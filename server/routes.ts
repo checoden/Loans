@@ -5,6 +5,7 @@ import { setupAuth } from "./auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import "./types"; // Импортируем расширения типов сессии
 
 // Setup multer for file uploads
 const createLogoDir = () => {
