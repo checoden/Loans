@@ -368,7 +368,10 @@ export default function AdminPage() {
                           <FormItem>
                             <FormLabel>Ставка (%)</FormLabel>
                             <FormControl>
-                              <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                              <Input type="number" step="0.01" {...field} onChange={e => {
+                                const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                                field.onChange(value);
+                              }} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -620,7 +623,10 @@ export default function AdminPage() {
                     <FormItem>
                       <FormLabel>Ставка (%)</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                        <Input type="number" step="0.01" {...field} onChange={e => {
+                          const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                          field.onChange(value);
+                        }} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
