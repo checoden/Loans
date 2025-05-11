@@ -9,6 +9,7 @@ import AdminPage from "@/pages/AdminPage";
 import AdminLoginPage from "@/pages/AdminLoginPage";
 import NotFound from "@/pages/not-found";
 import { AuthProvider } from "@/hooks/use-auth";
+import { AdminAuthProvider } from "@/hooks/use-admin-auth";
 import { useEffect } from "react";
 import { initializeOneSignal } from "@/lib/onesignal";
 
@@ -32,10 +33,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <AdminAuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </AdminAuthProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

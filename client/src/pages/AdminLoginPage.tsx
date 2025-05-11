@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useAuth } from "@/hooks/use-auth";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
 import { Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
@@ -25,7 +25,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function AdminLoginPage() {
-  const { user, isLoading, loginMutation } = useAuth();
+  const { admin, isLoading, loginMutation } = useAdminAuth();
   const [, navigate] = useLocation();
   
   const form = useForm<LoginFormValues>({
@@ -36,21 +36,15 @@ export default function AdminLoginPage() {
     },
   });
   
-  // If already logged in and is admin, redirect to admin page
+  // Если уже авторизован как администратор, перенаправить на страницу администратора
   useEffect(() => {
-    if (user && user.isAdmin) {
+    if (admin) {
       navigate("/admin");
     }
-  }, [user, navigate]);
+  }, [admin, navigate]);
   
-  const onSubmit = async (data: LoginFormValues) => {
-    loginMutation.mutate(data, {
-      onSuccess: (user) => {
-        if (user.isAdmin) {
-          navigate("/admin");
-        }
-      },
-    });
+  const onSubmit = (data: LoginFormValues) => {
+    loginMutation.mutate(data);
   };
   
   if (isLoading) {
