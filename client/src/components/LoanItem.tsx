@@ -36,7 +36,7 @@ export default function LoanItem({ loan, onOpenWebView }: LoanItemProps) {
             <h3 className="font-semibold text-gray-900">{loan.name}</h3>
             {loan.is_first_loan_zero && (
               <div className="flex items-center">
-                <span className="bg-secondary-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
                   0% первый займ
                 </span>
               </div>
@@ -56,16 +56,13 @@ export default function LoanItem({ loan, onOpenWebView }: LoanItemProps) {
               <p className="text-xs text-gray-500">Ставка</p>
               <p className="font-medium">{formatRate(Number(loan.rate), loan.is_first_loan_zero)}</p>
             </div>
-            <div>
-              <p className="text-xs text-gray-500">Одобрение</p>
-              <p className="font-medium">{loan.approval_rate}%</p>
-            </div>
+
           </div>
         </div>
       </div>
       <div className="px-4 pb-4">
         <Button 
-          className="w-full py-6 bg-primary-600 hover:bg-primary-700"
+          className="w-full h-12 text-base"
           onClick={() => onOpenWebView(loan)}
         >
           Получить займ
