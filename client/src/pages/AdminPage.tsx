@@ -52,7 +52,9 @@ import {
   Plus, 
   Pencil, 
   Trash2, 
-  Bell 
+  Bell,
+  Check,
+  X
 } from "lucide-react";
 import { Link } from "wouter";
 import { sendPushNotification } from "@/lib/onesignal";
@@ -268,26 +270,32 @@ export default function AdminPage() {
   };
   
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="container mx-auto max-w-6xl">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-4">
+      <div className="container mx-auto max-w-4xl">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-4 md:mb-6">
+          <div className="flex flex-wrap items-center gap-2">
             <Link href="/">
-              <Button variant="outline" size="sm" className="mr-2">
+              <Button variant="outline" size="sm" className="h-9">
                 <ArrowLeftCircle className="mr-2 h-4 w-4" />
-                Вернуться на сайт
+                <span className="whitespace-nowrap">Вернуться на сайт</span>
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold">Админ-панель</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-800">Админ-панель</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setIsNotificationDialogOpen(true)}>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-9" 
+              onClick={() => setIsNotificationDialogOpen(true)}
+            >
               <Bell className="mr-2 h-4 w-4" />
-              Отправить уведомление
+              <span className="whitespace-nowrap">Отправить уведомление</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
+              className="h-9"
               onClick={handleLogout}
               disabled={logoutMutation.isPending}
             >
@@ -300,12 +308,12 @@ export default function AdminPage() {
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Предложения МФО</h2>
+        <div className="bg-white rounded-lg shadow p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-800">Предложения МФО</h2>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button size="sm" className="whitespace-nowrap">
                   <Plus className="mr-2 h-4 w-4" />
                   Добавить
                 </Button>
@@ -483,45 +491,59 @@ export default function AdminPage() {
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
             </div>
           ) : loans && loans.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="overflow-x-auto -mx-4 md:mx-0">
+              <Table className="min-w-[800px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID</TableHead>
+                    <TableHead className="w-[60px]">ID</TableHead>
                     <TableHead>Имя</TableHead>
                     <TableHead>Лого</TableHead>
                     <TableHead>Сумма</TableHead>
                     <TableHead>Срок</TableHead>
                     <TableHead>Ставка</TableHead>
-                    <TableHead>0%</TableHead>
+                    <TableHead className="text-center">0%</TableHead>
                     <TableHead>Приоритет</TableHead>
-                    <TableHead>Действия</TableHead>
+                    <TableHead className="text-right">Действия</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loans.map((loan) => (
                     <TableRow key={loan.id}>
-                      <TableCell>{loan.id}</TableCell>
-                      <TableCell>{loan.name}</TableCell>
+                      <TableCell className="font-mono text-xs text-gray-600">{loan.id}</TableCell>
+                      <TableCell className="font-medium">{loan.name}</TableCell>
                       <TableCell>
-                        <img src={loan.logo} alt={loan.name} className="w-10 h-10 rounded object-cover" />
+                        <div className="w-16 h-10 bg-white border border-gray-100 rounded flex items-center justify-center p-1">
+                          <img src={loan.logo} alt={loan.name} className="max-w-full max-h-full object-contain" />
+                        </div>
                       </TableCell>
-                      <TableCell>{loan.amount} ₽</TableCell>
+                      <TableCell>{new Intl.NumberFormat('ru-RU').format(loan.amount)} ₽</TableCell>
                       <TableCell>{loan.term_from}-{loan.term_to} дн.</TableCell>
                       <TableCell>{Number(loan.rate)}%</TableCell>
-                      <TableCell>{loan.is_first_loan_zero ? "Да" : "Нет"}</TableCell>
+                      <TableCell className="text-center">
+                        {loan.is_first_loan_zero ? (
+                          <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-green-100 text-green-600">
+                            <Check className="h-3 w-3" />
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-gray-100 text-gray-400">
+                            <X className="h-3 w-3" />
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell>{loan.priority}</TableCell>
-                      <TableCell className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleEditLoan(loan)}
-                          title="Редактировать"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
+                      <TableCell>
+                        <div className="flex justify-end space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-8 w-8 p-0" 
+                            onClick={() => handleEditLoan(loan)}
+                            title="Редактировать"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
                             <Button variant="outline" size="sm" title="Удалить">
                               <Trash2 className="h-4 w-4 text-red-500" />
                             </Button>
@@ -544,6 +566,7 @@ export default function AdminPage() {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
