@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512px" height="512px" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <title>Иконка приложения</title>
+    <defs>
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="appIconGradient">
+            <stop stop-color="#FF9829" offset="0%"></stop>
+            <stop stop-color="#FF7B29" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect fill="url(#appIconGradient)" x="0" y="0" width="512" height="512" rx="100"></rect>
+        <g transform="translate(112, 112)" fill="#FFFFFF">
+            <path d="M144,0 C166.091,0 184,17.909 184,40 L184,248 C184,270.091 166.091,288 144,288 L40,288 C17.909,288 0,270.091 0,248 L0,40 C0,17.909 17.909,0 40,0 L144,0 Z M144,32 L40,32 C35.582,32 32,35.582 32,40 L32,248 C32,252.418 35.582,256 40,256 L144,256 C148.418,256 152,252.418 152,248 L152,40 C152,35.582 148.418,32 144,32 Z"></path>
+            <path d="M84,64 C93.941,64 102,72.059 102,82 L102,192 C102,201.941 93.941,210 84,210 C74.059,210 66,201.941 66,192 L66,82 C66,72.059 74.059,64 84,64 Z"></path>
+            <path d="M132,112 C141.941,112 150,120.059 150,130 L150,180 C150,189.941 141.941,198 132,198 C122.059,198 114,189.941 114,180 L114,130 C114,120.059 122.059,112 132,112 Z"></path>
+            <path d="M36,112 C45.941,112 54,120.059 54,130 L54,180 C54,189.941 45.941,198 36,198 C26.059,198 18,189.941 18,180 L18,130 C18,120.059 26.059,112 36,112 Z"></path>
+        </g>
+        <rect fill="#FFFFFF" opacity="0.3" x="112" y="392" width="288" height="64" rx="12"></rect>
+        <circle fill="#FFFFFF" cx="256" cy="424" r="12"></circle>
+    </g>
+</svg>
