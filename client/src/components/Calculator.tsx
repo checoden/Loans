@@ -10,7 +10,7 @@ interface CalculatorProps {
 
 export default function Calculator({ isOpen, onClose }: CalculatorProps) {
   const [amount, setAmount] = useState(15000);
-  const [term, setTerm] = useState(15);
+  const [term, setTerm] = useState(7);
   const [rate, setRate] = useState(1.0);
   const [totalToRepay, setTotalToRepay] = useState(0);
   const [overPayment, setOverPayment] = useState(0);
@@ -114,16 +114,16 @@ export default function Calculator({ isOpen, onClose }: CalculatorProps) {
               </div>
               <Slider
                 id="calc-term-slider"
-                min={5}
-                max={365}
+                min={1}
+                max={30}
                 step={1}
                 value={[term]}
                 onValueChange={(value) => setTerm(value[0])}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>5 дней</span>
-                <span>365 дней</span>
+                <span>1 день</span>
+                <span>30 дней</span>
               </div>
             </div>
             

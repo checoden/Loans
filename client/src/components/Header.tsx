@@ -1,4 +1,4 @@
-import { Menu, Calculator as CalculatorIcon, User } from "lucide-react";
+import { Menu, Calculator as CalculatorIcon } from "lucide-react";
 import { useState } from "react";
 import SideMenu from "./SideMenu";
 
@@ -32,12 +32,7 @@ export default function Header({ onOpenCalculator }: HeaderProps) {
               >
                 <CalculatorIcon className="w-5 h-5" />
               </button>
-              <button 
-                className="p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none transition-colors"
-                aria-label="Профиль пользователя"
-              >
-                <User className="w-5 h-5" />
-              </button>
+
             </div>
           </div>
         </div>

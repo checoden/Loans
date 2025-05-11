@@ -52,7 +52,11 @@ export default function HomePage() {
             </div>
           ) : loans && loans.length > 0 ? (
             <div className="space-y-5">
-              <h2 className="text-lg font-medium text-gray-800">Найдено предложений: {loans.length}</h2>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-md">
+                  Найдено: <span className="font-semibold">{loans.length}</span>
+                </span>
+              </div>
               {loans.map((loan) => (
                 <LoanItem 
                   key={loan.id} 
