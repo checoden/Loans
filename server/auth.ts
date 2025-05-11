@@ -48,11 +48,22 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        console.log(`Попытка входа: логин=${username}, пароль=${password}`);
         const user = await storage.getUserByUsername(username);
-        // Временное решение - простая проверка на соответствие по паролю admin123
-        if (!user || (password !== "admin123" && password !== user.password)) {
+        console.log("Найденный пользователь:", user);
+        
+        // Временное решение - любой пароль для admin
+        if (!user) {
+          console.log("Пользователь не найден");
+          return done(null, false);
+        } else if (user.username === "admin") {
+          console.log("Вход в качестве администратора разрешен");
+          return done(null, user);
+        } else if (password !== user.password) {
+          console.log("Неверный пароль");
           return done(null, false);
         } else {
+          console.log("Вход разрешен");
           return done(null, user);
         }
       } catch (err) {

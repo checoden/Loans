@@ -35,12 +35,16 @@ export class MemStorage implements IStorage {
       checkPeriod: 86400000,
     });
     
-    // Add default admin user
-    this.createUser({
+    // Add default admin user directly
+    const adminId = this.userCurrentId++;
+    const adminUser = {
+      id: adminId,
       username: "admin",
-      password: "admin123", // Will be hashed before storage
+      password: "admin123",
       isAdmin: true,
-    });
+    };
+    this.users.set(adminId, adminUser);
+    console.log("Администратор создан:", adminUser);
     
     // Add some initial loans
     this.createLoan({
