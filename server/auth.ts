@@ -48,9 +48,12 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
-        console.log(`Попытка входа: логин=${username}, пароль=${password}`);
-        const user = await storage.getUserByUsername(username);
+        const cleanUsername = username.trim();
+        console.log(`Попытка входа: логин='${cleanUsername}', пароль='${password}'`);
+        const user = await storage.getUserByUsername(cleanUsername);
         console.log("Найденный пользователь:", user);
+        // Вывод всех пользователей в хранилище для отладки
+        console.log("Все пользователи:", storage.getAllUsers());
         
         // Временное решение - любой пароль для admin
         if (!user) {

@@ -8,6 +8,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getAllUsers(): User[];
   
   getLoans(): Promise<Loan[]>;
   getLoan(id: number): Promise<Loan | undefined>;
@@ -92,9 +93,15 @@ export class MemStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
+    console.log(`Поиск пользователя с именем: '${username}'`);
+    console.log(`Все имеющиеся пользователи:`, Array.from(this.users.values()));
     return Array.from(this.users.values()).find(
       (user) => user.username === username,
     );
+  }
+  
+  getAllUsers(): User[] {
+    return Array.from(this.users.values());
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {

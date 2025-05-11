@@ -84,12 +84,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Simple admin login that doesn't use Passport
+  app.post("/api/admin/login", async (req, res) => {
+    console.log("Admin login attempt:", req.body);
+    const { username, password } = req.body;
+    
+    if (username === "admin" && password === "admin123") {
+      // Store admin authentication in session
+      req.session.adminIsAuthenticated = true;
+      res.json({
+        id: 1,
+        username: "admin",
+        isAdmin: true
+      });
+    } else {
+      res.status(401).send("Неверные учетные данные администратора");
+    }
+  });
+  
+  // Check admin auth status
+  app.get("/api/admin/user", (req, res) => {
+    if (req.session.adminIsAuthenticated) {
+      res.json({
+        id: 1,
+        username: "admin",
+        isAdmin: true
+      });
+    } else {
+      res.status(401).send("Не авторизован");
+    }
+  });
+  
+  // Admin logout
+  app.post("/api/admin/logout", (req, res) => {
+    req.session.adminIsAuthenticated = false;
+    res.sendStatus(200);
+  });
+
   // Admin routes - protected by isAdmin middleware
   const isAdmin = (req: Request, res: Response, next: Function) => {
-    if (!req.isAuthenticated || !req.isAuthenticated() || !req.user?.isAdmin) {
+    // Check both regular auth and our custom admin auth
+    if ((req.isAuthenticated && req.isAuthenticated() && req.user?.isAdmin) || req.session.adminIsAuthenticated) {
+      next();
+    } else {
       return res.status(403).json({ message: "Unauthorized access" });
     }
-    next();
   };
 
   // Create a new loan (admin only)
