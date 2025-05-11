@@ -44,15 +44,17 @@ export default function FilterSection({ onFilterChange }: FilterSectionProps) {
   }, [amount, term, onFilterChange]);
   
   return (
-    <section className="bg-white shadow-sm mb-4 sticky top-[61px] z-10">
-      <div className="container mx-auto px-4 py-4">
-        <div className="space-y-4">
-          <div>
+    <section className="bg-white shadow-md mb-6 sticky top-[61px] z-10 border-b border-gray-200">
+      <div className="container mx-auto px-4 py-5">
+        <div className="max-w-2xl mx-auto space-y-5">
+          <h2 className="text-lg font-medium text-gray-800 mb-1">Параметры займа</h2>
+          
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
             <div className="flex justify-between items-center mb-2">
               <label htmlFor="amount-slider" className="text-sm font-medium text-gray-700">
                 Сумма займа
               </label>
-              <span className="text-sm font-semibold text-primary-600">
+              <span className="text-sm font-bold text-primary-600 bg-primary-50 px-2 py-1 rounded">
                 {formatAmount(amount)}
               </span>
             </div>
@@ -71,12 +73,12 @@ export default function FilterSection({ onFilterChange }: FilterSectionProps) {
             </div>
           </div>
           
-          <div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
             <div className="flex justify-between items-center mb-2">
               <label htmlFor="term-slider" className="text-sm font-medium text-gray-700">
                 Срок займа
               </label>
-              <span className="text-sm font-semibold text-primary-600">
+              <span className="text-sm font-bold text-primary-600 bg-primary-50 px-2 py-1 rounded">
                 {formatTerm(term)}
               </span>
             </div>

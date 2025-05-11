@@ -40,28 +40,33 @@ export default function HomePage() {
       
       <FilterSection onFilterChange={handleFilterChange} />
       
-      <main className="container mx-auto px-4 pb-6">
-        {isLoading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mt-4">
-            <p>Ошибка при загрузке предложений: {error.message}</p>
-          </div>
-        ) : loans && loans.length > 0 ? (
-          loans.map((loan) => (
-            <LoanItem 
-              key={loan.id} 
-              loan={loan} 
-              onOpenWebView={handleOpenWebView}
-            />
-          ))
-        ) : (
-          <div className="bg-blue-50 border border-blue-200 text-blue-700 p-4 rounded-lg mt-4">
-            <p>Нет предложений, соответствующих выбранным параметрам. Попробуйте изменить сумму или срок займа.</p>
-          </div>
-        )}
+      <main className="container mx-auto px-4 pb-8 pt-4">
+        <div className="max-w-2xl mx-auto">
+          {isLoading ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mt-4">
+              <p>Ошибка при загрузке предложений: {error.message}</p>
+            </div>
+          ) : loans && loans.length > 0 ? (
+            <div className="space-y-5">
+              <h2 className="text-lg font-medium text-gray-800">Найдено предложений: {loans.length}</h2>
+              {loans.map((loan) => (
+                <LoanItem 
+                  key={loan.id} 
+                  loan={loan} 
+                  onOpenWebView={handleOpenWebView}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 p-5 rounded-lg mt-4">
+              <p>Нет предложений, соответствующих выбранным параметрам. Попробуйте изменить сумму или срок займа.</p>
+            </div>
+          )}
+        </div>
       </main>
       
       <WebView 
