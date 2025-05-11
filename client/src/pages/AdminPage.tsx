@@ -60,6 +60,7 @@ import { sendPushNotification } from "@/lib/onesignal";
 const loanFormSchema = insertLoanSchema.extend({
   logo: z.instanceof(FileList).optional(),
   logoUrl: z.string().optional(),
+  rate: z.coerce.number().min(0).max(999.99),
 });
 
 type LoanFormValues = z.infer<typeof loanFormSchema>;
