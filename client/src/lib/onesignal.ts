@@ -1,3 +1,10 @@
+// Add type declaration for OneSignal
+declare global {
+  interface Window {
+    OneSignal: any[];
+  }
+}
+
 // Initialize OneSignal for push notifications
 export function initializeOneSignal() {
   if (typeof window !== 'undefined') {
@@ -7,7 +14,7 @@ export function initializeOneSignal() {
     
     OneSignal.push(function() {
       OneSignal.init({
-        appId: process.env.ONESIGNAL_APP_ID || import.meta.env.VITE_ONESIGNAL_APP_ID || "",
+        appId: import.meta.env.VITE_ONESIGNAL_APP_ID || "",
         allowLocalhostAsSecureOrigin: true,
         notifyButton: {
           enable: true,
@@ -43,10 +50,10 @@ export async function sendPushNotification(title: string, message: string, url?:
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${process.env.ONESIGNAL_REST_API_KEY || import.meta.env.VITE_ONESIGNAL_REST_API_KEY || ""}`
+        'Authorization': `Basic ${import.meta.env.VITE_ONESIGNAL_REST_API_KEY || ""}`
       },
       body: JSON.stringify({
-        app_id: process.env.ONESIGNAL_APP_ID || import.meta.env.VITE_ONESIGNAL_APP_ID || "",
+        app_id: import.meta.env.VITE_ONESIGNAL_APP_ID || "",
         included_segments: ['All'],
         contents: {
           en: message,

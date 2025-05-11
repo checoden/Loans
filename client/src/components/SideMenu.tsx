@@ -28,11 +28,9 @@ export default function SideMenu({ isOpen, onClose, onOpenCalculator }: SideMenu
         <nav className="flex-1 overflow-y-auto p-4">
           <ul className="space-y-2">
             <li>
-              <Link href="/">
-                <a className="flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-600">
-                  <Home className="mr-3 w-5 h-5" />
-                  <span>Главная</span>
-                </a>
+              <Link href="/" className="flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-600">
+                <Home className="mr-3 w-5 h-5" />
+                <span>Главная</span>
               </Link>
             </li>
             <li>
@@ -64,11 +62,9 @@ export default function SideMenu({ isOpen, onClose, onOpenCalculator }: SideMenu
           </ul>
         </nav>
         <div className="p-4 border-t">
-          <Link href="/admin/login">
-            <a className="flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-600">
-              <Settings className="mr-3 w-5 h-5" />
-              <span>Администрирование</span>
-            </a>
+          <Link href="/admin/login" className="flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-primary-600">
+            <Settings className="mr-3 w-5 h-5" />
+            <span>Администрирование</span>
           </Link>
         </div>
       </div>
