@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>Займы онлайн - Быстрое получение микрозаймов</title>
+  <meta name="description" content="Займы онлайн - сервис для подбора и сравнения микрозаймов от МФО. Быстрое одобрение, выгодные условия, 0% на первый займ.">
+  
+  <!-- Tailwind CSS через CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f6f7ff',
+              100: '#eef1ff',
+              200: '#dde0ff',
+              300: '#c1c7ff',
+              400: '#9b9fff',
+              500: '#7c73ff',
+              600: '#6c5df4',
+              700: '#5a4ad8',
+              800: '#4a3dae',
+              900: '#3f388d',
+            },
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- OneSignal Web Push Notifications -->
+  <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+  <script>
+    window.OneSignal = window.OneSignal || [];
+    OneSignal.push(function() {
+      OneSignal.init({
+        appId: "YOUR_ONESIGNAL_APP_ID", // Замените на ваш APP ID
+        allowLocalhostAsSecureOrigin: true,
+        notifyButton: {
+          enable: true,
+          size: 'medium',
+          position: 'bottom-right',
+          showCredit: false,
+          text: {
+            'tip.state.unsubscribed': 'Получать уведомления',
+            'tip.state.subscribed': 'Вы подписаны на уведомления',
+            'tip.state.blocked': 'Уведомления заблокированы',
+            'message.prenotify': 'Нажмите, чтобы подписаться на уведомления',
+            'message.action.subscribed': 'Спасибо за подписку!',
+            'message.action.resubscribed': 'Вы подписаны на уведомления',
+            'message.action.unsubscribed': 'Вы больше не будете получать уведомления',
+            'dialog.main.title': 'Управление уведомлениями',
+            'dialog.main.button.subscribe': 'ПОДПИСАТЬСЯ',
+            'dialog.main.button.unsubscribe': 'ОТПИСАТЬСЯ',
+            'dialog.blocked.title': 'Разблокировать уведомления',
+            'dialog.blocked.message': 'Следуйте этим инструкциям, чтобы разрешить уведомления:'
+          }
+        },
+        promptOptions: {
+          slidedown: {
+            prompts: [
+              {
+                type: "push",
+                autoPrompt: true,
+                text: {
+                  actionMessage: "Получайте уведомления о новых займах и специальных предложениях",
+                  acceptButton: "Разрешить",
+                  cancelButton: "Отклонить"
+                },
+                delay: {
+                  pageViews: 1,
+                  timeDelay: 5
+                }
+              }
+            ]
+          }
+        }
+      });
+    });
+  </script>
+
+  <!-- Иконка сайта -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234F46E5'%3E%3Cpath d='M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-14.243L7.757 12 12 16.243 16.243 12 12 7.757z'/%3E%3C/svg%3E">
+  
+</head>
+<body class="bg-gray-50">
+  <header class="sticky top-0 bg-white shadow-sm z-10">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center">
+          <a href="/" class="flex items-center">
+            <span class="text-xl font-bold text-primary-600">Займы онлайн</span>
+          </a>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button 
+            id="calculatorBtn"
+            class="p-2 text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none transition-colors"
+            aria-label="Открыть калькулятор"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </button>
+          <button 
+            id="menuBtn"
+            class="p-2 text-gray-700 hover:bg-gray-100 rounded-full md:hidden focus:outline-none transition-colors"
+            aria-label="Открыть меню"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-6 space-y-6">
+    <!-- Фильтры -->
+    <div id="filters" class="bg-white rounded-lg shadow p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-medium text-gray-800">Параметры поиска</h2>
+        <button id="toggleFilters" class="text-primary-600 text-sm flex items-center focus:outline-none">
+          <span>Показать фильтры</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+      
+      <div id="filterContent" class="hidden space-y-4">
+        <div>
+          <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">
+            Сумма займа: <span id="amountValue">15000</span> ₽
+          </label>
+          <input
+            type="range"
+            id="amount"
+            min="1000"
+            max="100000"
+            step="1000"
+            value="15000"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          />
+          <div class="flex justify-between text-xs text-gray-500 mt-1">
+            <span>1 000 ₽</span>
+            <span>100 000 ₽</span>
+          </div>
+        </div>
+        
+        <div>
+          <label for="term" class="block text-sm font-medium text-gray-700 mb-1">
+            Срок займа: <span id="termValue">7</span> дней
+          </label>
+          <input
+            type="range"
+            id="term"
+            min="1"
+            max="30"
+            step="1"
+            value="7"
+            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          />
+          <div class="flex justify-between text-xs text-gray-500 mt-1">
+            <span>1 день</span>
+            <span>30 дней</span>
+          </div>
+        </div>
+        
+        <button 
+          id="applyFilters"
+          class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+        >
+          Подобрать займ
+        </button>
+      </div>
+      
+      <div id="activeFilters" class="hidden mt-4 pt-4 border-t border-gray-100">
+        <div class="flex flex-wrap gap-2">
+          <div class="inline-flex items-center bg-primary-50 text-primary-700 rounded-full px-3 py-1 text-sm">
+            <span>Сумма: <span id="activeAmount">15000</span> ₽</span>
+          </div>
+          <div class="inline-flex items-center bg-primary-50 text-primary-700 rounded-full px-3 py-1 text-sm">
+            <span>Срок: <span id="activeTerm">7</span> дн.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Результаты -->
+    <div class="space-y-4">
+      <div id="loansCount" class="flex justify-between items-center mb-1">
+        <span class="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-md">
+          Найдено: <span id="loansCountValue" class="font-semibold">0</span>
+        </span>
+      </div>
+      
+      <div id="loansContainer" class="space-y-4">
+        <!-- Займы будут добавлены через JavaScript -->
+        <div class="text-center py-10">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <p class="mt-2 text-gray-500">Загрузка предложений...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <!-- Калькулятор (модальное окно) -->
+  <div id="calculator" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden">
+    <div class="fixed bottom-0 left-0 right-0 bg-white rounded-t-xl shadow-lg z-40 max-h-[90vh] overflow-y-auto transform transition-transform duration-300 ease-out">
+      <div class="p-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">Калькулятор займа</h3>
+          <button 
+            id="closeCalculator"
+            class="text-gray-500 focus:outline-none"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="space-y-4 mb-6">
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label for="calcAmount" class="text-sm font-medium text-gray-700">
+                Сумма займа
+              </label>
+              <span id="calcAmountValue" class="text-sm font-semibold text-primary-600">15 000 ₽</span>
+            </div>
+            <input
+              id="calcAmount"
+              type="range"
+              min="1000"
+              max="100000"
+              step="1000"
+              value="15000"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <div class="flex justify-between text-xs text-gray-500 mt-1">
+              <span>1 000 ₽</span>
+              <span>100 000 ₽</span>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label for="calcTerm" class="text-sm font-medium text-gray-700">
+                Срок займа
+              </label>
+              <span id="calcTermValue" class="text-sm font-semibold text-primary-600">7 дней</span>
+            </div>
+            <input
+              id="calcTerm"
+              type="range"
+              min="1"
+              max="30"
+              step="1"
+              value="7"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <div class="flex justify-between text-xs text-gray-500 mt-1">
+              <span>1 день</span>
+              <span>30 дней</span>
+            </div>
+          </div>
+          
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label for="calcRate" class="text-sm font-medium text-gray-700">
+                Ставка (% в день)
+              </label>
+            </div>
+            <input
+              id="calcRate"
+              type="number"
+              min="0"
+              max="3"
+              step="0.01"
+              value="1"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+        </div>
+        
+        <div class="bg-gray-50 rounded-lg p-4">
+          <h4 class="text-sm font-medium text-gray-700 mb-3">Расчет переплаты</h4>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Сумма к возврату</p>
+              <p id="totalToRepay" class="font-semibold text-gray-900">0 ₽</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Переплата</p>
+              <p id="overPayment" class="font-semibold text-gray-900">0 ₽</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Ежедневный платеж</p>
+              <p id="dailyPayment" class="font-semibold text-gray-900">0 ₽</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Эффективная ставка</p>
+              <p id="effectiveRate" class="font-semibold text-gray-900">0%</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="text-xs text-gray-500 mt-4 px-1">
+          * Расчет является предварительным и может отличаться от условий, предлагаемых МФО
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- WebView модальное окно -->
+  <div id="webview" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden">
+    <div class="fixed inset-x-0 top-0 bottom-0 bg-white z-50 max-h-screen overflow-hidden flex flex-col">
+      <div class="flex items-center justify-between p-4 border-b">
+        <h3 id="webviewTitle" class="font-medium text-gray-900 truncate">Загрузка...</h3>
+        <button id="closeWebview" class="text-gray-500 focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+      <div class="flex-1 overflow-hidden">
+        <iframe id="webviewFrame" class="w-full h-full border-0" src="about:blank"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Подключаем JavaScript -->
+  <script src="/js/main.js"></script>
+</body>
+</html>

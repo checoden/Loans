@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "name": "Займер",
+    "logo": "/images/zaymer.svg",
+    "minAmount": 2000,
+    "maxAmount": 30000,
+    "minTerm": 7,
+    "maxTerm": 30,
+    "rate": 0.99,
+    "firstLoanFree": true,
+    "approvalPercent": 92,
+    "approval": "Мгновенно",
+    "age": "18-65",
+    "partnerUrl": "https://example.com/zaymer"
+  },
+  {
+    "id": 2,
+    "name": "МигКредит",
+    "logo": "/images/migcredit.svg",
+    "minAmount": 3000,
+    "maxAmount": 100000,
+    "minTerm": 5,
+    "maxTerm": 24,
+    "rate": 1.2,
+    "firstLoanFree": false,
+    "approvalPercent": 89,
+    "approval": "За 15 минут",
+    "age": "21-65",
+    "partnerUrl": "https://example.com/migcredit"
+  },
+  {
+    "id": 3,
+    "name": "MoneyMan",
+    "logo": "/images/moneyman.svg",
+    "minAmount": 5000,
+    "maxAmount": 80000,
+    "minTerm": 5,
+    "maxTerm": 18,
+    "rate": 1.1,
+    "firstLoanFree": true,
+    "approvalPercent": 95,
+    "approval": "За 10 минут",
+    "age": "18-70",
+    "partnerUrl": "https://example.com/moneyman"
+  }
+]
