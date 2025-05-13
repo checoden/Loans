@@ -1,50 +1,9 @@
 {
   "app": {
     "name": "Займы онлайн",
-    "package": "ru.zaymyonline.app",
+    "package": "ru.yourcompany.microloans",
     "versionName": "1.0.0",
-    "versionCode": 1,
-    "icon": "app_icon.png"
-  },
-  "android": {
-    "permissions": [
-      "android.permission.INTERNET",
-      "android.permission.VIBRATE",
-      "android.permission.RECEIVE_BOOT_COMPLETED",
-      "com.google.android.c2dm.permission.RECEIVE"
-    ],
-    "notificationSettings": {
-      "defaultChannelId": "займы-онлайн-уведомления",
-      "defaultChannelName": "Уведомления",
-      "defaultChannelDescription": "Уведомления о новых предложениях",
-      "defaultIconName": "ic_stat_onesignal_default",
-      "accentColor": "#FF9829"
-    },
-    "firebase": {
-      "googleServicesConfigPath": "google-services.json"
-    }
-  },
-  "ios": {
-    "teamId": "YOUR_APPLE_TEAM_ID",
-    "bundleIdentifier": "ru.zaymyonline.app",
-    "usesNotificationsPermission": true,
-    "notificationCategories": [
-      {
-        "id": "LOAN_CATEGORY",
-        "name": "Loan Notifications",
-        "actions": [
-          {
-            "id": "open",
-            "title": "Открыть",
-            "activationMode": "foreground"
-          }
-        ]
-      }
-    ]
-  },
-  "onesignal": {
-    "appId": "VITE_ONESIGNAL_APP_ID",
-    "googleProjectNumber": "YOUR_FIREBASE_PROJECT_NUMBER"
+    "versionCode": 1
   },
   "buildSettings": {
     "android": {
@@ -55,5 +14,23 @@
     "ios": {
       "deploymentTarget": "13.0"
     }
+  },
+  "android": {
+    "permissions": [
+      "android.permission.INTERNET",
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.WAKE_LOCK",
+      "android.permission.VIBRATE",
+      "android.permission.RECEIVE_BOOT_COMPLETED"
+    ]
+  },
+  "ios": {
+    "bundleIdentifier": "ru.yourcompany.microloans",
+    "capabilities": [
+      "push-notification"
+    ]
+  },
+  "oneSignal": {
+    "appId": "${VITE_ONESIGNAL_APP_ID}"
   }
 }

@@ -5,163 +5,182 @@
  * для компиляции с помощью Capacitor
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { exec } from 'child_process';
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
 
-// ES Modules не имеют __dirname, создаём его эквивалент
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Пути к файлам
+const SOURCE_DIR = 'client/src';
+const PUBLIC_DIR = 'public';
+const CAPACITOR_DIR = 'capacitor-app';
+const CONFIG_PATH = path.join(__dirname, 'client/app-config.json');
+const FIREBASE_TEMPLATE_PATH = path.join(__dirname, 'client/google-services.json.template');
 
-// Конфигурация
-const CONFIG = {
-  // Директории для создания
-  dirsToCreate: [
-    'capacitor-app',
-    'capacitor-app/www',
-    'capacitor-app/resources',
-    'capacitor-app/resources/android',
-    'capacitor-app/resources/ios',
-    'capacitor-app/resources/android/icon',
-    'capacitor-app/resources/android/splash',
-    'capacitor-app/resources/ios/icon',
-    'capacitor-app/resources/ios/splash',
-  ],
-  // OneSignal App ID для замены в HTML
-  oneSignalAppId: "YOUR_ONESIGNAL_APP_ID",
-};
-
-// Функция для копирования директории
 function copyDirectory(source, destination) {
+  // Создаем директорию назначения, если она не существует
   if (!fs.existsSync(destination)) {
     fs.mkdirSync(destination, { recursive: true });
   }
-
+  
+  // Получаем все файлы и поддиректории в исходной директории
   const files = fs.readdirSync(source);
   
+  // Копируем каждый файл/директорию
   for (const file of files) {
     const sourcePath = path.join(source, file);
-    const destPath = path.join(destination, file);
+    const destinationPath = path.join(destination, file);
     
+    // Проверяем, является ли это директорией
     if (fs.statSync(sourcePath).isDirectory()) {
-      copyDirectory(sourcePath, destPath);
+      // Если это директория, рекурсивно копируем ее содержимое
+      copyDirectory(sourcePath, destinationPath);
     } else {
-      fs.copyFileSync(sourcePath, destPath);
+      // Если это файл, копируем его
+      fs.copyFileSync(sourcePath, destinationPath);
     }
   }
 }
 
-// Функция для создания Capacitor конфигурации
 function createCapacitorConfig() {
-  const configContent = `{
-  "appId": "ru.zaymyonline.app",
-  "appName": "Займы онлайн",
-  "webDir": "www",
-  "bundledWebRuntime": false,
-  "plugins": {
-    "SplashScreen": {
-      "launchShowDuration": 3000,
-      "launchAutoHide": true,
-      "androidScaleType": "CENTER_CROP"
-    },
-    "PushNotifications": {
-      "presentationOptions": ["badge", "sound", "alert"]
-    }
-  },
-  "android": {
-    "allowMixedContent": true
-  },
-  "server": {
-    "androidScheme": "https"
-  }
-}`;
+  // Создать config для Capacitor с нужными настройками
+  const configTs = `
+import { CapacitorConfig } from '@capacitor/cli';
 
-  fs.writeFileSync(path.join(__dirname, 'capacitor-app', 'capacitor.config.json'), configContent);
-  console.log('✅ Создан файл capacitor.config.json');
+const config: CapacitorConfig = {
+  appId: 'ru.yourcompany.microloans',
+  appName: 'Займы онлайн',
+  webDir: 'www',
+  bundledWebRuntime: false,
+  plugins: {
+    // Добавьте здесь настройки плагинов
+  },
+  android: {
+    buildOptions: {
+      keystorePath: 'keystore.jks',
+      keystoreAlias: 'key0',
+      keystorePassword: 'microloans',
+      keystoreAliasPassword: 'microloans'
+    }
+  }
+};
+
+export default config;
+`;
+
+  fs.writeFileSync(path.join(CAPACITOR_DIR, 'capacitor.config.ts'), configTs);
+  console.log('✅ Создан файл capacitor.config.ts');
 }
 
-// Основная функция
 async function prepareForApk() {
-  console.log('🚀 Подготовка проекта для сборки APK');
+  console.log('🚀 Подготовка проекта для сборки APK с Capacitor');
   
   try {
-    // 1. Создаем необходимые директории
-    console.log('📁 Создание директорий...');
-    CONFIG.dirsToCreate.forEach(dir => {
-      const dirPath = path.join(__dirname, dir);
-      if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, { recursive: true });
-        console.log(`  ✓ Создана директория: ${dir}`);
-      }
-    });
+    // 1. Создаем директорию для Capacitor, если не существует
+    if (!fs.existsSync(CAPACITOR_DIR)) {
+      fs.mkdirSync(CAPACITOR_DIR, { recursive: true });
+      console.log('✅ Создана директория для Capacitor');
+    }
     
-    // 2. Копируем файлы веб-приложения
-    console.log('📋 Копирование файлов веб-приложения...');
-    copyDirectory(path.join(__dirname, 'public'), path.join(__dirname, 'capacitor-app', 'www'));
-    console.log('  ✓ Скопированы файлы веб-приложения');
+    // 2. Создаем www директорию в Capacitor
+    const wwwDir = path.join(CAPACITOR_DIR, 'www');
+    if (!fs.existsSync(wwwDir)) {
+      fs.mkdirSync(wwwDir, { recursive: true });
+      console.log('✅ Создана директория www');
+    }
     
-    // 3. Создаем capacitor.config.json
-    console.log('⚙️ Создание конфигурационных файлов...');
+    // 3. Копируем статические файлы в www директорию
+    console.log('📋 Копирование файлов из public в www...');
+    copyDirectory(PUBLIC_DIR, wwwDir);
+    
+    // 4. Копируем google-services.json.template (если существует)
+    if (fs.existsSync(FIREBASE_TEMPLATE_PATH)) {
+      const destPath = path.join(CAPACITOR_DIR, 'google-services.json');
+      fs.copyFileSync(FIREBASE_TEMPLATE_PATH, destPath);
+      console.log('✅ Скопирован шаблон google-services.json');
+    } else {
+      console.warn('⚠️ Файл google-services.json.template не найден');
+    }
+    
+    // 5. Создаем/обновляем capacitor.config.ts
     createCapacitorConfig();
     
-    // 4. Заменяем OneSignal App ID в HTML файлах
-    console.log('🔄 Обновление OneSignal App ID...');
-    const indexHtmlPath = path.join(__dirname, 'capacitor-app', 'www', 'index.html');
-    const adminHtmlPath = path.join(__dirname, 'capacitor-app', 'www', 'admin.html');
-    
-    if (fs.existsSync(indexHtmlPath)) {
-      let content = fs.readFileSync(indexHtmlPath, 'utf8');
-      content = content.replace(/YOUR_ONESIGNAL_APP_ID/g, CONFIG.oneSignalAppId);
-      fs.writeFileSync(indexHtmlPath, content);
-      console.log('  ✓ Обновлен OneSignal App ID в index.html');
+    // 6. Создаем package.json в директории Capacitor (если его нет)
+    const packageJsonPath = path.join(CAPACITOR_DIR, 'package.json');
+    if (!fs.existsSync(packageJsonPath)) {
+      const packageJson = {
+        name: "microloans-app",
+        version: "1.0.0",
+        description: "Займы Онлайн - мобильное приложение",
+        main: "index.js",
+        scripts: {
+          "build": "echo 'Building app'"
+        },
+        dependencies: {
+          "@capacitor/android": "^5.0.0",
+          "@capacitor/core": "^5.0.0",
+          "onesignal-cordova-plugin": "^3.3.1"
+        },
+        devDependencies: {
+          "@capacitor/cli": "^5.0.0"
+        }
+      };
+      
+      fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+      console.log('✅ Создан файл package.json');
     }
     
-    if (fs.existsSync(adminHtmlPath)) {
-      let content = fs.readFileSync(adminHtmlPath, 'utf8');
-      content = content.replace(/YOUR_ONESIGNAL_APP_ID/g, CONFIG.oneSignalAppId);
-      fs.writeFileSync(adminHtmlPath, content);
-      console.log('  ✓ Обновлен OneSignal App ID в admin.html');
+    // 7. Копируем index.html из public в www (на всякий случай)
+    const publicIndexPath = path.join(PUBLIC_DIR, 'index.html');
+    const wwwIndexPath = path.join(wwwDir, 'index.html');
+    
+    if (fs.existsSync(publicIndexPath)) {
+      fs.copyFileSync(publicIndexPath, wwwIndexPath);
+      console.log('✅ Скопирован файл index.html');
     }
     
-    // 5. Создаем package.json для Capacitor проекта
-    const packageJsonContent = `{
-  "name": "zaimy-online-app",
-  "version": "1.0.0",
-  "description": "Мобильное приложение для подбора займов от МФО",
-  "main": "index.js",
-  "scripts": {
-    "start": "npx cap serve",
-    "build": "npx cap add android && npx cap sync"
-  },
-  "keywords": ["loans", "mobile", "app"],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@capacitor/android": "^5.6.0",
-    "@capacitor/core": "^5.6.0",
-    "@capacitor/ios": "^5.6.0",
-    "onesignal-cordova-plugin": "^3.3.1"
-  },
-  "devDependencies": {
-    "@capacitor/cli": "^5.6.0"
-  }
-}`;
+    // 8. Добавляем инициализацию OneSignal в index.html
+    if (fs.existsSync(wwwIndexPath)) {
+      let indexHtml = fs.readFileSync(wwwIndexPath, 'utf8');
+      
+      // Проверяем, содержит ли index.html уже инициализацию OneSignal
+      if (!indexHtml.includes('window.OneSignal')) {
+        // Ищем тег head
+        const headEndIndex = indexHtml.indexOf('</head>');
+        
+        if (headEndIndex !== -1) {
+          // Добавляем скрипт OneSignal перед закрывающим тегом head
+          const oneSignalScript = `
+  <!-- OneSignal Init -->
+  <script src="OneSignalSDK.js" async=""></script>
+  <script>
+    window.OneSignal = window.OneSignal || [];
+    OneSignal.push(function() {
+      OneSignal.init({
+        appId: "a3060406-47e5-4331-91b3-296c3cbdcb86",
+        notifyButton: {
+          enable: true,
+        },
+      });
+    });
+  </script>`;
+          
+          indexHtml = indexHtml.slice(0, headEndIndex) + oneSignalScript + indexHtml.slice(headEndIndex);
+          fs.writeFileSync(wwwIndexPath, indexHtml);
+          console.log('✅ Добавлена инициализация OneSignal в index.html');
+        }
+      }
+    }
     
-    fs.writeFileSync(path.join(__dirname, 'capacitor-app', 'package.json'), packageJsonContent);
-    console.log('✅ Создан файл package.json для Capacitor проекта');
-    
-    // 6. Инструкции по следующим шагам
-    console.log('\n✨ Подготовка завершена успешно!');
+    console.log('\n✅ Подготовка завершена успешно!');
     console.log('\n📱 Для сборки APK:');
-    console.log('1. Перейдите в директорию capacitor-app');
-    console.log('2. Установите зависимости: npm install');
-    console.log('3. Добавьте платформу Android: npx cap add android');
-    console.log('4. Синхронизируйте проект: npx cap sync');
-    console.log('5. Откройте проект в Android Studio: npx cap open android');
-    console.log('\n🔔 Перед сборкой не забудьте:');
-    console.log('1. Заменить "YOUR_ONESIGNAL_APP_ID" на реальный App ID в capacitor.config.json');
-    console.log('2. Настроить OneSignal для поддержки мобильных платформ в консоли OneSignal');
+    console.log('1. Установите Android Studio: https://developer.android.com/studio');
+    console.log('2. Выполните: npx cap sync android');
+    console.log('3. Выполните: npx cap open android');
+    console.log('4. Соберите приложение в Android Studio');
+    
+    console.log('\n⚠️ Перед сборкой не забудьте:');
+    console.log('1. Заменить google-services.json валидным файлом из Firebase');
+    console.log('2. Проверить переменные окружения VITE_ONESIGNAL_APP_ID и VITE_ONESIGNAL_REST_API_KEY');
     
   } catch (error) {
     console.error('❌ Ошибка при подготовке проекта:', error);
