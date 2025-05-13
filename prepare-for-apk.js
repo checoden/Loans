@@ -5,9 +5,14 @@
  * для компиляции с помощью Capacitor
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+
+// ES модули не имеют __dirname, поэтому создаем его
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Пути к файлам
 const SOURCE_DIR = 'client/src';
@@ -189,4 +194,7 @@ async function prepareForApk() {
 }
 
 // Запуск скрипта
-prepareForApk();
+prepareForApk().catch(error => {
+  console.error('❌ Произошла ошибка:', error);
+  process.exit(1);
+});
