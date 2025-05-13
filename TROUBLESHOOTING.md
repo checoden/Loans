@@ -1,130 +1,215 @@
-# Решение проблем при сборке APK
+# Руководство по устранению неполадок
 
-Этот документ содержит решения для распространенных проблем, которые могут возникнуть при подготовке и сборке APK из веб-приложения.
+В этом руководстве описаны основные проблемы, которые могут возникнуть при работе с приложением "Займы онлайн", и способы их решения.
 
-## Общие проблемы
+## Содержание
 
-### Ошибка: "Error: Cannot find module '@capacitor/android'"
+1. [Проблемы с запуском приложения](#проблемы-с-запуском-приложения)
+2. [Проблемы с push-уведомлениями](#проблемы-с-push-уведомлениями)
+3. [Проблемы со сборкой APK](#проблемы-со-сборкой-apk)
+4. [Проблемы с интерфейсом](#проблемы-с-интерфейсом)
+5. [Конфликты портов](#конфликты-портов)
 
-**Решение:**
-```bash
-cd capacitor-app
-npm install @capacitor/android
-npx cap sync
-```
+## Проблемы с запуском приложения
 
-### Ошибка: "Error: Android SDK not found"
+### Ошибка "EADDRINUSE: address already in use"
 
-**Решение:**
-1. Установите Android SDK через Android Studio
-2. Добавьте переменную окружения ANDROID_SDK_ROOT
-   - В Windows: `set ANDROID_SDK_ROOT=C:\Users\username\AppData\Local\Android\Sdk`
-   - В macOS/Linux: `export ANDROID_SDK_ROOT=~/Library/Android/sdk`
+**Проблема**: При запуске приложения возникает ошибка "EADDRINUSE: address already in use".
 
-### Ошибка при добавлении платформы Android
-
-**Решение:**
-```bash
-# Очистить кэш npm
-npm cache clean --force
-
-# Удалить node_modules и установить заново
-rm -rf node_modules
-npm install
-
-# Попробовать добавить платформу снова
-npx cap add android
-```
-
-## Проблемы с OneSignal
-
-### Уведомления не работают в APK
-
-**Проверьте:**
-1. Правильно ли указан OneSignal App ID в `capacitor.config.json`
-2. Установлен ли плагин OneSignal:
+**Решение**:
+1. Выполните команду для поиска процесса, занимающего порт 5000:
    ```bash
-   npm install onesignal-cordova-plugin
-   npx cap sync
-   ```
-3. Добавлен ли FCM ключ в настройках OneSignal (для Android)
-
-### Ошибка: "Firebase FCM Sender ID is invalid"
-
-**Решение:**
-1. Откройте консоль Firebase
-2. Перейдите в Project Settings > Cloud Messaging
-3. Скопируйте Server Key и Sender ID
-4. Добавьте эти данные в настройках вашего приложения в OneSignal
-
-## Проблемы при сборке в Android Studio
-
-### Ошибка: "Failed to find Build Tools revision XX.X.X"
-
-**Решение:**
-1. Откройте SDK Manager в Android Studio
-2. Перейдите в SDK Tools
-3. Установите требуемую версию Build Tools
-
-### Ошибка: "Execution failed for task ':app:processDebugManifest'"
-
-**Решение:**
-Обычно это происходит из-за несоответствия версий компонентов Android. Попробуйте:
-
-1. В Android Studio, откройте build.gradle (Module: app)
-2. Проверьте и обновите:
-   ```gradle
-   compileSdkVersion 33
-   buildToolsVersion "33.0.0"
-   
-   defaultConfig {
-       minSdkVersion 21
-       targetSdkVersion 33
-       ...
-   }
+   lsof -i :5000
    ```
 
-### Ошибка подписи APK
-
-**Решение:**
-1. Создайте keystore файл:
+2. Завершите найденный процесс:
    ```bash
-   keytool -genkey -v -keystore my-release-key.keystore -alias alias_name -keyalg RSA -keysize 2048 -validity 10000
+   kill -9 <PID>
    ```
-2. В Android Studio откройте Build > Generate Signed Bundle/APK
-3. Используйте созданный keystore файл
 
-## Проблемы с иконками и ресурсами
-
-### Отсутствуют иконки/сплэш-экран в APK
-
-**Решение:**
-1. Проверьте, что в директории `capacitor-app/resources` есть все необходимые иконки
-2. Запустите:
+3. Запустите приложение снова:
    ```bash
-   npx cordova-res android --skip-config --copy
-   npx cap sync android
+   npm run dev
    ```
 
-### Ошибка: "resource not found"
+### Ошибка "Module not found"
 
-**Решение:**
-1. Проверьте, что все ресурсы имеют правильные имена (только строчные буквы, цифры и подчеркивания)
-2. Проверьте, что пути к ресурсам указаны правильно
-3. Синхронизируйте проект:
+**Проблема**: При запуске приложения возникает ошибка "Cannot find module..."
+
+**Решение**:
+1. Установите зависимости заново:
    ```bash
-   npx cap sync
+   npm install
    ```
 
-## Общие советы по отладке
+2. Очистите кэш npm:
+   ```bash
+   npm cache clean --force
+   ```
 
-1. Проверьте логи в Android Studio (Logcat)
-2. При тестировании на устройстве включите USB debugging и смотрите логи в реальном времени
-3. Используйте Chrome Remote Debugging для отладки WebView: chrome://inspect/#devices
-4. Для проблем с Capacitor, проверьте папку `capacitor.config.json`, убедитесь что все пути указаны корректно
+3. Запустите приложение:
+   ```bash
+   npm run dev
+   ```
 
-## Дополнительные ресурсы
+## Проблемы с push-уведомлениями
 
-- [Официальная документация Capacitor](https://capacitorjs.com/docs)
-- [Документация OneSignal](https://documentation.onesignal.com/docs)
-- [Android Studio Troubleshooting](https://developer.android.com/studio/troubleshoot)
+### Не отправляются уведомления
+
+**Проблема**: Уведомления не отправляются или не приходят.
+
+**Решение**:
+1. Проверьте наличие переменных окружения:
+   ```bash
+   echo $VITE_ONESIGNAL_APP_ID
+   echo $VITE_ONESIGNAL_REST_API_KEY
+   ```
+
+2. Проверьте статус OneSignal:
+   - Зайдите на https://app.onesignal.com/
+   - Проверьте, что ваше приложение активно
+
+3. Проверьте консоль на наличие ошибок при отправке уведомлений.
+
+### Ошибка "API Key is invalid"
+
+**Проблема**: При отправке уведомлений появляется ошибка "API Key is invalid".
+
+**Решение**:
+1. Проверьте значение ключа API в административной панели:
+   - Войдите в OneSignal Dashboard
+   - Перейдите в Settings > Keys & IDs
+   - Скопируйте REST API Key
+
+2. Обновите переменную окружения:
+   ```bash
+   export VITE_ONESIGNAL_REST_API_KEY="ваш_новый_ключ"
+   ```
+
+3. Перезапустите приложение.
+
+## Проблемы со сборкой APK
+
+### Ошибка "Capacitor not installed"
+
+**Проблема**: При сборке APK возникает ошибка, связанная с Capacitor.
+
+**Решение**:
+1. Установите Capacitor глобально:
+   ```bash
+   npm install -g @capacitor/cli
+   ```
+
+2. Установите необходимые пакеты:
+   ```bash
+   npm install @capacitor/core @capacitor/android
+   ```
+
+3. Запустите скрипт подготовки заново:
+   ```bash
+   node prepare-for-apk.js
+   ```
+
+### Ошибка "Google Services plugin not applied"
+
+**Проблема**: При сборке APK в Android Studio возникает ошибка Google Services.
+
+**Решение**:
+1. Убедитесь, что файл `google-services.json` находится в правильной директории:
+   ```bash
+   ls -la android/app/
+   ```
+
+2. Если файла нет, используйте шаблон:
+   ```bash
+   cp client/google-services.json.template android/app/google-services.json
+   ```
+
+3. Для работы с реальными push-уведомлениями замените этот файл на реальный, полученный из Firebase Console.
+
+### Ошибка "SDK Location not found"
+
+**Проблема**: Android Studio не может найти SDK.
+
+**Решение**:
+1. Создайте файл `local.properties` в директории android:
+   ```bash
+   echo "sdk.dir=/путь/к/android/sdk" > android/local.properties
+   ```
+
+2. Или укажите путь в Android Studio:
+   - File > Project Structure > SDK Location
+
+## Проблемы с интерфейсом
+
+### Не загружаются логотипы МФО
+
+**Проблема**: Логотипы МФО не отображаются в списке займов.
+
+**Решение**:
+1. Проверьте, что файлы логотипов существуют:
+   ```bash
+   ls -la public/logos/
+   ```
+
+2. Убедитесь, что пути к логотипам указаны правильно в данных:
+   ```bash
+   curl http://localhost:5000/api/loans
+   ```
+
+3. Проверьте консоль браузера на наличие ошибок загрузки.
+
+### Проблемы со стилями
+
+**Проблема**: Стили не применяются или отображаются некорректно.
+
+**Решение**:
+1. Обновите зависимости:
+   ```bash
+   npm install tailwindcss@latest postcss@latest autoprefixer@latest
+   ```
+
+2. Пересоберите стили:
+   ```bash
+   npx tailwindcss build -i client/src/index.css -o public/styles.css
+   ```
+
+3. Перезапустите приложение.
+
+## Конфликты портов
+
+### Основное приложение и push-сервер конфликтуют
+
+**Проблема**: Push-сервер и основное приложение конфликтуют из-за одинакового порта.
+
+**Решение**:
+1. Измените порт push-сервера в файле `run-push-server.js`:
+   ```javascript
+   const PORT = 3000; // Измените на другой, например, 3001
+   ```
+
+2. Перезапустите оба сервера:
+   ```bash
+   ./build-and-run-app.sh
+   ```
+
+### Другие сервисы используют порты приложения
+
+**Проблема**: Другие сервисы используют порты 5000 или 3000.
+
+**Решение**:
+1. Измените порт основного приложения в `server/index.ts`:
+   ```typescript
+   const PORT = process.env.PORT || 5001; // Измените порт
+   ```
+
+2. Измените порт push-сервера в `run-push-server.js`:
+   ```javascript
+   const PORT = 3001; // Используйте другой порт
+   ```
+
+3. Обновите URL в клиентской части, если необходимо.
+
+## Дополнительная информация
+
+Если возникают другие проблемы, не описанные в этом руководстве, пожалуйста, создайте обращение с подробным описанием проблемы и шагами для ее воспроизведения.
