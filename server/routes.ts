@@ -221,6 +221,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile(filepath);
   });
 
+  // Push notification endpoints - admin only
+  app.post("/api/push-notification", isAdmin, async (req, res) => {
+    try {
+      const { title, message, url } = req.body;
+      
+      if (!title || !message) {
+        return res.status(400).json({ message: "Title and message are required" });
+      }
+
+      // This will make a request to OneSignal API with your credentials
+      const response = await fetch('https://onesignal.com/api/v1/notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${process.env.VITE_ONESIGNAL_REST_API_KEY}`
+        },
+        body: JSON.stringify({
+          app_id: process.env.VITE_ONESIGNAL_APP_ID,
+          included_segments: ['Subscribed Users'],
+          contents: {
+            en: message,
+            ru: message
+          },
+          headings: {
+            en: title,
+            ru: title
+          },
+          url: url || '',
+          // Добавляем кнопки действий
+          buttons: url ? [
+            {
+              id: "open",
+              text: "Открыть",
+              url: url
+            }
+          ] : undefined,
+          // Настройки для Android
+          android_accent_color: "FF9829",
+          android_channel_id: "займы-онлайн-уведомления",
+          android_group: "loans_group",
+          android_group_message: {"ru": "{{посмотреть_новые}} новых уведомлений", "en": "{{посмотреть_новые}} new notifications"},
+          small_icon: "ic_stat_onesignal_default",
+          large_icon: "https://img.freepik.com/free-vector/money-bag-cash-in-flat-style_53562-11815.jpg?w=128",
+          android_visibility: 1,
+          
+          // Настройки для iOS
+          ios_badgeType: "Increase",
+          ios_badgeCount: 1,
+          ios_sound: "default",
+          ios_category: "LOAN_CATEGORY"
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.errors) {
+        return res.status(400).json({ 
+          message: "Error sending notification", 
+          errors: data.errors 
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        data
+      });
+    } catch (err) {
+      console.error("Error sending push notification:", err);
+      res.status(500).json({ message: "Error sending push notification" });
+    }
+  });
+
+  // Get OneSignal configuration
+  app.get("/api/push-notification/config", (req, res) => {
+    res.json({
+      appId: process.env.VITE_ONESIGNAL_APP_ID || '',
+      hasApiKey: !!process.env.VITE_ONESIGNAL_REST_API_KEY,
+    });
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

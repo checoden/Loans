@@ -2,9 +2,10 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fetch from 'node-fetch';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // ES Modules не имеют __dirname, создаём его эквивалент
 const __filename = fileURLToPath(import.meta.url);
@@ -15,6 +16,14 @@ app.use(express.json());
 
 // Статические файлы из директории public
 app.use(express.static('public'));
+
+// Маршрут для получения конфигурации OneSignal
+app.get('/api/push-notification/config', (req, res) => {
+  res.json({
+    appId: process.env.VITE_ONESIGNAL_APP_ID || '',
+    hasApiKey: !!process.env.VITE_ONESIGNAL_REST_API_KEY,
+  });
+});
 
 // API маршрут для получения предложений МФО
 app.get('/api/offers', (req, res) => {
@@ -106,23 +115,104 @@ app.get('/api/offers', (req, res) => {
 });
 
 // Маршрут для отправки push-уведомлений (для админки)
-app.post('/api/notifications', (req, res) => {
+app.post('/api/notifications', async (req, res) => {
   const { title, message, url } = req.body;
   
   if (!title || !message) {
     return res.status(400).json({ error: 'Требуются заголовок и сообщение' });
   }
   
-  console.log(`Push-уведомление отправлено: ${title} - ${message}`);
+  console.log(`Подготовка к отправке push-уведомления: ${title} - ${message}`);
   
-  // Здесь в реальном приложении будет вызов API OneSignal
-  // Но для упрощенной версии мы просто имитируем успешную отправку
+  // Проверка наличия ключей OneSignal
+  const ONESIGNAL_APP_ID = process.env.VITE_ONESIGNAL_APP_ID;
+  const ONESIGNAL_REST_API_KEY = process.env.VITE_ONESIGNAL_REST_API_KEY;
   
-  return res.json({ 
-    success: true, 
-    message: 'Уведомление отправлено успешно',
-    notification: { title, message, url, sentAt: new Date().toISOString() }
-  });
+  if (!ONESIGNAL_APP_ID || !ONESIGNAL_REST_API_KEY) {
+    console.log('Отсутствуют необходимые ключи OneSignal');
+    // В режиме разработки - имитируем отправку
+    return res.json({ 
+      success: true, 
+      message: 'Имитация отправки уведомления (отсутствуют ключи OneSignal)',
+      note: 'Для настоящей отправки укажите переменные окружения VITE_ONESIGNAL_APP_ID и VITE_ONESIGNAL_REST_API_KEY',
+      notification: { title, message, url, sentAt: new Date().toISOString() }
+    });
+  }
+  
+  try {
+    // Подготовка данных для OneSignal API
+    const payload = {
+      app_id: ONESIGNAL_APP_ID,
+      included_segments: ['Subscribed Users'],
+      contents: {
+        en: message,
+        ru: message
+      },
+      headings: {
+        en: title,
+        ru: title
+      },
+      url: url || '',
+      buttons: url ? [
+        {
+          id: "open",
+          text: "Открыть",
+          url: url
+        }
+      ] : undefined,
+      // Настройки для Android
+      android_accent_color: "FF9829",
+      android_channel_id: "займы-онлайн-уведомления",
+      android_group: "loans_group",
+      android_group_message: {"ru": "{{посмотреть_новые}} новых уведомлений", "en": "{{посмотреть_новые}} new notifications"},
+      small_icon: "ic_stat_onesignal_default",
+      large_icon: "https://img.freepik.com/free-vector/money-bag-cash-in-flat-style_53562-11815.jpg?w=128",
+      android_visibility: 1,
+      
+      // Настройки для iOS
+      ios_badgeType: "Increase",
+      ios_badgeCount: 1,
+      ios_sound: "default",
+      ios_category: "LOAN_CATEGORY"
+    };
+    
+    console.log('Отправка запроса к OneSignal API...');
+    
+    // Отправка запроса к OneSignal API
+    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${ONESIGNAL_REST_API_KEY}`
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    const responseData = await response.json();
+    
+    if (responseData.errors) {
+      console.error('Ошибка от OneSignal API:', responseData.errors);
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Ошибка отправки уведомления',
+        errors: responseData.errors
+      });
+    }
+    
+    console.log('Push-уведомление успешно отправлено через OneSignal');
+    return res.json({ 
+      success: true, 
+      message: 'Уведомление отправлено успешно',
+      data: responseData
+    });
+  } catch (error) {
+    console.error('Ошибка при отправке push-уведомления:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Ошибка сервера при отправке уведомления',
+      error: error.message
+    });
+  }
 });
 
 // Запуск сервера

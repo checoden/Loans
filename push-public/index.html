@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Займы Онлайн - Управление Push-уведомлениями</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    
+    // Функция для инициализации OneSignal
+    function initializeOneSignal(appId) {
+      window.OneSignalDeferred.push(function(OneSignal) {
+        OneSignal.init({
+          appId: appId,
+          allowLocalhostAsSecureOrigin: true,
+          notifyButton: {
+            enable: true,
+            size: 'medium',
+            position: 'bottom-right',
+            showCredit: false,
+            text: {
+              'tip.state.unsubscribed': 'Получать уведомления',
+              'tip.state.subscribed': 'Вы подписаны на уведомления',
+              'tip.state.blocked': 'Уведомления заблокированы',
+              'message.prenotify': 'Нажмите, чтобы подписаться на уведомления',
+              'message.action.subscribed': 'Спасибо за подписку!',
+              'message.action.resubscribed': 'Вы подписаны на уведомления',
+              'message.action.unsubscribed': 'Вы больше не будете получать уведомления',
+              'dialog.main.title': 'Управление уведомлениями',
+              'dialog.main.button.subscribe': 'ПОДПИСАТЬСЯ',
+              'dialog.main.button.unsubscribe': 'ОТПИСАТЬСЯ',
+              'dialog.blocked.title': 'Разблокировать уведомления',
+              'dialog.blocked.message': 'Следуйте этим инструкциям, чтобы разрешить уведомления:'
+            }
+          },
+          promptOptions: {
+            slidedown: {
+              prompts: [
+                {
+                  type: "push",
+                  autoPrompt: true,
+                  text: {
+                    actionMessage: "Получайте уведомления о новых займах и специальных предложениях",
+                    acceptButton: "Разрешить",
+                    cancelButton: "Отклонить"
+                  },
+                  delay: {
+                    pageViews: 1,
+                    timeDelay: 5
+                  }
+                }
+              ]
+            }
+          }
+        });
+      });
+    }
+  </script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div id="app" class="container mx-auto py-8 px-4">
+    <div id="login-form" class="max-w-md mx-auto bg-white rounded-lg shadow p-6 mb-8">
+      <h1 class="text-2xl font-bold mb-4">Вход в админ-панель</h1>
+      <form id="auth-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1" for="username">Имя пользователя</label>
+          <input type="text" id="username" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="admin" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1" for="password">Пароль</label>
+          <input type="password" id="password" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="••••••••" required>
+        </div>
+        <div id="login-error" class="text-red-500 text-sm hidden"></div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition">
+          Войти
+        </button>
+      </form>
+    </div>
+
+    <div id="admin-panel" class="max-w-4xl mx-auto hidden">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Управление Push-уведомлениями</h1>
+        <button id="logout-btn" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-md transition">
+          Выйти
+        </button>
+      </div>
+
+      <div id="onesignal-config-warning" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 hidden">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm text-yellow-700">
+              Отсутствуют ключи для работы с OneSignal API. Убедитесь, что в переменных окружения установлены:
+            </p>
+            <ul class="mt-2 text-sm text-yellow-700 list-disc list-inside">
+              <li id="appid-status">VITE_ONESIGNAL_APP_ID</li>
+              <li id="apikey-status">VITE_ONESIGNAL_REST_API_KEY</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="p-6">
+          <h2 class="text-lg font-semibold mb-4">Отправка уведомления</h2>
+          <form id="notification-form" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1" for="title">Заголовок уведомления</label>
+              <input type="text" id="title" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Например: Новое предложение" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1" for="message">Текст уведомления</label>
+              <textarea id="message" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Например: У нас появились новые выгодные предложения по займам" required></textarea>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1" for="url">URL для перехода (необязательно)</label>
+              <input type="url" id="url" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Например: https://example.com/offers">
+              <p class="mt-1 text-sm text-gray-500">Если указан, уведомление будет содержать кнопку для перехода по этому URL</p>
+            </div>
+            <div id="notification-error" class="text-red-500 text-sm hidden"></div>
+            <div id="notification-success" class="text-green-500 text-sm hidden"></div>
+            <button type="submit" id="send-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition">
+              Отправить уведомление
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div id="result-container" class="mt-8 bg-white rounded-lg shadow-md p-6 hidden">
+        <h2 class="text-lg font-semibold mb-2">Результат отправки</h2>
+        <pre id="result" class="bg-gray-100 p-4 rounded-md overflow-auto text-xs"></pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DOM элементы
+    const loginForm = document.getElementById('login-form');
+    const authForm = document.getElementById('auth-form');
+    const adminPanel = document.getElementById('admin-panel');
+    const notificationForm = document.getElementById('notification-form');
+    const logoutBtn = document.getElementById('logout-btn');
+    const loginError = document.getElementById('login-error');
+    const notificationError = document.getElementById('notification-error');
+    const notificationSuccess = document.getElementById('notification-success');
+    const resultContainer = document.getElementById('result-container');
+    const resultElement = document.getElementById('result');
+    const oneSignalConfigWarning = document.getElementById('onesignal-config-warning');
+    const appIdStatus = document.getElementById('appid-status');
+    const apiKeyStatus = document.getElementById('apikey-status');
+    const sendBtn = document.getElementById('send-btn');
+
+    // Состояние авторизации
+    let isAuthenticated = false;
+
+    // Проверка авторизации при загрузке страницы
+    checkAuth();
+    
+    // Проверка конфигурации OneSignal
+    checkOneSignalConfig();
+
+    // Обработчики форм
+    authForm.addEventListener('submit', handleLogin);
+    notificationForm.addEventListener('submit', handleSendNotification);
+    logoutBtn.addEventListener('click', handleLogout);
+
+    // Функции
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/admin/user');
+        if (response.ok) {
+          const user = await response.json();
+          isAuthenticated = true;
+          showAdminPanel();
+        } else {
+          isAuthenticated = false;
+          showLoginForm();
+        }
+      } catch (error) {
+        console.error('Ошибка проверки авторизации:', error);
+        isAuthenticated = false;
+        showLoginForm();
+      }
+    }
+
+    async function checkOneSignalConfig() {
+      try {
+        const response = await fetch('/api/push-notification/config');
+        if (response.ok) {
+          const config = await response.json();
+          
+          if (config.appId && config.hasApiKey) {
+            // Оба ключа настроены - скрываем предупреждение
+            oneSignalConfigWarning.classList.add('hidden');
+            sendBtn.disabled = false;
+            // Инициализируем OneSignal
+            initializeOneSignal(config.appId);
+          } else {
+            // Отсутствуют ключи - показываем предупреждение
+            oneSignalConfigWarning.classList.remove('hidden');
+            sendBtn.disabled = true;
+            
+            // Обновляем статус ключей
+            if (config.appId) {
+              appIdStatus.innerHTML = `VITE_ONESIGNAL_APP_ID <span class="text-green-500">✓</span>`;
+            } else {
+              appIdStatus.innerHTML = `VITE_ONESIGNAL_APP_ID <span class="text-red-500">✗</span>`;
+            }
+            
+            if (config.hasApiKey) {
+              apiKeyStatus.innerHTML = `VITE_ONESIGNAL_REST_API_KEY <span class="text-green-500">✓</span>`;
+            } else {
+              apiKeyStatus.innerHTML = `VITE_ONESIGNAL_REST_API_KEY <span class="text-red-500">✗</span>`;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка проверки конфигурации OneSignal:', error);
+        oneSignalConfigWarning.classList.remove('hidden');
+      }
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      try {
+        const response = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+        
+        if (response.ok) {
+          const user = await response.json();
+          isAuthenticated = true;
+          loginError.classList.add('hidden');
+          showAdminPanel();
+        } else {
+          const error = await response.json();
+          loginError.textContent = error.message || 'Ошибка авторизации';
+          loginError.classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Ошибка авторизации:', error);
+        loginError.textContent = 'Произошла ошибка при попытке входа';
+        loginError.classList.remove('hidden');
+      }
+    }
+
+    async function handleSendNotification(event) {
+      event.preventDefault();
+      
+      const title = document.getElementById('title').value;
+      const message = document.getElementById('message').value;
+      const url = document.getElementById('url').value;
+      
+      // Сброс предыдущих сообщений
+      notificationError.classList.add('hidden');
+      notificationSuccess.classList.add('hidden');
+      resultContainer.classList.add('hidden');
+      
+      // Проверка обязательных полей
+      if (!title || !message) {
+        notificationError.textContent = 'Заголовок и текст уведомления обязательны';
+        notificationError.classList.remove('hidden');
+        return;
+      }
+      
+      // Отображение состояния загрузки
+      const originalBtnText = sendBtn.innerHTML;
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Отправка...
+      `;
+      
+      try {
+        const response = await fetch('/api/push-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title, message, url: url || undefined }),
+        });
+        
+        const result = await response.json();
+        
+        // Отображение результата
+        resultElement.textContent = JSON.stringify(result, null, 2);
+        resultContainer.classList.remove('hidden');
+        
+        if (response.ok && result.success) {
+          notificationSuccess.textContent = 'Уведомление успешно отправлено';
+          notificationSuccess.classList.remove('hidden');
+          // Очищаем форму
+          notificationForm.reset();
+        } else {
+          notificationError.textContent = result.message || 'Ошибка отправки уведомления';
+          notificationError.classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Ошибка отправки уведомления:', error);
+        notificationError.textContent = 'Произошла ошибка при отправке уведомления';
+        notificationError.classList.remove('hidden');
+      } finally {
+        // Возвращаем кнопку в исходное состояние
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = originalBtnText;
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        const response = await fetch('/api/admin/logout', {
+          method: 'POST',
+        });
+        
+        if (response.ok) {
+          isAuthenticated = false;
+          showLoginForm();
+        }
+      } catch (error) {
+        console.error('Ошибка выхода:', error);
+      }
+    }
+
+    function showLoginForm() {
+      loginForm.classList.remove('hidden');
+      adminPanel.classList.add('hidden');
+      // Сбрасываем форму входа
+      authForm.reset();
+      loginError.classList.add('hidden');
+    }
+
+    function showAdminPanel() {
+      loginForm.classList.add('hidden');
+      adminPanel.classList.remove('hidden');
+      // Сбрасываем форму уведомлений
+      notificationForm.reset();
+      notificationError.classList.add('hidden');
+      notificationSuccess.classList.add('hidden');
+      resultContainer.classList.add('hidden');
+    }
+  </script>
+</body>
+</html>

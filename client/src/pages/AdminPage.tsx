@@ -283,15 +283,16 @@ export default function AdminPage() {
             <h1 className="text-xl md:text-2xl font-bold text-gray-800">Админ-панель</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-9" 
-              onClick={() => setIsNotificationDialogOpen(true)}
-            >
-              <Bell className="mr-2 h-4 w-4" />
-              <span className="whitespace-nowrap">Отправить уведомление</span>
-            </Button>
+            <Link href="/admin/push">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9"
+              >
+                <Bell className="mr-2 h-4 w-4" />
+                <span className="whitespace-nowrap">Управление уведомлениями</span>
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"
