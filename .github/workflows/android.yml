@@ -1,0 +1,55 @@
+name: Build-APK          # название workflow (свободно)
+
+on:
+  push:
+    tags: ["v*"]         # запуск ТОЛЬКО при пуше тега v1.0.0 и т.д.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Клонируем код
+    - uses: actions/checkout@v4
+
+    # 2. Ставим Node.js и зависимости сайта
+    - uses: actions/setup-node@v4
+      with: { node-version: "20" }
+
+    - run: npm ci
+    - run: npx cap sync android    # копируем веб-код в папку Android
+
+    # 3. Устанавливаем Android SDK & Build‑tools
+    - uses: android-actions/setup-android@v3
+
+    # 4. Release‑сборка (unsigned)
+    - name: Build unsigned APK
+      run: |
+        cd android
+        ./gradlew assembleRelease
+
+    # 5. Восстанавливаем keystore из секрета
+    - name: Decode keystore
+      run: echo "$KEYSTORE_B64" | base64 -d > keystore.jks
+      env:
+        KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+
+    # 6. Подписываем и zipalign
+    - name: Sign and align
+      run: |
+        APK=app/build/outputs/apk/release/app-release-unsigned.apk
+        jarsigner -verbose -keystore keystore.jks \
+          -storepass "$KS_PASS" -keypass "$KEY_PASS" \
+          $APK "$ALIAS"
+        ZIPALIGN="$ANDROID_HOME/build-tools/34.0.0/zipalign"
+        $ZIPALIGN -v 4 $APK Loans-${{ github.ref_name }}.apk
+      env:
+        KS_PASS:  ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+        ALIAS:    ${{ secrets.KEY_ALIAS }}
+
+    # 7. Кладём APK в артефакты, чтобы скачать
+    - uses: actions/upload-artifact@v4
+      with:
+        name: apk
+        path: android/Loans-*.apk
