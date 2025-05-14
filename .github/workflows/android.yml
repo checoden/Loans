@@ -19,7 +19,14 @@ jobs:
     - run: npm ci
     - run: npx cap sync android    # копируем веб-код в папку Android
 
-    # 3. Устанавливаем Android SDK & Build‑tools
+    # 3‑A. Устанавливаем нужную версию Java
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        distribution: "temurin"   # OpenJDK от Adoptium
+        java-version: "21"
+
+    # 3‑B. Устанавливаем Android‑SDK + Build‑tools
     - uses: android-actions/setup-android@v3
 
     # 4. Release‑сборка (unsigned)
