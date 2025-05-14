@@ -42,23 +42,28 @@
               env:
                 KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
 
-            # 7. Подписываем и zipalign (динамический поиск APK)
-            - name: Sign and align
+            # 7. Подписываем и apksigner (динамический поиск APK)
+            - name: Sign APK (apksigner)
               run: |
-                # ищем первый *release‑unsigned.apk
-                APK=$(find android/app/build/outputs/apk/release -name '*release-unsigned.apk' | head -n 1)
-                echo "Found APK: $APK"
+                # 1. Находим первый release‑unsigned.apk
+                UNSIGNED=$(find android/app/build/outputs/apk/release -name '*release-unsigned.apk' | head -n 1)
+                echo "Unsigned: $UNSIGNED"
 
-                # подписываем
-                jarsigner -verbose -keystore keystore.jks \
-                  -storepass "$KS_PASS" -keypass "$KEY_PASS" \
-                  "$APK" "$ALIAS"
+                # 2. Копируем во временный файл, т.к. apksigner пишeт поверх
+                cp "$UNSIGNED" app-unsigned.apk
 
-                # zipalign
-                ZIPALIGN="$ANDROID_HOME/build-tools/34.0.0/zipalign"
-                OUT="Loans-${{ github.ref_name }}.apk"
-                $ZIPALIGN -v 4 "$APK" "$OUT"
-                echo "Aligned → $OUT"
+                # 3. Подписываем V1+V2
+                APKSIGNER="$ANDROID_HOME/build-tools/34.0.0/apksigner"
+                $APKSIGNER sign \
+                  --ks keystore.jks \
+                  --ks-key-alias "$ALIAS" \
+                  --ks-pass pass:"$KS_PASS" \
+                  --key-pass pass:"$KEY_PASS" \
+                  --out Loans-${{ github.ref_name }}.apk \
+                  app-unsigned.apk
+
+                # 4. Проверяем сигнатуру
+                $APKSIGNER verify --verbose Loans-${{ github.ref_name }}.apk
               env:
                 KS_PASS:  ${{ secrets.KEYSTORE_PASSWORD }}
                 KEY_PASS: ${{ secrets.KEY_PASSWORD }}
