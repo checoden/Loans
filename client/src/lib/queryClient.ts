@@ -17,6 +17,7 @@ function getBaseApiUrl(): string {
       : 'https://' + import.meta.env.VITE_REPLIT_DOMAIN; // Fallback
     return replitUrl;
   }
+  
   // В режиме разработки используем относительные пути
   return '';
 }
