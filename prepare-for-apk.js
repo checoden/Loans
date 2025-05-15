@@ -157,7 +157,7 @@ async function prepareForApk() {
     }
     
     // 7. Копируем важные файлы из public в www
-    const filesToCopy = ['index.html', 'env.js', 'error.html'];
+    const filesToCopy = ['index.html', 'error.html'];
     
     for (const file of filesToCopy) {
       const sourcePath = path.join(PUBLIC_DIR, file);

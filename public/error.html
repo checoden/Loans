@@ -83,7 +83,68 @@
   </style>
   
   <!-- Environment script -->
-  <script src="/env.js"></script>
+  <script>
+    // Встраиваем env.js напрямую в HTML, чтобы избежать проблем с загрузкой в мобильном приложении
+    (function() {
+      // Определение базового URL для API и приложения
+      function getBaseUrl() {
+        // Обнаруживаем режим работы
+        const isProd = window.location.hostname.includes('.replit.app') || 
+                      window.location.hostname.includes('.repl.co');
+        
+        // В production используем полный URL
+        if (isProd) {
+          return window.location.origin;
+        }
+        
+        // В режиме разработки используем относительные пути
+        return '';
+      }
+      
+      // Определяем url replit для capacitor
+      function getReplitUrl() {
+        // Если мы уже на домене Replit, используем текущий домен
+        if (window.location.hostname.includes('.replit.app') || 
+            window.location.hostname.includes('.repl.co')) {
+          return window.location.origin;
+        }
+        
+        // В режиме разработки пытаемся определить Replit домен
+        return 'https://mikro-loan-app.replit.app';
+      }
+      
+      // Определение типа устройства
+      function detectDevice() {
+        // Обнаруживаем тип устройства
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        
+        // Проверяем наличие Capacitor
+        const isCapacitor = 
+          typeof window.Capacitor !== 'undefined' || 
+          userAgent.indexOf('MicroloansApp') !== -1;
+          
+        // Проверяем, запущено ли приложение из Capacitor
+        if (isCapacitor) {
+          return 'capacitor';
+        }
+        
+        // Проверяем мобильные устройства
+        const isMobile = /android|webos|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent);
+        return isMobile ? 'mobile' : 'desktop';
+      }
+      
+      // Экспортируем функции и параметры
+      window.APP_ENV = {
+        getBaseUrl: getBaseUrl,
+        baseUrl: getBaseUrl(),
+        replitUrl: getReplitUrl(),
+        isProd: window.location.hostname.includes('.replit.app') || 
+                window.location.hostname.includes('.repl.co'),
+        deviceType: detectDevice()
+      };
+      console.log('Environment initialized:', window.APP_ENV);
+    })();
+  </script>
 </head>
 <body>
   <div class="container">
