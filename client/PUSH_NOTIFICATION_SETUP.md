@@ -68,9 +68,44 @@ VITE_ONESIGNAL_REST_API_KEY=<ваш_rest_api_key>
 ```typescript
 plugins: {
   OneSignal: {
-    appId: process.env.VITE_ONESIGNAL_APP_ID
+    appId: process.env.VITE_ONESIGNAL_APP_ID,
+    // Важно: используем полную ссылку для обработки уведомлений
+    notificationURLOpenDeeplink: true
   }
 }
+```
+
+### 4. Настройка HTTPS для мобильного приложения
+
+Для корректной работы OneSignal в мобильном приложении необходимо настроить HTTPS:
+
+```typescript
+// В capacitor.config.ts
+const replitDomain = process.env.REPLIT_DOMAIN || 'your-app.replit.app';
+
+const config: CapacitorConfig = {
+  // ... другие настройки
+  server: {
+    // Используем полный URL Replit в production
+    url: `https://${replitDomain}`,
+    androidScheme: 'https'
+  }
+};
+```
+
+В коде клиента также важно использовать полные HTTPS-ссылки при обращении к API:
+
+```typescript
+// Вспомогательная функция для формирования полных URL
+function getBaseApiUrl(): string {
+  if (import.meta.env.PROD) {
+    return window.location.origin;
+  }
+  return '';
+}
+
+// Использование при запросах
+const fullUrl = url.startsWith('http') ? url : `${getBaseApiUrl()}${url}`;
 ```
 
 ## Интеграция с Firebase для Android
