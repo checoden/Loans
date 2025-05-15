@@ -9,12 +9,22 @@ async function throwIfResNotOk(res: Response) {
 
 // Получаем базовый URL для API запросов 
 function getBaseApiUrl(): string {
-  // В production режиме используем полный URL Replit
+  // Проверяем запуск из мобильного приложения или capacitor
+  if (typeof window !== 'undefined') {
+    // Если это мобильное устройство или Capacitor, всегда используем полный URL
+    const userAgent = navigator.userAgent || '';
+    if (userAgent.includes('MicroloansApp') || 
+        /android|webos|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent)) {
+      return 'https://mikro-loan-app.replit.app';
+    }
+  }
+  
+  // В production режиме всегда используем полный URL Replit
   if (import.meta.env.PROD) {
     // Определяем URL Replit сайта
     const replitUrl = typeof window !== 'undefined' 
       ? window.location.origin 
-      : 'https://' + import.meta.env.VITE_REPLIT_DOMAIN; // Fallback
+      : 'https://mikro-loan-app.replit.app'; // Hardcoded URL для мобильного приложения
     return replitUrl;
   }
   
