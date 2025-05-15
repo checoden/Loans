@@ -61,10 +61,13 @@ const config: CapacitorConfig = {
   bundledWebRuntime: false,
   // Настраиваем сервер для корректной работы https и коммуникации с Replit
   server: {
-    // В production используем полный URL Replit
+    // Всегда используем полный URL Replit для мобильного приложения
     url: \`https://\${replitDomain}\`,
     cleartext: true, // Разрешить незашифрованный трафик для отладки
-    androidScheme: 'https' // Схема для Android всегда должна быть https
+    androidScheme: 'https', // Схема для Android всегда должна быть https
+    // Важно: отключаем проверку сертификатов для самоподписанных сертификатов Replit
+    allowNavigation: ["*"],
+    errorPath: "/error.html" 
   },
   plugins: {
     // Конфигурация OneSignal
@@ -81,9 +84,10 @@ const config: CapacitorConfig = {
       keystorePassword: 'microloans',
       keystoreAliasPassword: 'microloans'
     },
-    // Дополнительные настройки безопасности
-    allowMixedContent: false, // Запретить смешанный контент (http в https)
-    captureInput: true       // Разрешить захват ввода для WebView
+    // Дополнительные настройки безопасности и отладки
+    allowMixedContent: true, // Временно разрешаем смешанный контент для отладки
+    captureInput: true,      // Разрешить захват ввода для WebView
+    webContentsDebuggingEnabled: true // Включаем отладку WebView для диагностики проблем
   }
 };
 
