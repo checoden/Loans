@@ -7,12 +7,30 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Получаем базовый URL для API запросов 
+function getBaseApiUrl(): string {
+  // В production режиме используем полный URL Replit
+  if (import.meta.env.PROD) {
+    // Определяем URL Replit сайта
+    const replitUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : 'https://' + import.meta.env.VITE_REPLIT_DOMAIN; // Fallback
+    return replitUrl;
+  }
+  // В режиме разработки используем относительные пути
+  return '';
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  // Формируем полный URL с учетом базового адреса
+  const baseUrl = getBaseApiUrl();
+  const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+  
+  const res = await fetch(fullUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -29,7 +47,14 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    // Получаем URL запроса из queryKey
+    const url = queryKey[0] as string;
+    
+    // Формируем полный URL с учетом базового адреса
+    const baseUrl = getBaseApiUrl();
+    const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+    
+    const res = await fetch(fullUrl, {
       credentials: "include",
     });
 

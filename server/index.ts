@@ -3,6 +3,28 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// Middleware для обеспечения HTTPS в production
+if (process.env.NODE_ENV === 'production') {
+  // Установка Strict-Transport-Security заголовка
+  app.use((req, res, next) => {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    
+    // Если запрос пришел по HTTP и мы в production, перенаправляем на HTTPS
+    if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(`https://${req.headers.host}${req.url}`);
+    }
+    
+    next();
+  });
+  
+  // Добавляем X-Content-Type-Options для безопасности
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    next();
+  });
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

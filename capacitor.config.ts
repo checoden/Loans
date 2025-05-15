@@ -1,15 +1,28 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+// Получаем Replit домен из переменных окружения или используем значение по умолчанию для тестов
+const replitDomain = process.env.REPLIT_DOMAIN || 'your-app.replit.app';
+
 const config: CapacitorConfig = {
   appId: 'ru.yourcompany.microloans',
   appName: 'Займы онлайн',
   webDir: 'public',
+  // Настраиваем сервер для корректной работы https и коммуникации с Replit
   server: {
-    hostname: 'localhost',
-    androidScheme: 'https'
+    // В production используем полный URL Replit, в dev - localhost
+    url: process.env.NODE_ENV === 'production' 
+      ? `https://${replitDomain}`
+      : 'http://localhost:5000',
+    cleartext: true, // Разрешить незашифрованный трафик для отладки
+    androidScheme: 'https' // Схема для Android всегда должна быть https
   },
   plugins: {
-    // Конфигурация других плагинов может быть добавлена здесь
+    // Конфигурация OneSignal
+    OneSignal: {
+      appId: process.env.VITE_ONESIGNAL_APP_ID,
+      // Используем полную HTTPS-ссылку для уведомлений 
+      notificationURLOpenDeeplink: true
+    }
   },
   android: {
     buildOptions: {
@@ -17,7 +30,17 @@ const config: CapacitorConfig = {
       keystoreAlias: 'key0',
       keystorePassword: 'microloans',
       keystoreAliasPassword: 'microloans'
-    }
+    },
+    // Дополнительные настройки безопасности
+    allowMixedContent: false, // Запретить смешанный контент (http в https)
+    captureInput: true,  // Разрешить захват ввода для WebView 
+    webContentsDebuggingEnabled: false // Отключить отладку в prod
+  },
+  // Настройки безопасности для iOS
+  ios: {
+    contentInset: 'always',
+    allowsLinkPreview: false,
+    scrollEnabled: true
   }
 };
 

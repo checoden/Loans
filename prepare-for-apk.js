@@ -51,13 +51,28 @@ function createCapacitorConfig() {
   const configTs = `
 import { CapacitorConfig } from '@capacitor/cli';
 
+// Получаем Replit домен для production
+const replitDomain = process.env.REPLIT_DOMAIN || 'your-app.replit.app';
+
 const config: CapacitorConfig = {
   appId: 'ru.yourcompany.microloans',
   appName: 'Займы онлайн',
   webDir: 'www',
   bundledWebRuntime: false,
+  // Настраиваем сервер для корректной работы https и коммуникации с Replit
+  server: {
+    // В production используем полный URL Replit
+    url: \`https://\${replitDomain}\`,
+    cleartext: true, // Разрешить незашифрованный трафик для отладки
+    androidScheme: 'https' // Схема для Android всегда должна быть https
+  },
   plugins: {
-    // Добавьте здесь настройки плагинов
+    // Конфигурация OneSignal
+    OneSignal: {
+      appId: process.env.VITE_ONESIGNAL_APP_ID,
+      // Используем полную HTTPS-ссылку для уведомлений
+      notificationURLOpenDeeplink: true
+    }
   },
   android: {
     buildOptions: {
@@ -65,7 +80,10 @@ const config: CapacitorConfig = {
       keystoreAlias: 'key0',
       keystorePassword: 'microloans',
       keystoreAliasPassword: 'microloans'
-    }
+    },
+    // Дополнительные настройки безопасности
+    allowMixedContent: false, // Запретить смешанный контент (http в https)
+    captureInput: true       // Разрешить захват ввода для WebView
   }
 };
 
@@ -143,7 +161,7 @@ async function prepareForApk() {
       console.log('✅ Скопирован файл index.html');
     }
     
-    // 8. Добавляем инициализацию OneSignal в index.html
+    // 8. Добавляем инициализацию OneSignal в index.html с поддержкой HTTPS Replit
     if (fs.existsSync(wwwIndexPath)) {
       let indexHtml = fs.readFileSync(wwwIndexPath, 'utf8');
       
@@ -153,18 +171,51 @@ async function prepareForApk() {
         const headEndIndex = indexHtml.indexOf('</head>');
         
         if (headEndIndex !== -1) {
-          // Добавляем скрипт OneSignal перед закрывающим тегом head
+          // Добавляем скрипт определения Replit и полного URL сайта
           const oneSignalScript = `
+  <!-- HTTPS URL Detection -->
+  <script>
+    // Определяем базовый URL для API и приложения
+    function getBaseUrl() {
+      // Обнаруживаем режим работы
+      const isProd = window.location.hostname.includes('.replit.app') || 
+                     window.location.hostname.includes('.repl.co');
+      
+      // В production используем полный URL
+      if (isProd) {
+        return window.location.origin;
+      }
+      
+      // В режиме разработки используем относительные пути
+      return '';
+    }
+    window.BASE_URL = getBaseUrl();
+  </script>
+  
   <!-- OneSignal Init -->
   <script src="OneSignalSDK.js" async=""></script>
   <script>
     window.OneSignal = window.OneSignal || [];
     OneSignal.push(function() {
       OneSignal.init({
-        appId: "a3060406-47e5-4331-91b3-296c3cbdcb86",
+        appId: "${process.env.VITE_ONESIGNAL_APP_ID || 'a3060406-47e5-4331-91b3-296c3cbdcb86'}",
         notifyButton: {
           enable: true,
         },
+        allowLocalhostAsSecureOrigin: true,
+        // Настройка HTTPS для уведомлений
+        webhookUrl: window.BASE_URL + "/api/onesignal-webhook",
+        // Единый формат ссылок
+        promptOptions: {
+          slidedown: {
+            prompts: [
+              {
+                type: "push",
+                autoPrompt: true
+              }
+            ]
+          }
+        }
       });
     });
   </script>`;
