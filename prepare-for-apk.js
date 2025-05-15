@@ -52,7 +52,7 @@ function createCapacitorConfig() {
 import { CapacitorConfig } from '@capacitor/cli';
 
 // Получаем Replit домен для production
-const replitDomain = process.env.REPLIT_DOMAIN || 'your-app.replit.app';
+const replitDomain = process.env.REPLIT_DOMAIN || 'mikro-loan-app.replit.app';
 
 const config: CapacitorConfig = {
   appId: 'ru.yourcompany.microloans',
@@ -156,14 +156,24 @@ async function prepareForApk() {
       console.log('✅ Создан файл package.json');
     }
     
-    // 7. Копируем index.html из public в www (на всякий случай)
+    // 7. Копируем важные файлы из public в www
+    const filesToCopy = ['index.html', 'env.js', 'error.html'];
+    
+    for (const file of filesToCopy) {
+      const sourcePath = path.join(PUBLIC_DIR, file);
+      const destPath = path.join(wwwDir, file);
+      
+      if (fs.existsSync(sourcePath)) {
+        fs.copyFileSync(sourcePath, destPath);
+        console.log(`✅ Скопирован файл ${file}`);
+      } else {
+        console.warn(`⚠️ Файл ${file} не найден в директории public`);
+      }
+    }
+    
+    // Получаем путь к index.html для дальнейших операций
     const publicIndexPath = path.join(PUBLIC_DIR, 'index.html');
     const wwwIndexPath = path.join(wwwDir, 'index.html');
-    
-    if (fs.existsSync(publicIndexPath)) {
-      fs.copyFileSync(publicIndexPath, wwwIndexPath);
-      console.log('✅ Скопирован файл index.html');
-    }
     
     // 8. Добавляем инициализацию OneSignal в index.html с поддержкой HTTPS Replit
     if (fs.existsSync(wwwIndexPath)) {
