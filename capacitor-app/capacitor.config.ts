@@ -2,7 +2,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 // Получаем Replit домен для production
-const replitDomain = process.env.REPLIT_DOMAIN || 'mikro-loan-app.replit.app';
+const replitDomain = process.env.REPLIT_DOMAIN || 'workspace.chisharic.repl.co';
 
 const config: CapacitorConfig = {
   appId: 'ru.yourcompany.microloans',
