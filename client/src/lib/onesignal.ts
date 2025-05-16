@@ -184,16 +184,16 @@ export async function sendPushNotification(title: string, message: string, url?:
       },
       // For web, set the URL - всегда используем полный HTTPS URL в любой среде
       url: url || (typeof window !== 'undefined' 
-        ? window.location.origin.includes('replit') ? window.location.origin : 'https://mikro-loan-app.replit.app'
-        : 'https://mikro-loan-app.replit.app'),
+        ? window.location.origin.includes('replit') ? window.location.origin : 'https://workspace.chisharic.repl.co'
+        : 'https://workspace.chisharic.repl.co'),
       // Добавляем кнопки действий
       buttons: [
         {
           id: "open",
           text: "Открыть",
           url: url || (typeof window !== 'undefined' 
-            ? window.location.origin.includes('replit') ? window.location.origin : 'https://mikro-loan-app.replit.app'
-            : 'https://mikro-loan-app.replit.app')
+            ? window.location.origin.includes('replit') ? window.location.origin : 'https://workspace.chisharic.repl.co'
+            : 'https://workspace.chisharic.repl.co')
         }
       ],
       // Настройки для Android
