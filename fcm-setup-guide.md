@@ -11,7 +11,7 @@
 
 1. В консоли Firebase выберите только что созданный проект
 2. Нажмите на иконку Android, чтобы добавить Android приложение
-3. Введите имя пакета: `ru.yourcompany.microloans` (это должно точно соответствовать appId в capacitor.config.ts)
+3. Введите имя пакета: `ru.checoden.onlineloans` (это должно точно соответствовать appId в capacitor.config.ts)
 4. Введите имя приложения: "Займы онлайн"
 5. Скачайте файл google-services.json
 
@@ -40,7 +40,7 @@
 
 ## Шаг 5: Настройка каналов уведомлений (для Android 8.0+)
 
-Откройте файл `capacitor-app/android/app/src/main/java/ru/yourcompany/microloans/MainActivity.java` и добавьте следующий код в метод onCreate:
+Откройте файл `capacitor-app/android/app/src/main/java/ru/checoden/onlineloans/MainActivity.java` и добавьте следующий код в метод onCreate:
 
 ```java
 @Override

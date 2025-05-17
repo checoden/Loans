@@ -55,7 +55,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 const replitDomain = process.env.REPLIT_DOMAIN || 'onlineloans.replit.app';
 
 const config: CapacitorConfig = {
-  appId: 'ru.yourcompany.microloans',
+  appId: 'ru.checoden.onlineloans',
   appName: 'Займы онлайн',
   webDir: 'www',
   bundledWebRuntime: false,
