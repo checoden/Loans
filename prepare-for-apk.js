@@ -200,10 +200,27 @@ async function prepareForApk() {
         return window.location.origin;
       }
       
-      // В режиме разработки используем относительные пути
-      return '';
+      // В режиме разработки и в мобильном приложении используем полный URL Replit
+      return 'https://onlineloans.replit.app';
     }
     window.BASE_URL = getBaseUrl();
+    
+    // Определяем устройство для корректной инициализации OneSignal
+    function detectDevice() {
+      // Если доступна Capacitor, то это мобильное приложение
+      if (typeof window.Capacitor !== 'undefined') {
+        return 'mobile';
+      }
+      
+      const userAgent = navigator.userAgent || '';
+      if (userAgent.includes('MicroloansApp') || 
+          /android|webos|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent)) {
+        return 'mobile';
+      }
+      return 'web';
+    }
+    window.DEVICE_TYPE = detectDevice();
+    console.log('Environment initialized:', { baseUrl: window.BASE_URL, deviceType: window.DEVICE_TYPE });
   </script>
   
   <!-- OneSignal Init -->
@@ -211,14 +228,20 @@ async function prepareForApk() {
   <script>
     window.OneSignal = window.OneSignal || [];
     OneSignal.push(function() {
+      const isCapacitor = window.DEVICE_TYPE === 'mobile';
+      
       OneSignal.init({
         appId: "${process.env.VITE_ONESIGNAL_APP_ID || 'a3060406-47e5-4331-91b3-296c3cbdcb86'}",
         notifyButton: {
-          enable: true,
+          enable: !isCapacitor, // Показываем кнопку только на веб-версии
+          size: 'medium',
+          position: 'bottom-right'
         },
         allowLocalhostAsSecureOrigin: true,
         // Настройка HTTPS для уведомлений
         webhookUrl: window.BASE_URL + "/api/onesignal-webhook",
+        // Настройки для Android специфичные
+        androidChannelId: "займы-онлайн-уведомления",
         // Единый формат ссылок
         promptOptions: {
           slidedown: {
@@ -228,6 +251,20 @@ async function prepareForApk() {
                 autoPrompt: true
               }
             ]
+          }
+        }
+      });
+      
+      // Обработчик для открытия уведомлений
+      OneSignal.setNotificationOpenedHandler(function(jsonData) {
+        console.log('Notification opened:', jsonData);
+        const url = jsonData.notification.additionalData && jsonData.notification.additionalData.url;
+        if (url) {
+          // В мобильном приложении обрабатываем внутри WebView
+          if (isCapacitor && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+            window.Capacitor.Plugins.Browser.open({ url: url });
+          } else {
+            window.location.href = url;
           }
         }
       });
