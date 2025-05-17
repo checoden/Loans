@@ -50,12 +50,22 @@ export function initializeOneSignal() {
 // Web implementation
 function initializeWebOneSignal() {
   if (typeof window !== 'undefined') {
+    // Для Android-приложения не инициализируем веб-версию OneSignal
+    // чтобы избежать ошибок "This app ID does not have any web platforms enabled"
+    if (window.location.href.includes('android-app://') || 
+        window.location.href.includes('capacitor://') ||
+        (typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent))) {
+      console.log("Запущено в Android-приложении, пропускаем инициализацию Web OneSignal");
+      return;
+    }
+    
     window.OneSignal = window.OneSignal || [];
     
     console.log("Initializing Web OneSignal with app ID:", import.meta.env.VITE_ONESIGNAL_APP_ID);
     
-    window.OneSignal.push(function() {
-      window.OneSignal.init({
+    try {
+      window.OneSignal.push(function() {
+        window.OneSignal.init({
         appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
         allowLocalhostAsSecureOrigin: true,
         notifyButton: {
@@ -99,6 +109,9 @@ function initializeWebOneSignal() {
         }
       });
     });
+    } catch (error) {
+      console.error("Ошибка при инициализации OneSignal для Web:", error);
+    }
   }
 }
 
