@@ -267,7 +267,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         // Настройки для Android
         android_accent_color: "FF9829",
-        android_channel_id: "займы-онлайн-уведомления",
+        // Удаляем android_channel_id, поскольку он должен быть настроен в мобильном приложении,
+        // а не при отправке уведомления. Для веб-уведомлений он не нужен.
         small_icon: "ic_stat_onesignal_default",
         priority: 10
       };
