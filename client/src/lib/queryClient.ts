@@ -15,7 +15,7 @@ function getBaseApiUrl(): string {
     const userAgent = navigator.userAgent || '';
     if (userAgent.includes('MicroloansApp') || 
         /android|webos|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent)) {
-      return 'https://workspace.chisharic.repl.co';
+      return 'https://onlineloans.replit.app';
     }
   }
   
@@ -24,7 +24,7 @@ function getBaseApiUrl(): string {
     // Определяем URL Replit сайта
     const replitUrl = typeof window !== 'undefined' 
       ? window.location.origin 
-      : 'https://workspace.chisharic.repl.co'; // Hardcoded URL для мобильного приложения
+      : 'https://onlineloans.replit.app'; // Hardcoded URL для мобильного приложения
     return replitUrl;
   }
   
