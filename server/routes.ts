@@ -226,90 +226,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { title, message, url } = req.body;
       
+      // Логирование для отладки
+      console.log("Попытка отправки push-уведомления:");
+      console.log("- title:", title);
+      console.log("- message:", message);
+      console.log("- url:", url);
+      console.log("- APP_ID:", process.env.VITE_ONESIGNAL_APP_ID ? "Установлен" : "Отсутствует");
+      console.log("- REST_API_KEY:", process.env.VITE_ONESIGNAL_REST_API_KEY ? "Установлен" : "Отсутствует");
+      
       if (!title || !message) {
         return res.status(400).json({ message: "Title and message are required" });
       }
-
-      // This will make a request to OneSignal API with your credentials
-      const response = await fetch('https://onesignal.com/api/v1/notifications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${process.env.VITE_ONESIGNAL_REST_API_KEY}`
-        },
-        body: JSON.stringify({
-          app_id: process.env.VITE_ONESIGNAL_APP_ID,
-          // Отправка на все типы устройств
-          included_segments: ['All'],
-          // Также можно добавить фильтры по устройствам
-          filters: [
-            // Фильтр обеспечивает отправку даже новым установкам приложения
-            {"field": "last_session", "relation": ">", "hours_ago": "720"} // 30 дней
-          ],
-          // Текстовое содержимое
-          contents: {
-            en: message,
-            ru: message
-          },
-          headings: {
-            en: title,
-            ru: title
-          },
-          // URL для веб и мобильных устройств
-          url: url || '',
-          // Дополнительные данные для обработки в приложении
-          data: {
-            notificationType: "general",
-            url: url || null,
-            customData: {
-              appSpecific: true
-            }
-          },
-          // Добавляем кнопки действий
-          buttons: url ? [
-            {
-              id: "open",
-              text: "Открыть",
-              url: url
-            }
-          ] : undefined,
-          // Настройки для Android
-          android_accent_color: "FF9829",
-          android_channel_id: "займы-онлайн-уведомления",
-          android_group: "loans_group",
-          android_group_message: {"ru": "{{посмотреть_новые}} новых уведомлений", "en": "{{посмотреть_новые}} new notifications"},
-          small_icon: "ic_stat_onesignal_default",
-          large_icon: "https://img.freepik.com/free-vector/money-bag-cash-in-flat-style_53562-11815.jpg?w=128",
-          android_visibility: 1,
-          priority: 10, // Высокий приоритет для Android
-          ttl: 86400, // Время жизни уведомления 24 часа
-          
-          // Настройки для iOS
-          ios_badgeType: "Increase",
-          ios_badgeCount: 1,
-          ios_sound: "default",
-          ios_category: "LOAN_CATEGORY",
-          // Отображать как предупреждение на iOS
-          ios_relevance_score: 10
-        })
-      });
       
-      const data = await response.json();
-      
-      if (data.errors) {
+      if (!process.env.VITE_ONESIGNAL_APP_ID || !process.env.VITE_ONESIGNAL_REST_API_KEY) {
         return res.status(400).json({ 
-          message: "Error sending notification", 
-          errors: data.errors 
+          message: "OneSignal credentials are not configured", 
+          details: {
+            appId: process.env.VITE_ONESIGNAL_APP_ID ? "Present" : "Missing",
+            apiKey: process.env.VITE_ONESIGNAL_REST_API_KEY ? "Present" : "Missing"
+          }
         });
       }
       
-      res.json({ 
-        success: true, 
-        data
-      });
+      // Конфигурация для уведомления
+      const notificationPayload = {
+        app_id: process.env.VITE_ONESIGNAL_APP_ID,
+        included_segments: ['All'],
+        contents: {
+          en: message,
+          ru: message
+        },
+        headings: {
+          en: title,
+          ru: title
+        },
+        url: url || '',
+        data: {
+          notificationType: "general",
+          url: url || null
+        },
+        // Настройки для Android
+        android_accent_color: "FF9829",
+        android_channel_id: "займы-онлайн-уведомления",
+        small_icon: "ic_stat_onesignal_default",
+        priority: 10
+      };
+      
+      console.log("Отправка запроса в OneSignal API...");
+      
+      try {
+        const response = await fetch('https://onesignal.com/api/v1/notifications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Basic ${process.env.VITE_ONESIGNAL_REST_API_KEY}`
+          },
+          body: JSON.stringify(notificationPayload)
+        });
+        
+        const data = await response.json();
+        console.log("Ответ от OneSignal API:", JSON.stringify(data, null, 2));
+        
+        if (data.errors) {
+          console.error("Ошибки при отправке уведомления:", data.errors);
+          return res.status(400).json({ 
+            message: "Error sending notification", 
+            errors: data.errors 
+          });
+        }
+        
+        return res.json({ 
+          success: true, 
+          data
+        });
+      } catch (fetchError) {
+        console.error("Ошибка при запросе к OneSignal API:", fetchError);
+        return res.status(500).json({ 
+          message: "Error connecting to OneSignal API", 
+          error: fetchError instanceof Error ? fetchError.message : String(fetchError)
+        });
+      }
     } catch (err) {
-      console.error("Error sending push notification:", err);
-      res.status(500).json({ message: "Error sending push notification" });
+      console.error("Error in push notification handler:", err);
+      return res.status(500).json({ 
+        message: "Error processing push notification request",
+        error: err instanceof Error ? err.message : String(err)
+      });
     }
   });
 
