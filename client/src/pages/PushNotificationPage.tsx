@@ -72,9 +72,18 @@ export default function PushNotificationPage() {
       }
     } catch (error) {
       console.error("Error sending notification:", error);
+      // Выводим детальную информацию об ошибке
+      let errorMsg = "Произошла ошибка при отправке уведомления";
+      if (error instanceof Error) {
+        errorMsg += `: ${error.message}`;
+        console.error("Детали ошибки:", error.stack);
+      }
+      // Сохраняем информацию об ошибке в результате
+      setLastSentResult({ error: errorMsg, details: String(error) });
+      
       toast({
         title: "Ошибка",
-        description: "Произошла ошибка при отправке уведомления",
+        description: errorMsg,
         variant: "destructive"
       });
     } finally {
