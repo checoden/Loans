@@ -1,36 +1,26 @@
 {
   "project_info": {
-    "project_number": "YOUR_PROJECT_NUMBER",
-    "project_id": "YOUR_PROJECT_ID",
-    "storage_bucket": "YOUR_STORAGE_BUCKET"
+    "project_number": "241645357896",
+    "project_id": "onlineloans-5c9d1",
+    "storage_bucket": "onlineloans-5c9d1.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "YOUR_MOBILESDK_APP_ID",
+        "mobilesdk_app_id": "1:241645357896:android:b2772bac96136bbf63017d",
         "android_client_info": {
-          "package_name": "ru.yourcompany.microloans"
+          "package_name": "ru.checoden.onlineloans"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "YOUR_CLIENT_ID",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "YOUR_API_KEY"
+          "current_key": "AIzaSyAVdjOpxSao5NpnRBum7Q4qC519E87aeoU"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "YOUR_CLIENT_ID",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }
