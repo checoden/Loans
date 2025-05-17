@@ -239,7 +239,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         body: JSON.stringify({
           app_id: process.env.VITE_ONESIGNAL_APP_ID,
-          included_segments: ['Subscribed Users'],
+          // Отправка на все типы устройств
+          included_segments: ['All'],
+          // Также можно добавить фильтры по устройствам
+          filters: [
+            // Фильтр обеспечивает отправку даже новым установкам приложения
+            {"field": "last_session", "relation": ">", "hours_ago": "720"} // 30 дней
+          ],
+          // Текстовое содержимое
           contents: {
             en: message,
             ru: message
@@ -248,7 +255,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             en: title,
             ru: title
           },
+          // URL для веб и мобильных устройств
           url: url || '',
+          // Дополнительные данные для обработки в приложении
+          data: {
+            notificationType: "general",
+            url: url || null,
+            customData: {
+              appSpecific: true
+            }
+          },
           // Добавляем кнопки действий
           buttons: url ? [
             {
@@ -265,12 +281,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           small_icon: "ic_stat_onesignal_default",
           large_icon: "https://img.freepik.com/free-vector/money-bag-cash-in-flat-style_53562-11815.jpg?w=128",
           android_visibility: 1,
+          priority: 10, // Высокий приоритет для Android
+          ttl: 86400, // Время жизни уведомления 24 часа
           
           // Настройки для iOS
           ios_badgeType: "Increase",
           ios_badgeCount: 1,
           ios_sound: "default",
-          ios_category: "LOAN_CATEGORY"
+          ios_category: "LOAN_CATEGORY",
+          // Отображать как предупреждение на iOS
+          ios_relevance_score: 10
         })
       });
       
