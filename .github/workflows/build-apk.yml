@@ -40,11 +40,7 @@ jobs:
         mkdir -p android/gradle/wrapper
         
         # Создаём правильный gradle-wrapper.properties с Gradle 8.6
-        echo "distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
+        echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
         
         # Проверяем созданный файл
         cat android/gradle/wrapper/gradle-wrapper.properties
@@ -56,11 +52,7 @@ zipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
         cat android/gradle/wrapper/gradle-wrapper.properties
         
         # Если файл был перезаписан, восстанавливаем нашу версию
-        echo "distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
+        echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
         
         # Копируем google-services.json
         cp google-services.json android/app/google-services.json
