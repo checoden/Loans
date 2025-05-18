@@ -1,0 +1,52 @@
+# Инструкции по обновлению GitHub Actions Workflows
+
+Для решения проблемы с запуском нескольких процессов сборки выполните следующие шаги.
+
+## Вариант 1: Отредактировать существующие файлы
+
+Для каждого файла в директории `.github/workflows/` (кроме `build-apk.yml`):
+
+1. Откройте файл
+2. Найдите следующий блок:
+   ```yaml
+   on:
+     push:
+       tags: ['v*']
+   ```
+   
+3. Замените его на:
+   ```yaml
+   on:
+     push:
+       tags: ['oldv*']
+   ```
+
+Список файлов для обновления:
+- .github/workflows/android.yml
+- .github/workflows/android-build.yml
+- .github/workflows/apk-simple.yml
+- .github/workflows/apk-java11.yml
+- .github/workflows/apk-fixed.yml
+- .github/workflows/apk-latest.yml
+- .github/workflows/apk-final.yml
+- .github/workflows/apk-simple-final.yml
+- .github/workflows/apk-gradle86.yml
+- .github/workflows/apk-java11-final.yml
+- .github/workflows/apk-fix-gradle.yml
+
+## Вариант 2: Удалить лишние файлы (рекомендуется)
+
+1. Оставьте только файл `build-apk.yml`
+2. Удалите все остальные .yml файлы в директории `.github/workflows/`:
+   - Откройте каждый файл
+   - Нажмите кнопку удаления (иконка корзины)
+   - Подтвердите удаление
+
+## После обновления
+
+После внесения изменений создайте новый тег, чтобы запустить сборку:
+```bash
+git tag v1.3.0 && git push --tags
+```
+
+В этом случае должен запуститься только один процесс сборки.

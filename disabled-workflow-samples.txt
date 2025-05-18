@@ -1,0 +1,77 @@
+# Примеры отключенных workflow файлов
+
+Ниже приведены примеры того, как должны выглядеть отключенные workflow файлы после изменения.
+
+## Пример 1 (android.yml)
+
+```yaml
+name: Build-APK (отключено)
+
+on:
+  push:
+    tags: ['oldv*']     # отключенный триггер
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # шаги сборки...
+```
+
+## Пример 2 (apk-java11.yml)
+
+```yaml
+name: Build APK with Java 11 (отключено)
+
+on:
+  push:
+    tags: ['oldv*']     # отключенный триггер
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # шаги сборки...
+```
+
+## Пример 3 (apk-fix-gradle.yml)
+
+```yaml
+name: Build-APK-Fix-Gradle (отключено)
+
+on:
+  push:
+    tags: ['oldv*']     # отключенный триггер
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # шаги сборки...
+```
+
+## Как это должно работать
+
+После изменения триггера с `v*` на `oldv*` workflow не будет запускаться при создании тега вида `v1.3.0`. Вместо этого будет запускаться только workflow, у которого триггер остался `v*` (в нашем случае это только `build-apk.yml`).
+
+## Единственный активный workflow (build-apk.yml)
+
+```yaml
+name: Build APK
+
+on:
+  push:
+    tags: ['v*']     # активный триггер
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # шаги сборки...
+```
+
+Тега с префиксом `oldv` использоваться не будут, поэтому отключенные workflow фактически не будут запускаться никогда.
