@@ -1,0 +1,78 @@
+name: Build-APK-Simple
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Клонируем репозиторий
+    - uses: actions/checkout@v4
+
+    # 2. Настраиваем Java 17
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+
+    # 3. Устанавливаем Android SDK
+    - uses: android-actions/setup-android@v3
+
+    # 4. Копируем google-services.json в правильную директорию
+    - name: Setup Firebase
+      run: |
+        if [ -f "capacitor-app/google-services.json" ]; then
+          echo "Copying google-services.json to Android app directory"
+          cp capacitor-app/google-services.json capacitor-app/android/app/google-services.json
+        else
+          echo "WARNING: google-services.json not found in capacitor-app directory!"
+        fi
+
+    # 5. Release-сборка (unsigned)
+    - name: Build unsigned APK
+      run: |
+        cd capacitor-app/android
+        ./gradlew assembleRelease
+
+    # 6. Восстанавливаем keystore из секрета
+    - name: Decode keystore
+      run: echo "$KEYSTORE_B64" | base64 -d > keystore.jks
+      env:
+        KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+
+    # 7. Подписываем APK
+    - name: Sign APK
+      run: |
+        # 1. Находим первый release‑unsigned.apk
+        UNSIGNED=$(find capacitor-app/android/app/build/outputs/apk/release -name '*release-unsigned.apk' | head -n 1)
+        echo "Unsigned: $UNSIGNED"
+
+        # 2. Копируем во временный файл, т.к. apksigner пишeт поверх
+        cp "$UNSIGNED" app-unsigned.apk
+
+        # 3. Подписываем V1+V2
+        APKSIGNER="$ANDROID_HOME/build-tools/34.0.0/apksigner"
+        $APKSIGNER sign \
+          --ks keystore.jks \
+          --ks-key-alias "$ALIAS" \
+          --ks-pass pass:"$KS_PASS" \
+          --key-pass pass:"$KEY_PASS" \
+          --out Loans-${{ github.ref_name }}.apk \
+          app-unsigned.apk
+
+        # 4. Проверяем сигнатуру
+        $APKSIGNER verify --verbose Loans-${{ github.ref_name }}.apk
+      env:
+        KS_PASS:  ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+        ALIAS:    ${{ secrets.KEY_ALIAS }}
+
+    # 8. Публикуем артефакт
+    - uses: actions/upload-artifact@v4
+      with:
+        name: apk
+        path: Loans-*.apk
