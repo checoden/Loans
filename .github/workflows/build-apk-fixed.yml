@@ -60,7 +60,12 @@ jobs:
         # Копируем google-services.json, если он существует
         if [ -f "google-services.json" ]; then
           echo "Копируем google-services.json в директорию Android проекта"
+          
+          # Убедимся, что директория android/app существует
+          mkdir -p android/app
+          
           cp google-services.json android/app/google-services.json
+          echo "Файл скопирован в $(pwd)/android/app/google-services.json"
         fi
         
         # Синхронизируем проект с Android
