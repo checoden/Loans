@@ -102,6 +102,11 @@ android {
 
     # 7. Android SDK
     - uses: android-actions/setup-android@v3
+    
+    # Настройка Gradle для ускорения сборки
+    - uses: gradle/gradle-build-action@v3
+      with:
+        gradle-home-cache-cleanup: true
 
     # 8. Сборка APK
     - name: Build unsigned APK
