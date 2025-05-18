@@ -27,7 +27,7 @@ jobs:
     # 4. Установка зависимостей
     - run: npm ci
 
-    # 5. Подготовка проекта и модификация до добавления Android
+    # 5. Подготовка проекта и работа с Android
     - name: Prepare Capacitor project
       run: |
         # Подготовка проекта
@@ -36,37 +36,44 @@ jobs:
         cd capacitor-app
         npm install
         
-        # Важно! Создаём директорию для Gradle Wrapper ПЕРЕД добавлением Android
-        mkdir -p android/gradle/wrapper
-        
-        # Создаём правильный gradle-wrapper.properties с Gradle 8.6
-        echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
-        
-        # Проверяем созданный файл
-        cat android/gradle/wrapper/gradle-wrapper.properties
-        
-        # Проверяем наличие Android платформы и при необходимости добавляем
+        # Проверяем наличие директории Android перед действиями
         if [ ! -d "android" ]; then
+          # Создаём директорию для Gradle Wrapper ПЕРЕД добавлением Android
+          mkdir -p android/gradle/wrapper
+          
+          # Создаём правильный gradle-wrapper.properties с Gradle 8.6
+          echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
+          
+          # Теперь добавляем Android платформу
           echo "Добавляем Android платформу..."
           npx cap add android
         else
           echo "Android платформа уже существует, пропускаем добавление"
+          
+          # Создаём директорию Gradle Wrapper, если она не существует
+          mkdir -p android/gradle/wrapper
+          
+          # Обновляем gradle-wrapper.properties в любом случае
+          echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
         fi
         
-        # Проверяем, какой файл используется
-        cat android/gradle/wrapper/gradle-wrapper.properties
+        # Копируем google-services.json, если он существует
+        if [ -f "google-services.json" ]; then
+          echo "Копируем google-services.json в директорию Android проекта"
+          
+          # Убедимся, что директория android/app существует
+          mkdir -p android/app
+          
+          cp google-services.json android/app/google-services.json
+          echo "Файл скопирован в $(pwd)/android/app/google-services.json"
+        fi
         
-        # Если файл был перезаписан, восстанавливаем нашу версию
-        echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
-        
-        # Копируем google-services.json
-        cp google-services.json android/app/google-services.json
-        
-        # Синхронизируем проект
+        # Синхронизируем проект с Android
+        echo "Синхронизация Android проекта..."
         npx cap sync android
         
-        # Снова проверяем версию Gradle в Wrapper
-        echo "Final Gradle wrapper version:"
+        # Проверяем версию Gradle в Wrapper
+        echo "Текущая версия Gradle Wrapper:"
         cat android/gradle/wrapper/gradle-wrapper.properties
         
         cd ..
@@ -86,31 +93,19 @@ jobs:
       run: |
         cd capacitor-app/android
         
+        # Убедимся, что разрешения выставлены
+        chmod +x ./gradlew
+        
         # Принудительно установить Gradle 8.6 через Wrapper
         ./gradlew wrapper --gradle-version 8.6 --distribution-type bin
         
         # Проверяем, что файл обновлен
         cat gradle/wrapper/gradle-wrapper.properties
         
-        # Убедимся, что разрешения выставлены
-        chmod +x ./gradlew
-        
         # Проверяем версию Gradle
         ./gradlew -v
 
-    # 8. Копирование google-services.json
-    - name: Setup Firebase
-      run: |
-        if [ -f "capacitor-app/google-services.json" ]; then
-          echo "Copying google-services.json to Android project"
-          cp capacitor-app/google-services.json capacitor-app/android/app/google-services.json
-          echo "File copied:"
-          ls -la capacitor-app/android/app/google-services.json
-        else
-          echo "WARNING: google-services.json not found!"
-        fi
-
-    # 9. Сборка APK
+    # 8. Сборка APK
     - name: Build unsigned APK
       run: |
         cd capacitor-app/android
@@ -118,7 +113,7 @@ jobs:
         # Запускаем сборку с использованием обновленного Gradle
         ./gradlew assembleRelease --info
 
-    # 10. Подписываем APK
+    # 9. Подписываем APK
     - name: Decode keystore
       run: echo "$KEYSTORE_B64" | base64 -d > keystore.jks
       env:
@@ -155,7 +150,7 @@ jobs:
         KEY_PASS: ${{ secrets.KEY_PASSWORD }}
         ALIAS:    ${{ secrets.KEY_ALIAS }}
 
-    # 11. Публикуем артефакт
+    # 10. Публикуем артефакт
     - uses: actions/upload-artifact@v4
       with:
         name: apk
