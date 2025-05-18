@@ -20,6 +20,65 @@ const __dirname = path.dirname(__filename);
 const CAPACITOR_DIR = 'capacitor-app';
 
 /**
+ * Проверяет и корректирует идентификатор пакета в build.gradle и AndroidManifest.xml
+ */
+function checkAndFixPackageId() {
+  const expectedPackageId = 'ru.checoden.onlineloans';
+  
+  // Проверяем и обновляем build.gradle
+  const buildGradlePath = path.join(CAPACITOR_DIR, 'android/app/build.gradle');
+  if (fs.existsSync(buildGradlePath)) {
+    let buildGradle = fs.readFileSync(buildGradlePath, 'utf8');
+    
+    // Ищем строку с applicationId
+    const applicationIdRegex = /applicationId "(.*?)"/;
+    const match = buildGradle.match(applicationIdRegex);
+    
+    if (match && match[1] !== expectedPackageId) {
+      console.log(`⚠️ В build.gradle обнаружен неправильный applicationId: ${match[1]}`);
+      buildGradle = buildGradle.replace(
+        applicationIdRegex,
+        `applicationId "${expectedPackageId}"`
+      );
+      fs.writeFileSync(buildGradlePath, buildGradle);
+      console.log(`✅ applicationId в build.gradle обновлен на "${expectedPackageId}"`);
+    } else if (match) {
+      console.log(`✅ applicationId в build.gradle уже установлен правильно: ${match[1]}`);
+    } else {
+      console.warn('⚠️ Не удалось найти applicationId в build.gradle');
+    }
+  } else {
+    console.error('❌ Файл build.gradle не найден! Убедитесь, что вы выполнили npx cap add android');
+  }
+  
+  // Проверяем и обновляем AndroidManifest.xml
+  const manifestPath = path.join(CAPACITOR_DIR, 'android/app/src/main/AndroidManifest.xml');
+  if (fs.existsSync(manifestPath)) {
+    let manifest = fs.readFileSync(manifestPath, 'utf8');
+    
+    // Ищем строку с package
+    const packageRegex = /package="(.*?)"/;
+    const match = manifest.match(packageRegex);
+    
+    if (match && match[1] !== expectedPackageId) {
+      console.log(`⚠️ В AndroidManifest.xml обнаружен неправильный package: ${match[1]}`);
+      manifest = manifest.replace(
+        packageRegex,
+        `package="${expectedPackageId}"`
+      );
+      fs.writeFileSync(manifestPath, manifest);
+      console.log(`✅ package в AndroidManifest.xml обновлен на "${expectedPackageId}"`);
+    } else if (match) {
+      console.log(`✅ package в AndroidManifest.xml уже установлен правильно: ${match[1]}`);
+    } else {
+      console.warn('⚠️ Не удалось найти package в AndroidManifest.xml');
+    }
+  } else {
+    console.error('❌ Файл AndroidManifest.xml не найден! Убедитесь, что вы выполнили npx cap add android');
+  }
+}
+
+/**
  * Настраивает канал уведомлений для Android
  */
 function setupNotificationChannel() {
@@ -93,13 +152,20 @@ function setupNotificationChannel() {
   }
 }
 
-// Запускаем настройку канала уведомлений
-console.log('🔔 Начинаю настройку канала уведомлений для Android...');
+// Запускаем проверки и настройку
+console.log('🔍 Проверяю и корректирую идентификатор пакета...');
+checkAndFixPackageId();
+
+console.log('\n🔔 Начинаю настройку канала уведомлений для Android...');
 if (setupNotificationChannel()) {
-  console.log('✅ Канал уведомлений успешно настроен!');
+  console.log('\n✅ Канал уведомлений успешно настроен!');
   console.log('\n📱 Теперь вы можете продолжить сборку APK:');
   console.log('1. Откройте Android Studio: npx cap open android');
   console.log('2. Выполните сборку приложения (Build > Build Bundle(s) / APK(s) > Build APK(s))');
+  
+  console.log('\n🔔 Важно! Для работы push-уведомлений:');
+  console.log('1. Убедитесь, что google-services.json в папке capacitor-app содержит правильный package_name: ru.checoden.onlineloans');
+  console.log('2. Убедитесь, что файл создан для ЭТОГО проекта в Firebase Console и содержит правильные API-ключи');
 } else {
   console.log('❌ Не удалось настроить канал уведомлений');
   console.log('Проверьте, что вы выполнили все предварительные шаги:');
