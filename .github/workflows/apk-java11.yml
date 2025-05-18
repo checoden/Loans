@@ -54,6 +54,15 @@ jobs:
         # Добавляем Android платформу
         npx cap add android
         
+        # Копируем google-services.json в Android проект
+        if [ -f "../capacitor-app/google-services.json" ]; then
+          echo "Copying google-services.json to Android project"
+          mkdir -p android/app/src/main
+          cp ../capacitor-app/google-services.json android/app/google-services.json
+        else
+          echo "WARNING: google-services.json not found in capacitor-app directory!"
+        fi
+        
         # Обновляем gradle-wrapper.properties для явного использования более старой версии Gradle
         mkdir -p android/gradle/wrapper
         echo "distributionBase=GRADLE_USER_HOME
@@ -77,9 +86,26 @@ zipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
     # 8. Release-сборка
     - name: Build unsigned APK
       run: |
+        cd capacitor-app/android
+        
+        # Проверяем структуру директорий
+        echo "Checking directory structure:"
+        ls -la
+        
+        # Создаем директорию app, если она не существует
+        mkdir -p app
+        
+        # Проверяем содержимое
+        echo "Contents of app directory:"
+        ls -la app
+        
+        # Возвращаемся в корневую директорию
+        cd ../..
+        
         # Копируем google-services.json в правильную директорию
         if [ -f "capacitor-app/google-services.json" ]; then
           echo "Copying google-services.json to Android project"
+          mkdir -p capacitor-app/android/app/src/main
           cp capacitor-app/google-services.json capacitor-app/android/app/google-services.json
         else
           echo "WARNING: google-services.json not found in capacitor-app directory!"
