@@ -1,0 +1,147 @@
+name: Build-APK-Simple
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Клонируем репозиторий
+    - uses: actions/checkout@v4
+
+    # 2. Устанавливаем Node.js
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    # 3. Устанавливаем Java 21
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
+    # 4. Проверяем файл google-services.json
+    - name: Check Firebase Config
+      run: |
+        echo "Checking for google-services.json:"
+        ls -la capacitor-app/google-services.json || echo "File not found!"
+
+    # 5. Устанавливаем зависимости
+    - run: npm ci
+
+    # 6. Подготовка проекта для APK
+    - name: Prepare Project for APK
+      run: |
+        # Готовим проект
+        node prepare-for-apk.js
+        
+        # Создаем директории для Android
+        mkdir -p capacitor-app/android/app/src/main
+        
+        # Копируем сразу google-services.json
+        cp capacitor-app/google-services.json capacitor-app/android/app/google-services.json
+        
+        # Проверяем наличие файла после копирования
+        ls -la capacitor-app/android/app/google-services.json
+
+    # 7. Настройка Android
+    - name: Setup Android
+      run: |
+        cd capacitor-app
+        
+        # Устанавливаем зависимости
+        npm install
+        
+        # Добавляем Android платформу
+        npx cap add android
+        
+        # Явно обновляем файл google-services.json
+        cp google-services.json android/app/google-services.json
+        
+        # Настраиваем Gradle для Java 21
+        echo "distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
+        
+        # Синхронизируем проект
+        npx cap sync android
+        
+        # Снова копируем google-services.json для уверенности
+        cp google-services.json android/app/google-services.json
+        
+        cd ..
+        
+        # Настраиваем канал уведомлений
+        node setup-android-notification-channel.js
+
+    # 8. Android SDK и Gradle кеширование
+    - uses: android-actions/setup-android@v3
+    
+    - uses: gradle/gradle-build-action@v3
+      with:
+        gradle-home-cache-cleanup: true
+
+    # 9. Сборка APK
+    - name: Build APK
+      run: |
+        # Проверим файл перед сборкой
+        ls -la capacitor-app/android/app/google-services.json || echo "Still missing!"
+        
+        # Добавим опции Java для Gradle
+        cd capacitor-app/android
+        chmod +x ./gradlew
+        
+        # Для совместимости с Java 21
+        sed -i 's/DEFAULT_JVM_OPTS=""/DEFAULT_JVM_OPTS="--add-opens java.base\/java.lang=ALL-UNNAMED --add-opens java.base\/java.io=ALL-UNNAMED --add-opens java.base\/java.util=ALL-UNNAMED"/g' gradlew
+        
+        # Собираем APK
+        ./gradlew assembleRelease
+
+    # 10. Подписываем APK
+    - name: Decode keystore
+      run: echo "$KEYSTORE_B64" | base64 -d > keystore.jks
+      env:
+        KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+
+    - name: Sign APK
+      run: |
+        # Находим собранный APK
+        UNSIGNED=$(find capacitor-app/android/app/build/outputs/apk/release -name '*release-unsigned.apk' | head -n 1)
+        echo "Unsigned APK: $UNSIGNED"
+        
+        if [ -z "$UNSIGNED" ]; then
+          echo "APK file not found!"
+          find capacitor-app/android/app/build -type f -name "*.apk" || echo "No APK files found!"
+          exit 1
+        fi
+        
+        cp "$UNSIGNED" app-unsigned.apk
+        
+        # Подписываем APK
+        APKSIGNER="$ANDROID_HOME/build-tools/34.0.0/apksigner"
+        $APKSIGNER sign \
+          --ks keystore.jks \
+          --ks-key-alias "$ALIAS" \
+          --ks-pass pass:"$KS_PASS" \
+          --key-pass pass:"$KEY_PASS" \
+          --out Loans-${{ github.ref_name }}.apk \
+          app-unsigned.apk
+          
+        # Проверяем
+        $APKSIGNER verify --verbose Loans-${{ github.ref_name }}.apk
+      env:
+        KS_PASS:  ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+        ALIAS:    ${{ secrets.KEY_ALIAS }}
+
+    # 11. Публикуем артефакт
+    - uses: actions/upload-artifact@v4
+      with:
+        name: apk
+        path: Loans-*.apk
