@@ -24,7 +24,14 @@
               run: |
                 node prepare-for-apk.js
                 cd capacitor-app
-                npm ci
+                
+                # Используем npm install вместо npm ci, если нет package-lock.json
+                if [ -f "package-lock.json" ]; then
+                  npm ci
+                else
+                  npm install
+                fi
+                
                 npx cap add android
                 npx cap sync android
                 cd ..
