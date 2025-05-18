@@ -1,0 +1,138 @@
+name: Build-APK-Java11
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Клонируем репозиторий
+    - uses: actions/checkout@v4
+
+    # 2. Устанавливаем Node.js
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    # 3. Устанавливаем Java 11 (полная совместимость с Gradle 8.0.2)
+    - name: Set up JDK 11
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'adopt'
+        java-version: '11'
+
+    # 4. Выводим информацию о версиях для отладки
+    - name: Debug environment
+      run: |
+        echo "Node version:"
+        node --version
+        echo "Java version:"
+        java -version
+        echo "Working directory:"
+        pwd
+        echo "Repository contents:"
+        ls -la
+
+    # 5. Установка NPM зависимостей
+    - run: npm ci
+
+    # 6. Подготовка проекта Capacitor
+    - name: Prepare Capacitor project
+      run: |
+        # Подготовка проекта
+        node prepare-for-apk.js
+        
+        # Переходим в директорию Capacitor
+        cd capacitor-app
+        
+        # Устанавливаем зависимости
+        npm install
+        
+        # Добавляем Android платформу
+        npx cap add android
+        
+        # Обновляем gradle-wrapper.properties для явного использования более старой версии Gradle
+        mkdir -p android/gradle/wrapper
+        echo "distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\\://services.gradle.org/distributions/gradle-7.6-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
+        
+        # Синхронизируем проект
+        npx cap sync android
+        
+        # Возвращаемся в корневую директорию
+        cd ..
+        
+        # Настраиваем канал уведомлений
+        node setup-android-notification-channel.js
+
+    # 7. Android SDK
+    - uses: android-actions/setup-android@v3
+
+    # 8. Release-сборка
+    - name: Build unsigned APK
+      run: |
+        # Копируем google-services.json в правильную директорию
+        if [ -f "capacitor-app/google-services.json" ]; then
+          echo "Copying google-services.json to Android project"
+          cp capacitor-app/google-services.json capacitor-app/android/app/google-services.json
+        else
+          echo "WARNING: google-services.json not found in capacitor-app directory!"
+        fi
+        
+        cd capacitor-app/android
+        
+        # Выводим информацию о проекте для отладки
+        echo "Contents of android directory:"
+        ls -la
+        echo "Contents of gradle/wrapper:"
+        ls -la gradle/wrapper
+        echo "Contents of gradle-wrapper.properties:"
+        cat gradle/wrapper/gradle-wrapper.properties
+        
+        # Запускаем сборку с дополнительными параметрами отладки
+        ./gradlew --info assembleRelease
+
+    # 9. Восстанавливаем keystore из секрета
+    - name: Decode keystore
+      run: echo "$KEYSTORE_B64" | base64 -d > keystore.jks
+      env:
+        KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+
+    # 10. Подписываем APK
+    - name: Sign APK
+      run: |
+        # Находим APK
+        UNSIGNED=$(find capacitor-app/android/app/build/outputs/apk/release -name '*release-unsigned.apk' | head -n 1)
+        echo "Unsigned APK found at: $UNSIGNED"
+
+        # Копируем во временный файл
+        cp "$UNSIGNED" app-unsigned.apk
+
+        # Подписываем
+        APKSIGNER="$ANDROID_HOME/build-tools/33.0.2/apksigner"
+        $APKSIGNER sign \
+          --ks keystore.jks \
+          --ks-key-alias "$ALIAS" \
+          --ks-pass pass:"$KS_PASS" \
+          --key-pass pass:"$KEY_PASS" \
+          --out Loans-${{ github.ref_name }}.apk \
+          app-unsigned.apk
+
+        # Проверяем
+        $APKSIGNER verify --verbose Loans-${{ github.ref_name }}.apk
+      env:
+        KS_PASS:  ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+        ALIAS:    ${{ secrets.KEY_ALIAS }}
+
+    # 11. Публикуем артефакт
+    - uses: actions/upload-artifact@v4
+      with:
+        name: apk
+        path: Loans-*.apk
