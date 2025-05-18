@@ -50,11 +50,13 @@ jobs:
         # Добавляем Android платформу
         npx cap add android
         
-        # Копируем google-services.json, если он существует
+        # Копируем google-services.json сразу после создания Android проекта
         if [ -f "../capacitor-app/google-services.json" ]; then
           echo "Copying google-services.json to Android project"
           mkdir -p android/app/src/main
           cp ../capacitor-app/google-services.json android/app/google-services.json
+          # Убедимся, что файл скопирован
+          ls -la android/app/google-services.json || echo "Failed to copy google-services.json"
         else
           echo "WARNING: google-services.json not found in capacitor-app directory!"
         fi
@@ -104,13 +106,17 @@ android {
     # 8. Сборка APK
     - name: Build unsigned APK
       run: |
-        # Создадим директорию для google-services.json, если нужно
-        mkdir -p capacitor-app/android/app/src/main
+        # Проверяем наличие google-services.json еще раз перед сборкой
+        echo "Checking google-services.json before build"
+        ls -la capacitor-app/android/app/google-services.json || echo "google-services.json not found before build"
         
-        # Копируем google-services.json в правильную директорию еще раз
-        if [ -f "capacitor-app/google-services.json" ]; then
+        # Если файл отсутствует, пробуем скопировать его еще раз
+        if [ ! -f "capacitor-app/android/app/google-services.json" ] && [ -f "capacitor-app/google-services.json" ]; then
           echo "Copying google-services.json to Android project again"
+          mkdir -p capacitor-app/android/app/src/main
           cp capacitor-app/google-services.json capacitor-app/android/app/google-services.json
+          # Проверяем, что файл скопирован
+          ls -la capacitor-app/android/app/google-services.json
         fi
         
         cd capacitor-app/android
