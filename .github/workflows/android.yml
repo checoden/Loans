@@ -18,7 +18,17 @@
                 node-version: '20'
 
             - run: npm ci
-            - run: npx cap sync android          # копируем web‑код в android/
+            
+            # Подготовка проекта для APK
+            - name: Prepare for APK
+              run: |
+                node prepare-for-apk.js
+                cd capacitor-app
+                npm ci
+                npx cap add android
+                npx cap sync android
+                cd ..
+                node setup-android-notification-channel.js
 
             # 3. JDK 21 (Capacitor требует Java 21)
             - name: Set up JDK 21
@@ -33,7 +43,15 @@
             # 5. Release‑сборка (unsigned)
             - name: Build unsigned APK
               run: |
-                cd android
+                # Копируем google-services.json в правильную директорию
+                if [ -f "capacitor-app/google-services.json" ]; then
+                  echo "Copying google-services.json to Android project"
+                  cp capacitor-app/google-services.json capacitor-app/android/app/google-services.json
+                else
+                  echo "WARNING: google-services.json not found in capacitor-app directory!"
+                fi
+                
+                cd capacitor-app/android
                 ./gradlew assembleRelease
 
             # 6. Восстанавливаем keystore из секрета
