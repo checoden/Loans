@@ -64,7 +64,7 @@
             - name: Sign APK (apksigner)
               run: |
                 # 1. Находим первый release‑unsigned.apk
-                UNSIGNED=$(find android/app/build/outputs/apk/release -name '*release-unsigned.apk' | head -n 1)
+                UNSIGNED=$(find capacitor-app/android/app/build/outputs/apk/release -name '*release-unsigned.apk' | head -n 1)
                 echo "Unsigned: $UNSIGNED"
 
                 # 2. Копируем во временный файл, т.к. apksigner пишeт поверх
