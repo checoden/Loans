@@ -18,11 +18,25 @@ const config: CapacitorConfig = {
     errorPath: "/error.html"
   },
   plugins: {
-    // Конфигурация OneSignal
+    // Конфигурация OneSignal согласно официальной документации
     OneSignal: {
       appId: process.env.VITE_ONESIGNAL_APP_ID,
       // Используем полную HTTPS-ссылку для уведомлений 
-      notificationURLOpenDeeplink: true
+      notificationURLOpenDeeplink: true,
+      // Дополнительные настройки из документации
+      requiresUserPrivacyConsent: false,
+      disableGmsMissingPrompt: false,
+      // Настройки для Android
+      android: {
+        // Настройки для уведомлений Android
+        notificationIcon: "ic_stat_onesignal_default",
+        notificationAccentColor: "FF9829",
+        notificationChannelId: "займы-онлайн-уведомления"
+      },
+      // Настройки для iOS
+      ios: {
+        allowNotificationsWhenAppIsInactive: true
+      }
     }
   },
   android: {
