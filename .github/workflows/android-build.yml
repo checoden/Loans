@@ -44,6 +44,12 @@ jobs:
         fi
         
         npx cap add android
+        cd ..
+        
+        # Исправляем версию Gradle для совместимости с Java 17
+        node fix-gradle-version.js
+        
+        cd capacitor-app
         npx cap sync android
         cd ..
         node setup-android-notification-channel.js
@@ -51,25 +57,41 @@ jobs:
     # 4. Android‑SDK + build‑tools
     - uses: android-actions/setup-android@v3
 
-    # 5. Обновляем градл-враппер для поддержки Java 17
-    - name: Update Gradle Wrapper
+    # 5. Дополнительная настройка Gradle (записываем явно опции Java 17)
+    - name: Configure Gradle
       run: |
         cd capacitor-app/android
         
-        # Обновляем gradle-wrapper.properties для использования Gradle 8.3
-        # Gradle 8.3 поддерживает Java 17 полностью
-        mkdir -p gradle/wrapper
-        cat > gradle/wrapper/gradle-wrapper.properties << EOF
-distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.3-bin.zip
-networkTimeout=10000
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists
-EOF
+        # Более детальный вывод для отладки
+        cat gradle/wrapper/gradle-wrapper.properties
         
-        # Сообщаем об успешном обновлении
-        echo "Updated Gradle wrapper to 8.3"
+        # Если build.gradle существует, модифицируем его для поддержки Java 17
+        if [ -f build.gradle ]; then
+          echo "Updating build.gradle for Java 17 support..."
+          echo "
+// Add to bottom of build.gradle 
+allprojects {
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << '-Xlint:unchecked' << '-Xlint:deprecation'
+    }
+    
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_17
+                    targetCompatibility JavaVersion.VERSION_17
+                }
+            }
+        }
+    }
+}" >> build.gradle
+        fi
+        
+        # Проверяем структуру проекта для отладки
+        ls -la
+        echo "Showing project files for debugging:"
+        find . -type f -name "*.gradle" | xargs ls -la
         cd ../..
 
     # 6. Release‑сборка (unsigned)
