@@ -2,7 +2,7 @@ name: Build APK
 
 on:
   push:
-    tags: ['build-*']
+    tags: ['v*']
 
 jobs:
   build:
