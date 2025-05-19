@@ -211,69 +211,165 @@ export default function PushNotificationPage() {
         </Card>
       ) : null}
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Отправка уведомления</CardTitle>
-          <CardDescription>
-            Заполните форму ниже для отправки уведомления всем пользователям
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Заголовок уведомления</Label>
-            <Input
-              id="title"
-              placeholder="Например: Новое предложение"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={isSending || !hasRequiredConfig}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="message">Текст уведомления</Label>
-            <Textarea
-              id="message"
-              placeholder="Например: У нас появились новые выгодные предложения по займам"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              disabled={isSending || !hasRequiredConfig}
-              rows={4}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="url">URL для перехода (необязательно)</Label>
-            <Input
-              id="url"
-              placeholder="Например: https://example.com/offers"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              disabled={isSending || !hasRequiredConfig}
-            />
-            <p className="text-sm text-muted-foreground">
-              Если указан, уведомление будет содержать кнопку для перехода по этому URL
-            </p>
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button 
-            onClick={handleSendNotification} 
-            disabled={isSending || !hasRequiredConfig || !title || !message}
-            className="w-full md:w-auto"
-          >
-            {isSending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Отправка...
-              </>
-            ) : (
-              <>
-                <SendIcon className="mr-2 h-4 w-4" />
-                Отправить уведомление
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
+      <Tabs 
+        defaultValue="all" 
+        value={activeTab} 
+        onValueChange={setActiveTab}
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="all" disabled={isSending}>
+            <Users className="mr-2 h-4 w-4" />
+            Всем устройствам
+          </TabsTrigger>
+          <TabsTrigger value="device" disabled={isSending}>
+            <Smartphone className="mr-2 h-4 w-4" />
+            Конкретному устройству
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="all">
+          <Card>
+            <CardHeader>
+              <CardTitle>Отправка уведомления всем устройствам</CardTitle>
+              <CardDescription>
+                Уведомление будет отправлено всем устройствам, которые установили приложение
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title-all">Заголовок уведомления</Label>
+                <Input
+                  id="title-all"
+                  placeholder="Например: Новое предложение"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  disabled={isSending || !hasRequiredConfig}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="message-all">Текст уведомления</Label>
+                <Textarea
+                  id="message-all"
+                  placeholder="Например: У нас появились новые выгодные предложения по займам"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  disabled={isSending || !hasRequiredConfig}
+                  rows={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="url-all">URL для перехода (необязательно)</Label>
+                <Input
+                  id="url-all"
+                  placeholder="Например: https://example.com/offers"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  disabled={isSending || !hasRequiredConfig}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Если указан, уведомление будет содержать кнопку для перехода по этому URL
+                </p>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                onClick={handleSendToAll} 
+                disabled={isSending || !hasRequiredConfig || !title || !message}
+                className="w-full md:w-auto"
+              >
+                {isSending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Отправка...
+                  </>
+                ) : (
+                  <>
+                    <SendIcon className="mr-2 h-4 w-4" />
+                    Отправить всем
+                  </>
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="device">
+          <Card>
+            <CardHeader>
+              <CardTitle>Отправка уведомления на конкретное устройство</CardTitle>
+              <CardDescription>
+                Уведомление будет отправлено только на указанное устройство по его ID
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="device-id" className="font-medium">ID устройства</Label>
+                <Input
+                  id="device-id"
+                  placeholder="Например: ab12cd34-5678-90ef-ghij-klmnopqrstuv"
+                  value={deviceId}
+                  onChange={(e) => setDeviceId(e.target.value)}
+                  disabled={isSending || !hasRequiredConfig}
+                />
+                <p className="text-sm text-muted-foreground">
+                  ID устройства можно получить на странице <Link href="/device-info" className="text-primary hover:underline">информации об устройстве</Link>
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="title-device">Заголовок уведомления</Label>
+                <Input
+                  id="title-device"
+                  placeholder="Например: Новое предложение"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  disabled={isSending || !hasRequiredConfig}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="message-device">Текст уведомления</Label>
+                <Textarea
+                  id="message-device"
+                  placeholder="Например: У нас появились новые выгодные предложения по займам"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  disabled={isSending || !hasRequiredConfig}
+                  rows={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="url-device">URL для перехода (необязательно)</Label>
+                <Input
+                  id="url-device"
+                  placeholder="Например: https://example.com/offers"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  disabled={isSending || !hasRequiredConfig}
+                />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                onClick={handleSendToDevice} 
+                disabled={isSending || !hasRequiredConfig || !title || !message || !deviceId}
+                className="w-full md:w-auto"
+              >
+                {isSending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Отправка...
+                  </>
+                ) : (
+                  <>
+                    <SendIcon className="mr-2 h-4 w-4" />
+                    Отправить на устройство
+                  </>
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
       
       {lastSentResult && (
         <Card className="mt-8">
