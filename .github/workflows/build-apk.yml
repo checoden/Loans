@@ -17,12 +17,12 @@ jobs:
       with:
         node-version: '20'
 
-    # 3. Устанавливаем Java 21
-    - name: Set up JDK 21
+    # 3. Устанавливаем Java 17 (совместимую с Android)
+    - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '21'
+        java-version: '17'
 
     # 4. Установка зависимостей
     - run: npm ci
@@ -51,15 +51,15 @@ jobs:
         # Создаём директорию для Gradle Wrapper ПЕРЕД добавлением Android
         mkdir -p android/gradle/wrapper
         
-        # Создаём правильный gradle-wrapper.properties с Gradle 8.6
+        # Создаём правильный gradle-wrapper.properties с Gradle 8.0.2
         echo "distributionBase=GRADLE_USER_HOME" > android/gradle/wrapper/gradle-wrapper.properties
         echo "distributionPath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
-        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip" >> android/gradle/wrapper/gradle-wrapper.properties
+        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.0.2-bin.zip" >> android/gradle/wrapper/gradle-wrapper.properties
         echo "zipStoreBase=GRADLE_USER_HOME" >> android/gradle/wrapper/gradle-wrapper.properties
         echo "zipStorePath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
         
         # Загружаем Gradle Wrapper JAR напрямую
-        curl -s -o android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradle/wrapper/gradle-wrapper.jar
+        curl -s -o android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.0.2/gradle/wrapper/gradle-wrapper.jar
         
         echo "Установка актуальной версии Capacitor"
         npm install @capacitor/core@5.7.8 @capacitor/android@5.7.3
@@ -102,9 +102,9 @@ jobs:
     - uses: android-actions/setup-android@v3
     - uses: gradle/actions/setup-gradle@v3
       with:
-        gradle-version: 8.6
+        gradle-version: 8.0.2
 
-    # 7. Принудительно настраиваем Gradle 8.6 до запуска сборки
+    # 7. Принудительно настраиваем Gradle 8.0.2 до запуска сборки
     - name: Setup correct Gradle Wrapper
       run: |
         cd capacitor-app/android
@@ -121,7 +121,7 @@ jobs:
         # Создаем gradle-wrapper.properties с правильной версией
         echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
         echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
-        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
+        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.0.2-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
         echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
         echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
         
@@ -129,10 +129,10 @@ jobs:
         cat gradle/wrapper/gradle-wrapper.properties
         
         # Загружаем Gradle Wrapper напрямую
-        curl -s -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradle/wrapper/gradle-wrapper.jar
+        curl -s -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.0.2/gradle/wrapper/gradle-wrapper.jar
         
         # Проверяем версию Gradle (без использования gradlew, который может использовать неправильную версию)
-        echo "Установлена версия Gradle 8.6"
+        echo "Установлена версия Gradle 8.0.2"
 
     # 8. Сборка APK
     - name: Build unsigned APK
