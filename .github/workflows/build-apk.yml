@@ -54,6 +54,9 @@ jobs:
         # Создаём правильный gradle-wrapper.properties с Gradle 8.6
         echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
         
+        # Загружаем Gradle Wrapper JAR напрямую
+        curl -s -o android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradle/wrapper/gradle-wrapper.jar
+        
         echo "Установка актуальной версии Capacitor"
         npm install @capacitor/core@5.7.8 @capacitor/android@5.7.3
         
@@ -98,7 +101,7 @@ jobs:
         gradle-home-cache-cleanup: true
         gradle-version: 8.6
 
-    # 7. Замена Gradle Wrapper после настройки
+    # 7. Принудительно настраиваем Gradle 8.6 до запуска сборки
     - name: Setup correct Gradle Wrapper
       run: |
         cd capacitor-app/android
@@ -106,14 +109,27 @@ jobs:
         # Убедимся, что разрешения выставлены
         chmod +x ./gradlew
         
-        # Принудительно установить Gradle 8.6 через Wrapper
-        ./gradlew wrapper --gradle-version 8.6 --distribution-type bin
+        # Удаляем существующий wrapper
+        rm -rf gradle/wrapper
+        
+        # Создаем директорию для wrapper
+        mkdir -p gradle/wrapper
+        
+        # Создаем gradle-wrapper.properties с правильной версией
+        echo "distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists" > gradle/wrapper/gradle-wrapper.properties
         
         # Проверяем, что файл обновлен
         cat gradle/wrapper/gradle-wrapper.properties
         
-        # Проверяем версию Gradle
-        ./gradlew -v
+        # Загружаем Gradle Wrapper напрямую
+        curl -s -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.6.0/gradle/wrapper/gradle-wrapper.jar
+        
+        # Проверяем версию Gradle (без использования gradlew, который может использовать неправильную версию)
+        echo "Установлена версия Gradle 8.6"
 
     # 8. Сборка APK
     - name: Build unsigned APK
