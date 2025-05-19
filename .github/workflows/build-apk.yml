@@ -40,13 +40,12 @@ jobs:
         echo "Удаляем существующую Android платформу, если она есть"
         rm -rf android
         
-        # Для 100% уверенности, удаляем все остатки платформы из package.json
-        if grep -q "capacitor/android" package.json; then
-          echo "Очищаем упоминания Android из package.json"
-          sed -i '/capacitor\/android/d' package.json
-        fi
+        # Полностью очищаем package.json от Capacitor зависимостей
+        echo "Очищаем package.json от всех Capacitor зависимостей"
+        jq 'del(.dependencies."@capacitor/android") | del(.dependencies."@capacitor/core")' package.json > package.json.tmp
+        mv package.json.tmp package.json
         
-        # Повторно устанавливаем зависимости после очистки
+        # Повторно устанавливаем базовые зависимости
         npm install
         
         # Создаём директорию для Gradle Wrapper ПЕРЕД добавлением Android
@@ -55,8 +54,8 @@ jobs:
         # Создаём правильный gradle-wrapper.properties с Gradle 8.6
         echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
         
-        echo "Установка совместимых версий Capacitor пакетов"
-        npm install @capacitor/core@5.7.8 @capacitor/android@5.7.3 --legacy-peer-deps
+        echo "Установка актуальной версии Capacitor"
+        npm install @capacitor/core@5.7.8 @capacitor/android@5.7.3
         
         # Добавляем Android платформу после установки совместимых версий
         echo "Добавляем Android платформу..."
@@ -64,7 +63,7 @@ jobs:
           echo "Ошибка при добавлении Android платформы, пытаемся глубоко очистить проект"; 
           rm -rf android node_modules;
           npm install;
-          npm install @capacitor/core@5.7.8 @capacitor/android@5.7.3 --legacy-peer-deps;
+          npm install @capacitor/core@5.7.8 @capacitor/android@5.7.3;
           npx cap add android; 
         }
         
