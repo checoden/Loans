@@ -6,10 +6,11 @@ import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
-import { Loader2, SendIcon, AlertTriangleIcon, CheckCircle, ArrowLeftCircle } from "lucide-react";
+import { Loader2, SendIcon, AlertTriangleIcon, CheckCircle, ArrowLeftCircle, Users, Smartphone } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, getQueryFn } from "../lib/queryClient";
 import { Redirect, Link } from "wouter";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 
 export default function PushNotificationPage() {
   const { admin, isLoading } = useAdminAuth();
@@ -18,8 +19,10 @@ export default function PushNotificationPage() {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [url, setUrl] = useState("");
+  const [deviceId, setDeviceId] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [lastSentResult, setLastSentResult] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("all");
 
   // Получаем конфигурацию OneSignal
   const { data: config, isLoading: isLoadingConfig } = useQuery({
@@ -35,8 +38,8 @@ export default function PushNotificationPage() {
   // Проверка на наличие ключей OneSignal
   const hasRequiredConfig = config?.appId && config?.hasApiKey;
 
-  // Отправка уведомления
-  const handleSendNotification = async () => {
+  // Отправка уведомления всем устройствам
+  const handleSendToAll = async () => {
     if (!title || !message) {
       toast({
         title: "Ошибка",
@@ -60,7 +63,7 @@ export default function PushNotificationPage() {
       if (result.success) {
         toast({
           title: "Успех",
-          description: "Уведомление успешно отправлено",
+          description: "Уведомление успешно отправлено всем устройствам",
           variant: "default"
         });
       } else {
@@ -88,6 +91,78 @@ export default function PushNotificationPage() {
       });
     } finally {
       setIsSending(false);
+    }
+  };
+  
+  // Отправка уведомления на конкретное устройство
+  const handleSendToDevice = async () => {
+    if (!title || !message) {
+      toast({
+        title: "Ошибка",
+        description: "Заголовок и текст уведомления обязательны",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!deviceId) {
+      toast({
+        title: "Ошибка",
+        description: "ID устройства обязателен для отправки",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsSending(true);
+      const response = await apiRequest("POST", "/api/push-notification/device", { 
+        title, 
+        message, 
+        url: url || undefined,
+        deviceId
+      });
+      
+      const result = await response.json();
+      setLastSentResult(result);
+      
+      if (result.success) {
+        toast({
+          title: "Успех",
+          description: "Уведомление успешно отправлено на устройство",
+          variant: "default"
+        });
+      } else {
+        toast({
+          title: "Ошибка",
+          description: "Не удалось отправить уведомление на устройство",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error sending notification to device:", error);
+      let errorMsg = "Произошла ошибка при отправке уведомления на устройство";
+      if (error instanceof Error) {
+        errorMsg += `: ${error.message}`;
+      }
+      setLastSentResult({ error: errorMsg, details: String(error) });
+      
+      toast({
+        title: "Ошибка",
+        description: errorMsg,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+  
+  // Обобщенный обработчик отправки в зависимости от активной вкладки
+  const handleSendNotification = async () => {
+    if (activeTab === "device") {
+      await handleSendToDevice();
+    } else {
+      await handleSendToAll();
     }
   };
 
