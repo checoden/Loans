@@ -186,7 +186,10 @@ export async function sendPushNotification(title: string, message: string, url?:
     // This ensures consistent behavior regardless of platform
     const payload = {
       app_id: import.meta.env.VITE_ONESIGNAL_APP_ID,
-      included_segments: ['Subscribed Users'],
+      // Вместо сегмента используем broadcast для всех устройств
+      included_segments: ['All'],
+      // Резервный вариант - отправка всем устройствам (даже не подписанным)
+      isAnyWeb: true,
       contents: {
         en: message,
         ru: message
