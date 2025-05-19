@@ -182,14 +182,15 @@ export async function sendPushNotification(title: string, message: string, url?:
     const environment = detectEnvironment();
     console.log(`Sending notification in ${environment} environment`);
 
-    // For both platforms (web and mobile), we'll use the REST API
-    // This ensures consistent behavior regardless of platform
+    // Создаем базовый payload для отправки уведомлений
     const payload = {
       app_id: import.meta.env.VITE_ONESIGNAL_APP_ID,
-      // Вместо сегмента используем broadcast для всех устройств
-      included_segments: ['All'],
-      // Резервный вариант - отправка всем устройствам (даже не подписанным)
+      // Пробуем отправить на все устройства 
+      included_segments: ['Active Users'],
+      // Для охвата даже не зарегистрированных в Firebase устройств
       isAnyWeb: true,
+      // Включаем все возможные каналы доставки
+      channel_for_external_user_ids: "push",
       contents: {
         en: message,
         ru: message
@@ -228,7 +229,8 @@ export async function sendPushNotification(title: string, message: string, url?:
       ios_category: "LOAN_CATEGORY"
     };
     
-    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+    // Сначала пробуем стандартный метод отправки
+    let response = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -237,8 +239,67 @@ export async function sendPushNotification(title: string, message: string, url?:
       body: JSON.stringify(payload)
     });
     
-    const data = await response.json();
-    console.log("Ответ от OneSignal API:", data);
+    let data = await response.json();
+    console.log("Ответ от OneSignal API (стандартный метод):", data);
+    
+    // Если не удалось отправить через сегменты, пробуем отправить всем устройствам
+    if (data.errors && (Array.isArray(data.errors) ? data.errors.includes("All included players are not subscribed") : String(data.errors).includes("All included players are not subscribed"))) {
+      console.log("Пробуем альтернативный метод отправки...");
+      
+      // Создаем модифицированный payload для всех устройств
+      const altPayload = {
+        ...payload,
+        // Очищаем все методы адресации и используем только "All"
+        included_segments: ["All"],
+        include_player_ids: [], 
+        include_external_user_ids: [],
+        // Отправляем всем, независимо от подписки
+        isAnyWeb: true,
+        // Дополнительные настройки для отображения даже без FCM
+        priority: 10,
+        ttl: 259200 // 3 дня
+      };
+      
+      response = await fetch('https://onesignal.com/api/v1/notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${import.meta.env.VITE_ONESIGNAL_REST_API_KEY}`
+        },
+        body: JSON.stringify(altPayload)
+      });
+      
+      data = await response.json();
+      console.log("Ответ от OneSignal API (альтернативный метод):", data);
+    }
+    
+    // Проверка наличия устройств для теста
+    if (data.errors && (
+        (Array.isArray(data.errors) && data.errors.includes("All included players are not subscribed")) || 
+        (typeof data.errors === 'string' && data.errors.includes("All included players are not subscribed")) ||
+        (typeof data.errors === 'object' && data.errors.players && 
+         (Array.isArray(data.errors.players) 
+           ? data.errors.players.includes("All included players are not subscribed")
+           : String(data.errors.players).includes("All included players are not subscribed")))
+    )) {
+      
+      console.log("Нет зарегистрированных устройств. Проверяем состояние OneSignal...");
+      
+      // Запрашиваем статус приложения в OneSignal
+      const statusResponse = await fetch(`https://onesignal.com/api/v1/apps/${import.meta.env.VITE_ONESIGNAL_APP_ID}`, {
+        headers: {
+          'Authorization': `Basic ${import.meta.env.VITE_ONESIGNAL_REST_API_KEY}`
+        }
+      });
+      
+      if (statusResponse.ok) {
+        const appStatus = await statusResponse.json();
+        console.log("Статус приложения в OneSignal:", appStatus);
+        
+        // Добавляем информацию о статусе в ответ
+        data.app_status = appStatus;
+      }
+    }
     
     // Provide detailed feedback for APK debugging
     if (data.errors) {
