@@ -116,11 +116,11 @@ jobs:
         mkdir -p gradle/wrapper
         
         # Создаем gradle-wrapper.properties с правильной версией
-        echo "distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists" > gradle/wrapper/gradle-wrapper.properties
+        echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
+        echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
+        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
+        echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
+        echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
         
         # Проверяем, что файл обновлен
         cat gradle/wrapper/gradle-wrapper.properties
