@@ -36,26 +36,21 @@ jobs:
         cd capacitor-app
         npm install
         
-        # Проверяем наличие директории Android перед действиями
-        if [ ! -d "android" ]; then
-          # Создаём директорию для Gradle Wrapper ПЕРЕД добавлением Android
-          mkdir -p android/gradle/wrapper
-          
-          # Создаём правильный gradle-wrapper.properties с Gradle 8.6
-          echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
-          
-          # Теперь добавляем Android платформу
-          echo "Добавляем Android платформу..."
-          npx cap add android
-        else
-          echo "Android платформа уже существует, пропускаем добавление"
-          
-          # Создаём директорию Gradle Wrapper, если она не существует
-          mkdir -p android/gradle/wrapper
-          
-          # Обновляем gradle-wrapper.properties в любом случае
-          echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
+        # Проверка наличия и возможное удаление директории android
+        if [ -d "android" ]; then
+          echo "Android платформа уже существует, удаляем для избежания ошибок"
+          rm -rf android
         fi
+          
+        # Создаём директорию для Gradle Wrapper ПЕРЕД добавлением Android
+        mkdir -p android/gradle/wrapper
+        
+        # Создаём правильный gradle-wrapper.properties с Gradle 8.6
+        echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
+        
+        # Добавляем Android платформу после удаления старой
+        echo "Добавляем Android платформу..."
+        npx cap add android
         
         # Копируем google-services.json, если он существует
         if [ -f "google-services.json" ]; then
