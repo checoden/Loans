@@ -36,21 +36,37 @@ jobs:
         cd capacitor-app
         npm install
         
-        # Проверка наличия и возможное удаление директории android
-        if [ -d "android" ]; then
-          echo "Android платформа уже существует, удаляем для избежания ошибок"
-          rm -rf android
+        # Полностью очищаем проект перед добавлением платформы
+        echo "Удаляем существующую Android платформу, если она есть"
+        rm -rf android
+        
+        # Для 100% уверенности, удаляем все остатки платформы из package.json
+        if grep -q "capacitor/android" package.json; then
+          echo "Очищаем упоминания Android из package.json"
+          sed -i '/capacitor\/android/d' package.json
         fi
-          
+        
+        # Повторно устанавливаем зависимости после очистки
+        npm install
+        
         # Создаём директорию для Gradle Wrapper ПЕРЕД добавлением Android
         mkdir -p android/gradle/wrapper
         
         # Создаём правильный gradle-wrapper.properties с Gradle 8.6
         echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
         
+        echo "Установка @capacitor/android"
+        npm install @capacitor/android
+        
         # Добавляем Android платформу после удаления старой
         echo "Добавляем Android платформу..."
-        npx cap add android
+        npx cap add android || { 
+          echo "Ошибка при добавлении Android платформы, пытаемся глубоко очистить проект"; 
+          rm -rf android node_modules;
+          npm install;
+          npm install @capacitor/android;
+          npx cap add android; 
+        }
         
         # Копируем google-services.json, если он существует
         if [ -f "google-services.json" ]; then
