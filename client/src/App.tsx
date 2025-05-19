@@ -8,7 +8,6 @@ import HomePage from "@/pages/HomePage";
 import AdminPage from "@/pages/AdminPage";
 import AdminLoginPage from "@/pages/AdminLoginPage";
 import PushNotificationPage from "@/pages/PushNotificationPage";
-import DeviceInfoPage from "@/pages/DeviceInfoPage";
 import NotFound from "@/pages/not-found";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AdminAuthProvider } from "@/hooks/use-admin-auth";
@@ -20,7 +19,6 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/admin/login" component={AdminLoginPage} />
-      <Route path="/device-info" component={DeviceInfoPage} />
       <ProtectedRoute path="/admin" component={AdminPage} adminOnly={true} />
       <ProtectedRoute path="/admin/push" component={PushNotificationPage} adminOnly={true} />
       <Route component={NotFound} />
