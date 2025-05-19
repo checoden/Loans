@@ -1,0 +1,49 @@
+Run # Подготовка проекта
+🚀 Подготовка проекта для сборки APK с Capacitor
+📋 Копирование файлов из public в www...
+✅ Скопирован шаблон google-services.json
+✅ Создан файл capacitor.config.ts
+✅ Скопирован файл index.html
+✅ Скопирован файл error.html
+✅ Подготовка завершена успешно!
+📱 Для сборки APK:
+1. Установите Android Studio: https://developer.android.com/studio
+2. Выполните: npx cap sync android
+3. Выполните: npx cap open android
+4. Соберите приложение в Android Studio
+⚠️ Перед сборкой не забудьте:
+1. Заменить google-services.json валидным файлом из Firebase
+2. Проверить переменные окружения VITE_ONESIGNAL_APP_ID и VITE_ONESIGNAL_REST_API_KEY
+added 100 packages, and audited 101 packages in 3s
+11 packages are looking for funding
+  run `npm fund` for details
+found 0 vulnerabilities
+Удаляем существующую Android платформу, если она есть
+Очищаем упоминания Android из package.json
+removed 1 package, and audited 100 packages in 528ms
+11 packages are looking for funding
+  run `npm fund` for details
+found 0 vulnerabilities
+Установка @capacitor/android
+npm error code ERESOLVE
+npm error ERESOLVE unable to resolve dependency tree
+npm error
+npm error While resolving: zaimy-online-app@1.0.0
+npm error Found: @capacitor/core@5.7.8
+npm error node_modules/@capacitor/core
+npm error   @capacitor/core@"^5.6.0" from the root project
+npm error
+npm error Could not resolve dependency:
+npm error peer @capacitor/core@"^7.2.0" from @capacitor/android@7.2.0
+npm error node_modules/@capacitor/android
+npm error   @capacitor/android@"*" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error /home/runner/.npm/_logs/2025-05-19T05_44_10_848Z-eresolve-report.txt
+npm error A complete log of this run can be found in: /home/runner/.npm/_logs/2025-05-19T05_44_10_848Z-debug-0.log
+Error: Process completed with exit code 1.

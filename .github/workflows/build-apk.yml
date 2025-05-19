@@ -55,16 +55,16 @@ jobs:
         # Создаём правильный gradle-wrapper.properties с Gradle 8.6
         echo -e "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionUrl=https\://services.gradle.org/distributions/gradle-8.6-bin.zip\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists" > android/gradle/wrapper/gradle-wrapper.properties
         
-        echo "Установка @capacitor/android"
-        npm install @capacitor/android
+        echo "Установка совместимых версий Capacitor пакетов"
+        npm install @capacitor/core@5.7.8 @capacitor/android@5.7.3 --legacy-peer-deps
         
-        # Добавляем Android платформу после удаления старой
+        # Добавляем Android платформу после установки совместимых версий
         echo "Добавляем Android платформу..."
         npx cap add android || { 
           echo "Ошибка при добавлении Android платформы, пытаемся глубоко очистить проект"; 
           rm -rf android node_modules;
           npm install;
-          npm install @capacitor/android;
+          npm install @capacitor/core@5.7.8 @capacitor/android@5.7.3 --legacy-peer-deps;
           npx cap add android; 
         }
         
