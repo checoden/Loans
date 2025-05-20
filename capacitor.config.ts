@@ -46,6 +46,10 @@ const config: CapacitorConfig = {
       keystorePassword: 'microloans',
       keystoreAliasPassword: 'microloans'
     },
+    // Разрешения для Android - критично для push-уведомлений на Android 13+
+    permissions: [
+      'android.permission.POST_NOTIFICATIONS',
+    ],
     // Дополнительные настройки безопасности и отладки
     allowMixedContent: true, // Временно разрешаем смешанный контент для отладки
     captureInput: true,  // Разрешить захват ввода для WebView 
