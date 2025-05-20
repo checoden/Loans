@@ -191,29 +191,25 @@ jobs:
         name: apk
         path: Loans-*.apk
         
-    # Примечание: для создания релизов нужно убедиться, что в разделе 
-    # Settings -> Actions -> General -> Workflow permissions установлено "Read and write permissions"
-    # Или можно вручную загрузить APK и создать релиз через веб-интерфейс GitHub
-    # 
-    # # 13. Создаем релиз GitHub Release с APK
-    # - name: Create GitHub Release
-    #   uses: softprops/action-gh-release@v1
-    #   if: startsWith(github.ref, 'refs/tags/')
-    #   with:
-    #     files: Loans-*.apk
-    #     draft: false
-    #     prerelease: false
-    #     name: "Займы онлайн ${{ github.ref_name }}"
-    #     body: |
-    #       ### Займы онлайн (версия ${{ github.ref_name }})
-    #       
-    #       **Функциональность:**
-    #       - Браузер займов с фильтрами
-    #       - Админ-панель для управления займами
-    #       - Push-уведомления через OneSignal
-    #       
-    #       **Технические детали:**
-    #       - Используется Capacitor для компиляции в APK
-    #       - Интеграция с Firebase для push-уведомлений
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # 13. Создаем релиз GitHub Release с APK
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: Loans-*.apk
+        draft: false
+        prerelease: false
+        name: "Займы онлайн ${{ github.ref_name }}"
+        body: |
+          ### Займы онлайн (версия ${{ github.ref_name }})
+          
+          **Функциональность:**
+          - Браузер займов с фильтрами
+          - Админ-панель для управления займами
+          - Push-уведомления через OneSignal
+          
+          **Технические детали:**
+          - Используется Capacitor для компиляции в APK
+          - Интеграция с Firebase для push-уведомлений
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
