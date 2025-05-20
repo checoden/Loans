@@ -151,6 +151,12 @@ jobs:
     # 11. Подписываем APK
     - name: Decode keystore
       run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > keystore.jks
+      
+    # 11.1 Показываем SHA1 отпечаток сертификата (полезно для Firebase)
+    - name: Display certificate fingerprint
+      run: |
+        echo "Отпечаток сертификата (SHA1) для Firebase:"
+        keytool -list -v -keystore keystore.jks -alias "${{ secrets.KEY_ALIAS }}" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" | grep SHA1
 
     - name: Sign APK
       run: |
@@ -184,3 +190,26 @@ jobs:
       with:
         name: apk
         path: Loans-*.apk
+        
+    # 13. Создаем релиз GitHub Release с APK
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: Loans-*.apk
+        draft: false
+        prerelease: false
+        name: "Займы онлайн ${{ github.ref_name }}"
+        body: |
+          ### Займы онлайн (версия ${{ github.ref_name }})
+          
+          **Функциональность:**
+          - Браузер займов с фильтрами
+          - Админ-панель для управления займами
+          - Push-уведомления через OneSignal
+          
+          **Технические детали:**
+          - Используется Capacitor для компиляции в APK
+          - Интеграция с Firebase для push-уведомлений
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
