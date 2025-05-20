@@ -153,20 +153,49 @@ function initializeMobileOneSignal(platform: 'android' | 'ios') {
 
     // Initialize the OneSignal plugin with appropriate settings
     window.plugins.OneSignal.setAppId(import.meta.env.VITE_ONESIGNAL_APP_ID);
+    
+    // Запрашиваем разрешение на показ уведомлений (важно для Android 13+)
+    // Новый метод в OneSignal 5.0+
+    if (window.plugins.OneSignal.Notifications && typeof window.plugins.OneSignal.Notifications.requestPermission === 'function') {
+      console.log("Requesting notification permission with new API (OneSignal 5.0+)");
+      window.plugins.OneSignal.Notifications.requestPermission(true)
+        .then((accepted: boolean) => {
+          console.log("User accepted notifications (new API):", accepted);
+        })
+        .catch((error: any) => {
+          console.error("Error requesting notification permission:", error);
+        });
+    } else {
+      // Старый метод запроса разрешений для OneSignal 3.x
+      console.log("Requesting notification permission with legacy API (OneSignal 3.x)");
+      if (platform === 'ios') {
+        window.plugins.OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
+          console.log("User accepted notifications (legacy API):", accepted);
+        });
+      } else {
+        // Для Android < 13 разрешения не требовались, но теперь нужно явно запрашивать
+        console.log("Android platform detected, attempting to request permissions");
+        try {
+          // Пробуем вызвать API, который может быть доступен
+          if (typeof window.plugins.OneSignal.promptForPushNotificationsWithUserResponse === 'function') {
+            window.plugins.OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
+              console.log("Android user accepted notifications:", accepted);
+            });
+          }
+        } catch (e) {
+          console.warn("Could not request notification permission on Android:", e);
+        }
+      }
+    }
+    
+    // Устанавливаем обработчик открытия уведомлений
     window.plugins.OneSignal.setNotificationOpenedHandler((jsonData: any) => {
       console.log('Notification opened:', jsonData);
       // Here handle notification open event (e.g. navigate to specific screens)
     });
     
-    // Request permission based on platform
-    if (platform === 'ios') {
-      window.plugins.OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
-        console.log("User accepted notifications:", accepted);
-      });
-    } else {
-      // On Android permissions are granted by default in most cases
-      window.plugins.OneSignal.setRequiresUserPrivacyConsent(false);
-    }
+    // Не требуем согласия на обработку данных для работы уведомлений
+    window.plugins.OneSignal.setRequiresUserPrivacyConsent(false);
   } else {
     console.error("OneSignal plugin not available in mobile environment");
   }
