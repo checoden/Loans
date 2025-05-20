@@ -86,13 +86,28 @@ jobs:
           echo "Ошибка при добавлении Android платформы, пытаемся глубоко очистить проект"; 
           rm -rf android node_modules;
           npm install;
-          npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0;
+          npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 @onesignal/onesignal-cordova-plugin@5.2.13;
           npx cap add android; 
         }
         
         # Копируем google-services.json в нужные места
-        if [ -f "google-services.json" ]; then
-          echo "Копируем google-services.json в директории Android проекта"
+        if [ -f "../google-services.json" ]; then
+          echo "Копируем google-services.json из корня проекта в директории Android"
+          
+          # Создаем директории, если их нет
+          mkdir -p android/app
+          
+          # Копируем файл в директорию android/app для Firebase плагина
+          cp ../google-services.json android/app/google-services.json
+          
+          # Копируем в корень android директории для резервного копирования
+          cp ../google-services.json android/google-services.json
+          
+          echo "Файл скопирован в необходимые директории Android"
+          echo "Проверяем наличие файла в android/app:"
+          ls -la android/app/google-services.json || echo "ФАЙЛ НЕ НАЙДЕН В android/app!"
+        elif [ -f "google-services.json" ]; then
+          echo "Копируем google-services.json из capacitor-app в директории Android"
           
           # Создаем директории, если их нет
           mkdir -p android/app
@@ -106,6 +121,9 @@ jobs:
           echo "Файл скопирован в необходимые директории Android"
           echo "Проверяем наличие файла в android/app:"
           ls -la android/app/google-services.json || echo "ФАЙЛ НЕ НАЙДЕН В android/app!"
+        else
+          echo "ВНИМАНИЕ: google-services.json не найден ни в корне проекта, ни в capacitor-app!"
+          echo "Push-уведомления могут не работать без этого файла!"
         fi
         
         cd ..
