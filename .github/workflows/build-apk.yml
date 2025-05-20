@@ -98,18 +98,21 @@ jobs:
           echo "Файл скопирован в $(pwd)/android/app/google-services.json"
         fi
         
-        # Синхронизируем проект с Android
+        cd ..
+        
+        # Настраиваем канал уведомлений ПЕРЕД синхронизацией Android
+        echo "Настраиваем канал уведомлений для Android..."
+        node setup-android-notification-channel.js
+        
+        cd capacitor-app
+        
+        # Синхронизируем проект с Android ПОСЛЕ настройки канала уведомлений
         echo "Синхронизация Android проекта..."
         npx cap sync android
         
         # Проверяем версию Gradle в Wrapper
         echo "Текущая версия Gradle Wrapper:"
         cat android/gradle/wrapper/gradle-wrapper.properties
-        
-        cd ..
-        
-        # Настраиваем канал уведомлений
-        node setup-android-notification-channel.js
 
     # 8. Android SDK и Gradle setup
     - uses: android-actions/setup-android@v3
