@@ -90,12 +90,26 @@ jobs:
           npx cap add android; 
         }
         
-        # Копируем google-services.json, если он существует
+        # Копируем google-services.json во все необходимые места
         if [ -f "google-services.json" ]; then
-          echo "Копируем google-services.json в директорию Android проекта"
+          echo "Копируем google-services.json в директории Android проекта"
+          
+          # 1. Корень проекта Capacitor - для сохранения между сборками
+          cp google-services.json ../capacitor-app/google-services.json
+          
+          # 2. Android/app директория - основная для Firebase плагина
           mkdir -p android/app
           cp google-services.json android/app/google-services.json
-          echo "Файл скопирован в $(pwd)/android/app/google-services.json"
+          
+          # 3. Корень android директории - для резервного копирования
+          cp google-services.json android/google-services.json
+          
+          echo "Файл скопирован во все необходимые директории"
+          echo "Проверяем наличие файла в android/app:"
+          ls -la android/app/google-services.json || echo "ФАЙЛ НЕ НАЙДЕН В android/app!"
+        else
+          echo "ВНИМАНИЕ: google-services.json не найден! Push-уведомления не будут работать."
+          exit 1
         fi
         
         cd ..
