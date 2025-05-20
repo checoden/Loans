@@ -152,6 +152,11 @@ jobs:
         echo "Синхронизация Android проекта..."
         npx cap sync android
         
+        # Добавляем разрешение POST_NOTIFICATIONS в AndroidManifest.xml после синхронизации
+        echo "Запускаем скрипт добавления разрешения POST_NOTIFICATIONS..."
+        chmod +x ./add-notification-permission.sh
+        ./add-notification-permission.sh
+        
         # Проверяем версию Gradle в Wrapper
         echo "Текущая версия Gradle Wrapper:"
         cat android/gradle/wrapper/gradle-wrapper.properties
