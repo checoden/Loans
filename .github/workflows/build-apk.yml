@@ -172,6 +172,39 @@ jobs:
         chmod +x ./patch-build-gradle.sh
         ./patch-build-gradle.sh
         
+        # Копируем config.xml для обеспечения сохранения разрешения POST_NOTIFICATIONS
+        if [ -f "../capacitor-app/android/app/src/main/res/xml/config.xml" ]; then
+          echo "Копируем config.xml для сохранения разрешения POST_NOTIFICATIONS..."
+          mkdir -p android/app/src/main/res/xml
+          cp ../capacitor-app/android/app/src/main/res/xml/config.xml android/app/src/main/res/xml/
+          echo "✅ config.xml успешно скопирован"
+        fi
+        
+        # Копируем capacitor.settings.gradle для интеграции в процесс сборки
+        if [ -f "../capacitor-app/android/capacitor.settings.gradle" ]; then
+          echo "Копируем capacitor.settings.gradle для интеграции в процесс сборки..."
+          cp ../capacitor-app/android/capacitor.settings.gradle android/
+          echo "✅ capacitor.settings.gradle успешно скопирован"
+          
+          # Добавляем включение настроек в build.gradle, если его еще нет
+          if [ -f "android/app/build.gradle" ]; then
+            if ! grep -q "apply from: '../capacitor.settings.gradle'" android/app/build.gradle; then
+              echo "Добавляем подключение capacitor.settings.gradle в build.gradle..."
+              sed -i '/apply plugin: "com.android.application"/a apply from: "../capacitor.settings.gradle"' android/app/build.gradle
+              echo "✅ capacitor.settings.gradle успешно подключен в build.gradle"
+            fi
+          fi
+        fi
+        
+        # Проверяем манифест на наличие разрешения после всех модификаций
+        if [ -f "android/app/src/main/AndroidManifest.xml" ]; then
+          echo "Проверяем манифест на наличие разрешения POST_NOTIFICATIONS..."
+          grep -i "POST_NOTIFICATIONS" android/app/src/main/AndroidManifest.xml || {
+            echo "⚠️ Разрешение POST_NOTIFICATIONS не найдено в манифесте! Добавляем принудительно...";
+            sed -i '/<manifest/a\\t<uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />' android/app/src/main/AndroidManifest.xml;
+          }
+        fi
+        
         # Проверяем версию Gradle в Wrapper
         echo "Текущая версия Gradle Wrapper:"
         cat android/gradle/wrapper/gradle-wrapper.properties
@@ -217,11 +250,28 @@ jobs:
           echo "Файл gradlew не найден, wrapper будет создан автоматически"
         fi
 
-    # 10. Сборка APK
+    # 10. Сборка APK с дополнительной проверкой разрешений
     - name: Build unsigned APK
       run: |
         cd capacitor-app/android
+        
+        # Проверяем и выводим содержимое манифеста перед сборкой
+        echo "Содержимое AndroidManifest.xml перед сборкой:"
+        cat app/src/main/AndroidManifest.xml
+        
+        # Проверяем наличие разрешения POST_NOTIFICATIONS перед сборкой
+        echo "Проверка наличия POST_NOTIFICATIONS в манифесте перед сборкой:"
+        grep -i "POST_NOTIFICATIONS" app/src/main/AndroidManifest.xml || {
+          echo "⚠️ Разрешение POST_NOTIFICATIONS не найдено в манифесте! Добавляем принудительно перед сборкой...";
+          sed -i '/<manifest/a\\t<uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />' app/src/main/AndroidManifest.xml;
+        }
+        
+        # Выполняем сборку
         ./gradlew assembleRelease --info
+        
+        # Проверяем наличие разрешения в собранном APK
+        echo "Проверка наличия POST_NOTIFICATIONS в собранном APK:"
+        find app/build/outputs/apk/release -name "*.apk" | xargs -I{} $ANDROID_HOME/build-tools/34.0.0/aapt dump permissions {} | grep -i POST_NOTIFICATIONS
 
     # 11. Подписываем APK
     - name: Decode keystore
