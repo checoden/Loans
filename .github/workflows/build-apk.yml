@@ -167,6 +167,11 @@ jobs:
         chmod +x ./force-patch-manifest.sh
         ./force-patch-manifest.sh
         
+        # Патчим build.gradle для включения скрипта добавления разрешений
+        echo "Патчим build.gradle для добавления скрипта мерджа разрешений..."
+        chmod +x ./patch-build-gradle.sh
+        ./patch-build-gradle.sh
+        
         # Проверяем версию Gradle в Wrapper
         echo "Текущая версия Gradle Wrapper:"
         cat android/gradle/wrapper/gradle-wrapper.properties
