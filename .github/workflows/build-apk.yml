@@ -23,6 +23,12 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '17'
+        
+    # 3.1 Очищаем кэш Gradle, чтобы предотвратить использование старой версии
+    - name: Clear Gradle cache
+      run: |
+        rm -rf /home/runner/.gradle || true
+        echo "Кэш Gradle очищен"
 
     # 4. Установка зависимостей
     - run: npm ci
@@ -144,9 +150,11 @@ jobs:
 
     # 8. Android SDK и Gradle setup
     - uses: android-actions/setup-android@v3
-    - uses: gradle/actions/setup-gradle@v3
+    - uses: gradle/gradle-build-action@v3
       with:
-        gradle-version: 8.0.2
+        gradle-home-cache-cleanup: true
+        gradle-version: 8.3
+        arguments: --no-daemon --stacktrace
 
     # 9. Настройка Gradle Wrapper
     - name: Setup correct Gradle Wrapper
@@ -154,16 +162,16 @@ jobs:
         cd capacitor-app/android
         
         # Убедимся, что разрешения выставлены
-        chmod +x ./gradlew
+        chmod +x ./gradlew || echo "Файл gradlew не найден, будет создан автоматически в процессе сборки"
         
         # Удаляем существующий wrapper и создаем заново
         rm -rf gradle/wrapper
         mkdir -p gradle/wrapper
         
-        # Создаем gradle-wrapper.properties с правильной версией
+        # Создаем gradle-wrapper.properties с Gradle 8.3
         echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
         echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
-        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.0.2-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
+        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.3-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
         echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
         echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
         
@@ -171,7 +179,7 @@ jobs:
         cat gradle/wrapper/gradle-wrapper.properties
         
         # Загружаем Gradle Wrapper напрямую
-        curl -s -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.0.2/gradle/wrapper/gradle-wrapper.jar
+        curl -s -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.3.0/gradle/wrapper/gradle-wrapper.jar
 
     # 10. Сборка APK
     - name: Build unsigned APK
