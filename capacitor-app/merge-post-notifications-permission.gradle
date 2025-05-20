@@ -1,0 +1,47 @@
+// Этот скрипт интегрируется в процесс сборки Android и добавляет разрешение POST_NOTIFICATIONS
+// в финальный AndroidManifest.xml
+
+android.applicationVariants.all { variant ->
+    variant.outputs.each { output ->
+        // Добавляем задачу, которая будет выполнена после мерджа манифестов, но до упаковки APK
+        def processManifestTask = tasks.findByName("process${variant.name.capitalize()}Manifest")
+        if (processManifestTask) {
+            def taskName = "addPostNotificationsTo${variant.name.capitalize()}Manifest"
+            tasks.register(taskName) {
+                doLast {
+                    // Путь к объединенному манифесту
+                    def mergedManifestFile = processManifestTask.mergedManifest.get().asFile
+                    
+                    // Проверяем, существует ли файл
+                    if (mergedManifestFile.exists()) {
+                        println "Добавляем разрешение POST_NOTIFICATIONS в объединенный манифест: ${mergedManifestFile.absolutePath}"
+                        
+                        def manifestContent = mergedManifestFile.text
+                        
+                        // Проверяем, содержит ли манифест уже разрешение POST_NOTIFICATIONS
+                        if (!manifestContent.contains("android.permission.POST_NOTIFICATIONS")) {
+                            // Добавляем разрешение перед первым тегом application
+                            def updatedContent = manifestContent.replaceFirst(
+                                /(<application[^>]*>)/,
+                                '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    $1'
+                            )
+                            
+                            // Записываем обновленный манифест
+                            mergedManifestFile.text = updatedContent
+                            println "✅ Разрешение POST_NOTIFICATIONS успешно добавлено в манифест"
+                        } else {
+                            println "✅ Разрешение POST_NOTIFICATIONS уже присутствует в манифесте"
+                        }
+                    } else {
+                        println "❌ Объединенный манифест не найден по пути: ${mergedManifestFile.absolutePath}"
+                    }
+                }
+            }
+            
+            // Устанавливаем зависимость, чтобы наша задача выполнялась после объединения манифестов
+            tasks.named("package${variant.name.capitalize()}").configure {
+                dependsOn(taskName)
+            }
+        }
+    }
+}

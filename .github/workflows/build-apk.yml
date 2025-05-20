@@ -152,10 +152,20 @@ jobs:
         echo "Синхронизация Android проекта..."
         npx cap sync android
         
+        # Копируем патч манифеста
+        echo "Копируем патч манифеста с POST_NOTIFICATIONS..."
+        mkdir -p android/app/src/main/res/xml
+        cp ../capacitor-app/android-patches/AndroidManifest.xml android/app/src/main/res/xml/notification_manifest.xml
+        
         # Добавляем разрешение POST_NOTIFICATIONS в AndroidManifest.xml после синхронизации
         echo "Запускаем скрипт добавления разрешения POST_NOTIFICATIONS..."
         chmod +x ./add-notification-permission.sh
         ./add-notification-permission.sh
+        
+        # Запускаем принудительное обновление всех манифестов
+        echo "Запускаем принудительный патчинг всех манифестов..."
+        chmod +x ./force-patch-manifest.sh
+        ./force-patch-manifest.sh
         
         # Проверяем версию Gradle в Wrapper
         echo "Текущая версия Gradle Wrapper:"
