@@ -17,12 +17,12 @@ jobs:
       with:
         node-version: '20'
 
-    # 3. Устанавливаем Java 17 (совместимую с Android)
-    - name: Set up JDK 17
+    # 3. Устанавливаем Java 21 (для совместимости с Capacitor 7.2.0)
+    - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '21'
         
     # 3.1 Очищаем кэш Gradle, чтобы предотвратить использование старой версии
     - name: Clear Gradle cache
