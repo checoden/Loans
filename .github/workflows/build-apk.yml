@@ -86,7 +86,7 @@ jobs:
           echo "Ошибка при добавлении Android платформы, пытаемся глубоко очистить проект"; 
           rm -rf android node_modules;
           npm install;
-          npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 @onesignal/onesignal-cordova-plugin@5.2.13;
+          npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 onesignal-cordova-plugin@5.2.13;
           npx cap add android; 
         }
         
