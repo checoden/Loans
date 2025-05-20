@@ -133,6 +133,13 @@ jobs:
           echo "Push-уведомления могут не работать без этого файла!"
         fi
         
+        # Вручную копируем шаблон AndroidManifest с POST_NOTIFICATIONS
+        if [ -f "../capacitor-app/android/app/src/main/AndroidManifest-template.xml" ]; then
+          echo "Копируем AndroidManifest-template.xml с разрешением POST_NOTIFICATIONS..."
+          cp ../capacitor-app/android/app/src/main/AndroidManifest-template.xml android/app/src/main/AndroidManifest.xml
+          echo "✅ AndroidManifest обновлен с разрешением POST_NOTIFICATIONS"
+        fi
+        
         cd ..
         
         # Настраиваем канал уведомлений ПЕРЕД синхронизацией Android

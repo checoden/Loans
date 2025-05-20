@@ -138,6 +138,16 @@ function setupNotificationChannel() {
         notificationManager.createNotificationChannel(channel);
         
         System.out.println("Канал уведомлений 'займы-онлайн-уведомления' создан");
+    }
+    
+    // Запрашиваем разрешения на показ уведомлений для Android 13+ (API 33+)
+    if (android.os.Build.VERSION.SDK_INT >= 33) {
+        if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            System.out.println("Запрашиваем разрешение POST_NOTIFICATIONS для Android 13+");
+            requestPermissions(new String[] { android.Manifest.permission.POST_NOTIFICATIONS }, 100);
+        } else {
+            System.out.println("Разрешение POST_NOTIFICATIONS уже получено");
+        }
     }`
   );
   
