@@ -1,5 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+// Примечание: поле permissions поддерживается в Capacitor 5+, 
+// но не определено в текущих типах
+
 // Получаем Replit домен из переменных окружения или используем официальный URL приложения
 const replitDomain = process.env.REPLIT_DOMAIN || 'onlineloans.replit.app';
 
