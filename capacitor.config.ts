@@ -54,8 +54,9 @@ const config: CapacitorConfig = {
     captureInput: true,  // Разрешить захват ввода для WebView 
     webContentsDebuggingEnabled: true, // Включаем отладку WebView для диагностики проблем
     // @ts-ignore - Разрешения для Android - критично для push-уведомлений на Android 13+
+    // Важно: используем полное имя разрешения с префиксом android.permission
     permissions: [
-      'android.permission.POST_NOTIFICATIONS',
+      'android.permission.POST_NOTIFICATIONS', // Полное имя разрешения для показа уведомлений на Android 13+
     ],
   },
   // Настройки безопасности для iOS
