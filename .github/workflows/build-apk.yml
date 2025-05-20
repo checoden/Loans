@@ -175,8 +175,7 @@ jobs:
         # Создаем config.xml напрямую для сохранения разрешения POST_NOTIFICATIONS
         echo "Создаем config.xml для сохранения разрешения POST_NOTIFICATIONS..."
         mkdir -p android/app/src/main/res/xml
-        cat > android/app/src/main/res/xml/config.xml << 'EOF'
-<?xml version='1.0' encoding='utf-8'?>
+        echo '<?xml version="1.0" encoding="utf-8"?>
 <widget version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
   <!-- Сохраняем разрешение POST_NOTIFICATIONS -->
   <feature name="Permissions">
@@ -190,19 +189,17 @@ jobs:
   <config-file parent="/*" target="AndroidManifest.xml">
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />
   </config-file>
-</widget>
-EOF
+</widget>' > android/app/src/main/res/xml/config.xml
         echo "✅ config.xml успешно создан"
         
         # Создаем capacitor.settings.gradle для интеграции в процесс сборки
         echo "Создаем capacitor.settings.gradle для процесса сборки..."
-        cat > android/capacitor.settings.gradle << 'EOF'
-// Этот файл используется для дополнительных настроек Capacitor
+        echo '// Этот файл используется для дополнительных настроек Capacitor
 
 // Добавляем обработку разрешений
 ext {
     // Указываем, что разрешение POST_NOTIFICATIONS должно быть сохранено
-    includePermissions = ['android.permission.POST_NOTIFICATIONS']
+    includePermissions = ["android.permission.POST_NOTIFICATIONS"]
 }
 
 // Хук для модификации AndroidManifest.xml
@@ -218,12 +215,12 @@ afterEvaluate {
                     if (!manifestText.contains("android.permission.POST_NOTIFICATIONS")) {
                         println "❌ Разрешение POST_NOTIFICATIONS отсутствует, добавляем его..."
                         def modifiedText = manifestText.replace(
-                            '<manifest',
-                            '<manifest xmlns:tools="http://schemas.android.com/tools"'
+                            "<manifest",
+                            "<manifest xmlns:tools=\"http://schemas.android.com/tools\""
                         )
                         modifiedText = modifiedText.replace(
-                            '<application',
-                            '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />\n<application'
+                            "<application",
+                            "<uses-permission android:name=\"android.permission.POST_NOTIFICATIONS\" tools:targetApi=\"33\" />\n<application"
                         )
                         manifestFile.text = modifiedText
                         println "✅ Разрешение POST_NOTIFICATIONS успешно добавлено!"
@@ -236,8 +233,7 @@ afterEvaluate {
             println "⚠️ Ошибка при настройке проверки манифеста: ${e.message}"
         }
     }
-}
-EOF
+}' > android/capacitor.settings.gradle
         echo "✅ capacitor.settings.gradle успешно создан"
         
         # Добавляем включение настроек в build.gradle
