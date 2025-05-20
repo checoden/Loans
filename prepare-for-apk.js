@@ -144,11 +144,11 @@ async function prepareForApk() {
         },
         dependencies: {
           "@capacitor/android": "^7.2.0",
-          "@capacitor/core": "^5.7.8",
+          "@capacitor/core": "^7.2.0",
           "@onesignal/onesignal-cordova-plugin": "^5.2.13"
         },
         devDependencies: {
-          "@capacitor/cli": "^5.7.8"
+          "@capacitor/cli": "^7.2.0"
         }
       };
       
