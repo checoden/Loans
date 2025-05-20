@@ -28,7 +28,8 @@ jobs:
     - name: Clear Gradle cache
       run: |
         rm -rf /home/runner/.gradle || true
-        echo "Кэш Gradle очищен"
+        rm -rf ~/.gradle/wrapper/dists || true
+        echo "Кэш Gradle полностью очищен"
 
     # 4. Установка зависимостей
     - run: npm ci
