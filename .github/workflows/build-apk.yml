@@ -30,6 +30,10 @@ jobs:
     # 5. Подготовка проекта и работа с Android
     - name: Prepare Capacitor project
       run: |
+        # Устанавливаем переменные окружения для OneSignal
+        echo "VITE_ONESIGNAL_APP_ID=$ONESIGNAL_APP_ID" >> $GITHUB_ENV
+        echo "VITE_ONESIGNAL_REST_API_KEY=$ONESIGNAL_REST_API_KEY" >> $GITHUB_ENV
+        
         # Подготовка проекта
         node prepare-for-apk.js
         
@@ -39,6 +43,9 @@ jobs:
         # Полностью очищаем проект перед добавлением платформы
         echo "Удаляем существующую Android платформу, если она есть"
         rm -rf android
+      env:
+        ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
+        ONESIGNAL_REST_API_KEY: ${{ secrets.ONESIGNAL_REST_API_KEY }}
         
         # Полностью очищаем package.json от Capacitor зависимостей
         echo "Очищаем package.json от всех Capacitor зависимостей"
