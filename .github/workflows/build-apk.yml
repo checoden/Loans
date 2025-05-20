@@ -154,7 +154,7 @@ jobs:
     - uses: gradle/gradle-build-action@v3
       with:
         gradle-home-cache-cleanup: true
-        gradle-version: 8.3
+        gradle-version: 8.11
         arguments: --no-daemon --stacktrace
 
     # 9. Настройка Gradle Wrapper
@@ -169,18 +169,26 @@ jobs:
         rm -rf gradle/wrapper
         mkdir -p gradle/wrapper
         
-        # Создаем gradle-wrapper.properties с Gradle 8.3
+        # Создаем gradle-wrapper.properties с Gradle 8.11
         echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
         echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
-        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.3-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
+        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.11-all.zip" >> gradle/wrapper/gradle-wrapper.properties
         echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
         echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
         
         # Проверяем, что файл обновлен
         cat gradle/wrapper/gradle-wrapper.properties
         
-        # Загружаем Gradle Wrapper напрямую
-        curl -s -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.3.0/gradle/wrapper/gradle-wrapper.jar
+        # Загружаем Gradle Wrapper напрямую - используем JAR из актуальной версии Gradle
+        curl -s -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.11.0/gradle/wrapper/gradle-wrapper.jar
+        
+        # Выполняем команду обновления wrapper, если gradlew доступен
+        if [ -f "./gradlew" ]; then
+          chmod +x ./gradlew
+          ./gradlew wrapper --gradle-version 8.11 --distribution-type all
+        else
+          echo "Файл gradlew не найден, wrapper будет создан автоматически"
+        fi
 
     # 10. Сборка APK
     - name: Build unsigned APK
