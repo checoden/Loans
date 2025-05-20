@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>Ошибка подключения | Займы онлайн</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background-color: #f5f7fa;
+      color: #333;
+      text-align: center;
+    }
+    .container {
+      padding: 2rem;
+      max-width: 90%;
+      width: 400px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    h1 {
+      color: #4F46E5;
+      margin-top: 0;
+      font-size: 1.5rem;
+    }
+    p {
+      margin: 1rem 0;
+      line-height: 1.5;
+    }
+    .icon {
+      color: #4F46E5;
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    .button {
+      display: inline-block;
+      background-color: #4F46E5;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      margin-top: 1rem;
+      border: none;
+      cursor: pointer;
+    }
+    .details {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+      font-size: 0.85rem;
+      color: #666;
+    }
+    #errorDetails {
+      text-align: left;
+      background-color: #f8f8f8;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      overflow-x: auto;
+      display: none;
+    }
+    .show-details {
+      color: #4F46E5;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 0.85rem;
+      border: none;
+      background: none;
+      margin-top: 0.5rem;
+    }
+  </style>
+  
+  <!-- Environment script -->
+  <script>
+    // Встраиваем env.js напрямую в HTML, чтобы избежать проблем с загрузкой в мобильном приложении
+    (function() {
+      // Определение базового URL для API и приложения
+      function getBaseUrl() {
+        // Обнаруживаем режим работы
+        const isProd = window.location.hostname.includes('.replit.app') || 
+                      window.location.hostname.includes('.repl.co');
+        
+        // В production используем полный URL
+        if (isProd) {
+          return window.location.origin;
+        }
+        
+        // В режиме разработки используем относительные пути
+        return '';
+      }
+      
+      // Определяем url replit для capacitor
+      function getReplitUrl() {
+        // Если мы уже на домене Replit, используем текущий домен
+        if (window.location.hostname.includes('.replit.app') || 
+            window.location.hostname.includes('.repl.co')) {
+          return window.location.origin;
+        }
+        
+        // В режиме разработки пытаемся определить Replit домен
+        return 'https://onlineloans.replit.app';
+      }
+      
+      // Определение типа устройства
+      function detectDevice() {
+        // Обнаруживаем тип устройства
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        
+        // Проверяем наличие Capacitor
+        const isCapacitor = 
+          typeof window.Capacitor !== 'undefined' || 
+          userAgent.indexOf('MicroloansApp') !== -1;
+          
+        // Проверяем, запущено ли приложение из Capacitor
+        if (isCapacitor) {
+          return 'capacitor';
+        }
+        
+        // Проверяем мобильные устройства
+        const isMobile = /android|webos|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent);
+        return isMobile ? 'mobile' : 'desktop';
+      }
+      
+      // Экспортируем функции и параметры
+      window.APP_ENV = {
+        getBaseUrl: getBaseUrl,
+        baseUrl: getBaseUrl(),
+        replitUrl: getReplitUrl(),
+        isProd: window.location.hostname.includes('.replit.app') || 
+                window.location.hostname.includes('.repl.co'),
+        deviceType: detectDevice()
+      };
+      console.log('Environment initialized:', window.APP_ENV);
+    })();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">⚠️</div>
+    <h1>Ошибка подключения</h1>
+    <p>Не удалось подключиться к серверу. Это может быть вызвано проблемами с интернет-соединением или неполадками на сервере.</p>
+    
+    <div id="status"></div>
+    
+    <button class="button" onclick="retryConnection()">Повторить попытку</button>
+    
+    <div class="details">
+      <p>Технические детали:</p>
+      <button class="show-details" onclick="toggleDetails()">Показать подробности</button>
+      <div id="errorDetails"></div>
+    </div>
+  </div>
+
+  <script>
+    // Попытка определить, работает ли сервер
+    async function checkServerStatus() {
+      const statusElement = document.getElementById('status');
+      const errorDetails = document.getElementById('errorDetails');
+      
+      try {
+        // Определяем baseUrl из env.js если доступен
+        const baseUrl = window.APP_ENV ? window.APP_ENV.baseUrl : '';
+        
+        // Пытаемся загрузить данные с сервера
+        const response = await fetch(`${baseUrl}/api/loans`);
+        
+        if (response.ok) {
+          statusElement.innerHTML = '<p style="color: green;">✓ Сервер доступен! Перезагрузка...</p>';
+          // Если сервер доступен, перезагружаем главную страницу
+          setTimeout(() => {
+            window.location.href = baseUrl || '/';
+          }, 3000);
+        } else {
+          statusElement.innerHTML = '<p style="color: orange;">⚠️ Сервер отвечает, но вернул ошибку. Попробуйте позже.</p>';
+          errorDetails.textContent = `Код ответа: ${response.status} - ${response.statusText}`;
+        }
+      } catch (error) {
+        statusElement.innerHTML = '<p style="color: red;">✗ Сервер недоступен!</p>';
+        errorDetails.textContent = `Ошибка: ${error.message}\n\nURL: ${window.location.href}\n\nAPP_ENV: ${JSON.stringify(window.APP_ENV || "Not defined", null, 2)}`;
+      }
+    }
+    
+    // Повторить попытку подключения
+    function retryConnection() {
+      const statusElement = document.getElementById('status');
+      statusElement.innerHTML = '<p style="color: blue;">⟳ Проверка соединения...</p>';
+      checkServerStatus();
+    }
+    
+    // Показать/скрыть технические детали
+    function toggleDetails() {
+      const details = document.getElementById('errorDetails');
+      if (details.style.display === 'none' || !details.style.display) {
+        details.style.display = 'block';
+        document.querySelector('.show-details').textContent = 'Скрыть подробности';
+      } else {
+        details.style.display = 'none';
+        document.querySelector('.show-details').textContent = 'Показать подробности';
+      }
+    }
+    
+    // Проверяем статус сервера при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+      checkServerStatus();
+    });
+  </script>
+</body>
+</html>

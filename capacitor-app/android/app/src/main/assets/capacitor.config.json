@@ -1,0 +1,26 @@
+{
+	"appId": "ru.checoden.onlineloans",
+	"appName": "Займы онлайн",
+	"webDir": "www",
+	"bundledWebRuntime": false,
+	"server": {
+		"url": "https://onlineloans.replit.app",
+		"cleartext": true,
+		"androidScheme": "https",
+		"allowNavigation": [
+			"*"
+		],
+		"errorPath": "/error.html"
+	},
+	"plugins": {
+		"OneSignal": {
+			"appId": "a3060406-47e5-4331-91b3-296c3cbdcb86",
+			"notificationURLOpenDeeplink": true
+		}
+	},
+	"android": {
+		"allowMixedContent": true,
+		"captureInput": true,
+		"webContentsDebuggingEnabled": true
+	}
+}
