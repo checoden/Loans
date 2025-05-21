@@ -3,6 +3,8 @@ name: Build APK
 on:
   push:
     tags: ['v*']
+    branches-ignore:
+      - '**'
 
 jobs:
   build:

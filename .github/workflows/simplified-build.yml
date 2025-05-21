@@ -1,10 +1,9 @@
 name: Build APK Simplified
 
 on:
+  workflow_dispatch:
   push:
-    tags: ['v*']
-    branches-ignore:
-      - '**'
+    tags: ['manual-build-only']
 
 jobs:
   build:
