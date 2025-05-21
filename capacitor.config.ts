@@ -1,8 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
-// Примечание: поле permissions поддерживается в Capacitor 5+, 
-// но не определено в текущих типах
-
 // Получаем Replit домен из переменных окружения или используем официальный URL приложения
 const replitDomain = process.env.REPLIT_DOMAIN || 'onlineloans.replit.app';
 
@@ -52,12 +49,7 @@ const config: CapacitorConfig = {
     // Дополнительные настройки безопасности и отладки
     allowMixedContent: true, // Временно разрешаем смешанный контент для отладки
     captureInput: true,  // Разрешить захват ввода для WebView 
-    webContentsDebuggingEnabled: true, // Включаем отладку WebView для диагностики проблем
-    // @ts-ignore - Разрешения для Android - критично для push-уведомлений на Android 13+
-    // Важно: используем полное имя разрешения с префиксом android.permission
-    permissions: [
-      'android.permission.POST_NOTIFICATIONS', // Полное имя разрешения для показа уведомлений на Android 13+
-    ],
+    webContentsDebuggingEnabled: true // Включаем отладку WebView для диагностики проблем
   },
   // Настройки безопасности для iOS
   ios: {

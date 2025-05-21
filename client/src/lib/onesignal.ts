@@ -196,25 +196,6 @@ function initializeMobileOneSignal(platform: 'android' | 'ios') {
     
     // Не требуем согласия на обработку данных для работы уведомлений
     window.plugins.OneSignal.setRequiresUserPrivacyConsent(false);
-    
-    // ВАЖНО: Дополнительно гарантируем запрос разрешений для Android 13+
-    // Делаем запрос с небольшой задержкой после полной инициализации OneSignal
-    setTimeout(() => {
-      try {
-        if (platform === 'android' && window.plugins && window.plugins.OneSignal && window.plugins.OneSignal.Notifications) {
-          console.log("⚠️ ЯВНО вызываем requestPermission для гарантии показа диалога разрешений на Android 13+");
-          window.plugins.OneSignal.Notifications.requestPermission(true)
-            .then((accepted: boolean) => {
-              console.log("✅ Запрос разрешения на показ уведомлений выполнен. Пользователь принял:", accepted);
-            })
-            .catch((error: any) => {
-              console.error("❌ Ошибка при запросе разрешения:", error);
-            });
-        }
-      } catch (e) {
-        console.warn("❌ Не удалось выполнить дополнительный запрос разрешений:", e);
-      }
-    }, 2000); // Задержка 2 секунды для стабильности
   } else {
     console.error("OneSignal plugin not available in mobile environment");
   }
