@@ -33,10 +33,23 @@ jobs:
         # Подготовка проекта через скрипт
         node prepare-for-apk.js
         cd capacitor-app
+        
+        # Установка зависимостей
         npm install
+        
+        # Гарантированное удаление предыдущей Android платформы
         rm -rf android
-        npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0
-        npx cap add android || npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 && npx cap add android
+        
+        # Установка правильных версий Capacitor
+        npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 onesignal-cordova-plugin@5.2.13
+        
+        # Добавление Android платформы с дополнительной проверкой
+        echo "Добавляем Android платформу..."
+        if [ -d "android" ]; then
+          echo "Директория android все еще существует, удаляем принудительно"
+          rm -rf android
+        fi
+        npx cap add android
 
         # Создаем или модифицируем файл src/main/res/AndroidManifest.xml
         mkdir -p android/app/src/main
