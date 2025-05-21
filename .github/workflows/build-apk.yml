@@ -3,8 +3,6 @@ name: Build APK
 on:
   push:
     tags: ['v*']
-    branches-ignore:
-      - '**'
 
 jobs:
   build:
@@ -19,19 +17,12 @@ jobs:
       with:
         node-version: '20'
 
-    # 3. Устанавливаем Java 21 (для совместимости с Capacitor 7.2.0)
+    # 3. Устанавливаем Java 21 
     - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '21'
-        
-    # 3.1 Очищаем кэш Gradle, чтобы предотвратить использование старой версии
-    - name: Clear Gradle cache
-      run: |
-        rm -rf /home/runner/.gradle || true
-        rm -rf ~/.gradle/wrapper/dists || true
-        echo "Кэш Gradle полностью очищен"
 
     # 4. Установка зависимостей
     - run: npm ci
@@ -41,174 +32,42 @@ jobs:
       run: |
         echo "VITE_ONESIGNAL_APP_ID=${{ secrets.ONESIGNAL_APP_ID }}" >> $GITHUB_ENV
         echo "VITE_ONESIGNAL_REST_API_KEY=${{ secrets.ONESIGNAL_REST_API_KEY }}" >> $GITHUB_ENV
-        echo "Переменные окружения для OneSignal установлены"
 
     # 6. Подготовка проекта Capacitor
     - name: Prepare Capacitor project
       run: |
-        # Подготовка проекта - создает папку capacitor-app с нужными файлами
+        # Подготовка проекта
         node prepare-for-apk.js
         
         cd capacitor-app
         
-        # Очищаем и устанавливаем зависимости для Capacitor
-        echo "Установка зависимостей Capacitor..."
+        # Установка зависимостей
         npm install
         
-        # Очищаем проект перед добавлением платформы
-        echo "Удаляем существующую Android платформу, если она есть"
+        # Удаляем существующую Android платформу
         rm -rf android
         
-        # Очищаем package.json от существующих Capacitor зависимостей
-        echo "Очищаем package.json от Capacitor зависимостей"
-        jq 'del(.dependencies."@capacitor/android") | del(.dependencies."@capacitor/core")' package.json > package.json.tmp
-        mv package.json.tmp package.json
-        
-        # Устанавливаем базовые зависимости
-        npm install
-        
-        # Создаём директорию и файлы для Gradle Wrapper
-        mkdir -p android/gradle/wrapper
-        
-        # Создаём gradle-wrapper.properties с Gradle 8.0.2
-        echo "distributionBase=GRADLE_USER_HOME" > android/gradle/wrapper/gradle-wrapper.properties
-        echo "distributionPath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
-        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.0.2-bin.zip" >> android/gradle/wrapper/gradle-wrapper.properties
-        echo "zipStoreBase=GRADLE_USER_HOME" >> android/gradle/wrapper/gradle-wrapper.properties
-        echo "zipStorePath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
-        
-        # Загружаем Gradle Wrapper JAR напрямую
-        curl -s -o android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.0.2/gradle/wrapper/gradle-wrapper.jar
-        
-        # Устанавливаем новые версии Capacitor
-        echo "Установка актуальной версии Capacitor"
-        npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0
-
-    # 7. Добавление Android платформы
-    - name: Add Android platform
-      run: |
-        cd capacitor-app
+        # Устанавливаем Capacitor и OneSignal
+        npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 onesignal-cordova-plugin@5.2.13
         
         # Добавляем Android платформу
-        echo "Добавляем Android платформу..."
-        npx cap add android || { 
-          echo "Ошибка при добавлении Android платформы, пытаемся глубоко очистить проект"; 
-          rm -rf android node_modules;
-          npm install;
-          npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 onesignal-cordova-plugin@5.2.13;
-          npx cap add android; 
-        }
+        npx cap add android
         
-        # Копируем google-services.json в нужные места
-        if [ -f "../google-services.json" ]; then
-          echo "Копируем google-services.json из корня проекта в директории Android"
-          
-          # Создаем директории, если их нет
-          mkdir -p android/app
-          
-          # Копируем файл в директорию android/app для Firebase плагина
-          cp ../google-services.json android/app/google-services.json
-          
-          # Копируем в корень android директории для резервного копирования
-          cp ../google-services.json android/google-services.json
-          
-          echo "Файл скопирован в необходимые директории Android"
-          echo "Проверяем наличие файла в android/app:"
-          ls -la android/app/google-services.json || echo "ФАЙЛ НЕ НАЙДЕН В android/app!"
-        elif [ -f "google-services.json" ]; then
-          echo "Копируем google-services.json из capacitor-app в директории Android"
-          
-          # Создаем директории, если их нет
-          mkdir -p android/app
-          
-          # Копируем файл в директорию android/app для Firebase плагина
-          cp google-services.json android/app/google-services.json
-          
-          # Копируем в корень android директории для резервного копирования
-          cp google-services.json android/google-services.json
-          
-          echo "Файл скопирован в необходимые директории Android"
-          echo "Проверяем наличие файла в android/app:"
-          ls -la android/app/google-services.json || echo "ФАЙЛ НЕ НАЙДЕН В android/app!"
-        else
-          echo "ВНИМАНИЕ: google-services.json не найден ни в корне проекта, ни в capacitor-app!"
-          echo "Push-уведомления могут не работать без этого файла!"
-        fi
-        
-        # Вручную копируем шаблон AndroidManifest с POST_NOTIFICATIONS
-        if [ -f "../capacitor-app/android/app/src/main/AndroidManifest-template.xml" ]; then
-          echo "Копируем AndroidManifest-template.xml с разрешением POST_NOTIFICATIONS..."
-          cp ../capacitor-app/android/app/src/main/AndroidManifest-template.xml android/app/src/main/AndroidManifest.xml
-          echo "✅ AndroidManifest обновлен с разрешением POST_NOTIFICATIONS"
-        fi
-        
-        cd ..
-        
-        # Настраиваем канал уведомлений ПЕРЕД синхронизацией Android
-        echo "Настраиваем канал уведомлений для Android..."
-        node setup-android-notification-channel.js
-        
-        cd capacitor-app
-        
-        # Синхронизируем проект с Android ПОСЛЕ настройки канала уведомлений
-        echo "Синхронизация Android проекта..."
-        npx cap sync android
-        
-        # Копируем патч манифеста
-        echo "Копируем патч манифеста с POST_NOTIFICATIONS..."
-        mkdir -p android/app/src/main/res/xml
-        cp ../capacitor-app/android-patches/AndroidManifest.xml android/app/src/main/res/xml/notification_manifest.xml
-        
-        # Добавляем разрешение POST_NOTIFICATIONS в AndroidManifest.xml после синхронизации
-        echo "Запускаем скрипт добавления разрешения POST_NOTIFICATIONS..."
-        chmod +x ./add-notification-permission.sh
-        ./add-notification-permission.sh
-        
-        # Запускаем принудительное обновление всех манифестов
-        echo "Запускаем принудительный патчинг всех манифестов..."
-        chmod +x ./force-patch-manifest.sh
-        ./force-patch-manifest.sh
-        
-        # Патчим build.gradle для включения скрипта добавления разрешений
-        echo "Патчим build.gradle для добавления скрипта мерджа разрешений..."
-        chmod +x ./patch-build-gradle.sh
-        ./patch-build-gradle.sh
-        
-        # Создаем config.xml напрямую для сохранения разрешения POST_NOTIFICATIONS
-        echo "Создаем config.xml для сохранения разрешения POST_NOTIFICATIONS..."
-        mkdir -p android/app/src/main/res/xml
-        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>" > android/app/src/main/res/xml/config.xml
-        echo "<widget version=\"1.0.0\" xmlns=\"http://www.w3.org/ns/widgets\" xmlns:cdv=\"http://cordova.apache.org/ns/1.0\">" >> android/app/src/main/res/xml/config.xml
-        echo "  <feature name=\"Permissions\">" >> android/app/src/main/res/xml/config.xml
-        echo "    <param name=\"android-package\" value=\"com.android.plugins.Permissions\"/>" >> android/app/src/main/res/xml/config.xml
-        echo "  </feature>" >> android/app/src/main/res/xml/config.xml
-        echo "  <preference name=\"AndroidXEnabled\" value=\"true\" />" >> android/app/src/main/res/xml/config.xml
-        echo "  <preference name=\"GradlePluginGoogleServicesEnabled\" value=\"true\" />" >> android/app/src/main/res/xml/config.xml
-        echo "  <config-file parent=\"/*\" target=\"AndroidManifest.xml\">" >> android/app/src/main/res/xml/config.xml
-        echo "    <uses-permission android:name=\"android.permission.POST_NOTIFICATIONS\" tools:targetApi=\"33\" />" >> android/app/src/main/res/xml/config.xml
-        echo "  </config-file>" >> android/app/src/main/res/xml/config.xml
-        echo "</widget>" >> android/app/src/main/res/xml/config.xml
-        echo "✅ config.xml успешно создан"
-        
-        # Создаем AndroidManifest.xml с нужным разрешением
-        echo "Создаем AndroidManifest.xml с разрешением POST_NOTIFICATIONS..."
-        
-        # Убеждаемся, что директория существует
+        # Создаем AndroidManifest.xml с разрешением POST_NOTIFICATIONS
         mkdir -p android/app/src/main
-        
-        # Создаем файл манифеста с разрешением POST_NOTIFICATIONS
         echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>" > android/app/src/main/AndroidManifest.xml
         echo "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"" >> android/app/src/main/AndroidManifest.xml
-        echo "    xmlns:tools=\"http://schemas.android.com/tools\">" >> android/app/src/main/AndroidManifest.xml
+        echo "    xmlns:tools=\"http://schemas.android.com/tools\"" >> android/app/src/main/AndroidManifest.xml
+        echo "    package=\"ru.checoden.onlineloans\">" >> android/app/src/main/AndroidManifest.xml
         echo "" >> android/app/src/main/AndroidManifest.xml
-        echo "    <!-- Разрешения для Android -->" >> android/app/src/main/AndroidManifest.xml
+        echo "    <!-- Базовые разрешения -->" >> android/app/src/main/AndroidManifest.xml
         echo "    <uses-permission android:name=\"android.permission.INTERNET\" />" >> android/app/src/main/AndroidManifest.xml
         echo "    <uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />" >> android/app/src/main/AndroidManifest.xml
         echo "" >> android/app/src/main/AndroidManifest.xml
-        echo "    <!-- Разрешение для уведомлений на Android 13+ -->" >> android/app/src/main/AndroidManifest.xml
+        echo "    <!-- Разрешение для показа уведомлений на Android 13+ (API 33+) -->" >> android/app/src/main/AndroidManifest.xml
         echo "    <uses-permission android:name=\"android.permission.POST_NOTIFICATIONS\" tools:targetApi=\"33\" />" >> android/app/src/main/AndroidManifest.xml
         echo "" >> android/app/src/main/AndroidManifest.xml
-        echo "    <!-- Дополнительные разрешения для уведомлений -->" >> android/app/src/main/AndroidManifest.xml
+        echo "    <!-- Разрешения для Firebase и OneSignal -->" >> android/app/src/main/AndroidManifest.xml
         echo "    <uses-permission android:name=\"android.permission.WAKE_LOCK\" />" >> android/app/src/main/AndroidManifest.xml
         echo "    <uses-permission android:name=\"android.permission.VIBRATE\" />" >> android/app/src/main/AndroidManifest.xml
         echo "    <uses-permission android:name=\"android.permission.RECEIVE_BOOT_COMPLETED\" />" >> android/app/src/main/AndroidManifest.xml
@@ -216,104 +75,50 @@ jobs:
         echo "    <application></application>" >> android/app/src/main/AndroidManifest.xml
         echo "</manifest>" >> android/app/src/main/AndroidManifest.xml
         
-        echo "✅ AndroidManifest.xml с разрешением POST_NOTIFICATIONS создан"
-        
-        # Проверяем манифест на наличие разрешения после всех модификаций
-        if [ -f "android/app/src/main/AndroidManifest.xml" ]; then
-          echo "Проверяем манифест на наличие разрешения POST_NOTIFICATIONS..."
-          grep -i "POST_NOTIFICATIONS" android/app/src/main/AndroidManifest.xml || {
-            echo "⚠️ Разрешение POST_NOTIFICATIONS не найдено в манифесте! Добавляем принудительно...";
-            sed -i '/<manifest/a\\t<uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />' android/app/src/main/AndroidManifest.xml;
-          }
+        # Копируем google-services.json
+        if [ -f "../google-services.json" ]; then
+          cp ../google-services.json android/app/google-services.json
         fi
         
-        # Проверяем версию Gradle в Wrapper
-        echo "Текущая версия Gradle Wrapper:"
-        cat android/gradle/wrapper/gradle-wrapper.properties
+        # Настройка канала уведомлений
+        node ../setup-android-notification-channel.js
+        
+        # Синхронизируем проект
+        npx cap sync android
+        
+        # Выводим финальный манифест для проверки
+        echo "Проверяем финальный манифест:"
+        cat android/app/src/main/AndroidManifest.xml
 
-    # 8. Android SDK и Gradle setup
+    # 7. Android SDK и Gradle setup
     - uses: android-actions/setup-android@v3
     - uses: gradle/gradle-build-action@v3
       with:
-        gradle-home-cache-cleanup: true
         gradle-version: 8.11
-        arguments: --no-daemon --stacktrace
 
-    # 9. Настройка Gradle Wrapper
-    - name: Setup correct Gradle Wrapper
-      run: |
-        cd capacitor-app/android
-        
-        # Убедимся, что разрешения выставлены
-        chmod +x ./gradlew || echo "Файл gradlew не найден, будет создан автоматически в процессе сборки"
-        
-        # Удаляем существующий wrapper и создаем заново
-        rm -rf gradle/wrapper
-        mkdir -p gradle/wrapper
-        
-        # Создаем gradle-wrapper.properties с Gradle 8.11
-        echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
-        echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
-        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.11-all.zip" >> gradle/wrapper/gradle-wrapper.properties
-        echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
-        echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
-        
-        # Проверяем, что файл обновлен
-        cat gradle/wrapper/gradle-wrapper.properties
-        
-        # Загружаем Gradle Wrapper напрямую - используем JAR из актуальной версии Gradle
-        curl -s -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.11.0/gradle/wrapper/gradle-wrapper.jar
-        
-        # Выполняем команду обновления wrapper, если gradlew доступен
-        if [ -f "./gradlew" ]; then
-          chmod +x ./gradlew
-          ./gradlew wrapper --gradle-version 8.11 --distribution-type all
-        else
-          echo "Файл gradlew не найден, wrapper будет создан автоматически"
-        fi
-
-    # 10. Сборка APK с дополнительной проверкой разрешений
+    # 8. Сборка APK
     - name: Build unsigned APK
       run: |
         cd capacitor-app/android
         
-        # Проверяем и выводим содержимое манифеста перед сборкой
-        echo "Содержимое AndroidManifest.xml перед сборкой:"
+        # Выводим содержимое манифеста перед сборкой
+        echo "Содержимое AndroidManifest.xml:"
         cat app/src/main/AndroidManifest.xml
         
-        # Проверяем наличие разрешения POST_NOTIFICATIONS перед сборкой
-        echo "Проверка наличия POST_NOTIFICATIONS в манифесте перед сборкой:"
-        grep -i "POST_NOTIFICATIONS" app/src/main/AndroidManifest.xml || {
-          echo "⚠️ Разрешение POST_NOTIFICATIONS не найдено в манифесте! Добавляем принудительно перед сборкой...";
-          sed -i '/<manifest/a\\t<uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />' app/src/main/AndroidManifest.xml;
-        }
-        
-        # Выполняем сборку
-        ./gradlew assembleRelease --info
-        
-        # Проверяем наличие разрешения в собранном APK
-        echo "Проверка наличия POST_NOTIFICATIONS в собранном APK:"
-        find app/build/outputs/apk/release -name "*.apk" | xargs -I{} $ANDROID_HOME/build-tools/34.0.0/aapt dump permissions {} | grep -i POST_NOTIFICATIONS
+        # Сборка APK
+        ./gradlew assembleRelease --stacktrace
 
-    # 11. Подписываем APK
-    - name: Decode keystore
-      run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > keystore.jks
-      
-    # 11.1 Показываем SHA1 отпечаток сертификата (полезно для Firebase)
-    - name: Display certificate fingerprint
-      run: |
-        echo "Отпечаток сертификата (SHA1) для Firebase:"
-        keytool -list -v -keystore keystore.jks -alias "${{ secrets.KEY_ALIAS }}" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" | grep SHA1
-
+    # 9. Подписываем APK
     - name: Sign APK
       run: |
-        # Находим APK
+        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > keystore.jks
+        
+        # Находим собранный APK
         UNSIGNED=$(find capacitor-app/android/app/build/outputs/apk/release -name '*release-unsigned.apk' | head -n 1)
-        echo "Unsigned APK: $UNSIGNED"
         
         if [ -z "$UNSIGNED" ]; then
-          echo "APK file not found! Checking build directory..."
-          find capacitor-app/android/app/build -type f -name "*.apk" || echo "No APK files found!"
+          echo "APK файл не найден! Проверяем директории сборки..."
+          find capacitor-app/android/app/build -type f -name "*.apk" || echo "APK файлов не найдено!"
           exit 1
         fi
         
@@ -329,16 +134,20 @@ jobs:
           --out Loans-${{ github.ref_name }}.apk \
           app-unsigned.apk
           
-        # Проверяем
+        # Проверяем подпись
         $APKSIGNER verify --verbose Loans-${{ github.ref_name }}.apk
+        
+        # Проверяем наличие разрешения POST_NOTIFICATIONS
+        echo "Проверка наличия разрешения POST_NOTIFICATIONS в APK:"
+        $ANDROID_HOME/build-tools/34.0.0/aapt dump permissions Loans-${{ github.ref_name }}.apk | grep POST_NOTIFICATIONS
 
-    # 12. Публикуем артефакт
+    # 10. Публикуем APK как артефакт
     - uses: actions/upload-artifact@v4
       with:
         name: apk
         path: Loans-*.apk
         
-    # 13. Создаем релиз GitHub Release с APK
+    # 11. Создаем GitHub Release
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
@@ -353,10 +162,6 @@ jobs:
           **Функциональность:**
           - Браузер займов с фильтрами
           - Админ-панель для управления займами
-          - Push-уведомления через OneSignal
-          
-          **Технические детали:**
-          - Используется Capacitor для компиляции в APK
-          - Интеграция с Firebase для push-уведомлений
+          - Push-уведомления через OneSignal (поддержка Android 13+)
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
