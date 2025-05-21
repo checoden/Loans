@@ -188,53 +188,33 @@ jobs:
         echo "</widget>" >> android/app/src/main/res/xml/config.xml
         echo "✅ config.xml успешно создан"
         
-        # Модифицируем непосредственно build.gradle для добавления разрешения POST_NOTIFICATIONS
-        echo "Модифицируем build.gradle для добавления разрешения POST_NOTIFICATIONS..."
-        if [ -f "android/app/build.gradle" ]; then
-          # Создаем временный файл для манипуляций
-          cat > notification_script.txt << 'EOF'
-
-// Код для добавления разрешения POST_NOTIFICATIONS
-android.applicationVariants.all { variant ->
-    variant.outputs.each { output ->
-        // Добавляем действие после обработки манифеста
-        def taskName = "addPostNotificationsTo${variant.name.capitalize()}"
-        tasks.register(taskName) {
-            doLast {
-                def manifestPath = "${buildDir}/intermediates/merged_manifest/${variant.name}/AndroidManifest.xml"
-                def manifestFile = file(manifestPath)
-                if (manifestFile.exists()) {
-                    def manifestText = manifestFile.text
-                    if (!manifestText.contains("android.permission.POST_NOTIFICATIONS")) {
-                        println "💡 Добавляем разрешение POST_NOTIFICATIONS в ${manifestPath}"
-                        def updatedText = manifestText.replace("<application", 
-                            "<uses-permission android:name=\"android.permission.POST_NOTIFICATIONS\" />\n    <application")
-                        manifestFile.write(updatedText)
-                        println "✅ Разрешение POST_NOTIFICATIONS успешно добавлено в манифест"
-                    } else {
-                        println "✅ Разрешение POST_NOTIFICATIONS уже присутствует в манифесте"
-                    }
-                } else {
-                    println "❌ Манифест не найден: ${manifestPath}"
-                }
-            }
-        }
+        # Создаем AndroidManifest.xml с нужным разрешением
+        echo "Создаем AndroidManifest.xml с разрешением POST_NOTIFICATIONS..."
         
-        // Исполняем наш таск сразу после процессинга манифеста
-        tasks.matching { it.name == "process${variant.name.capitalize()}Manifest" }.all {
-            finalizedBy(taskName)
-        }
-    }
-}
-EOF
-
-          # Добавляем наш скрипт в конец build.gradle
-          cat notification_script.txt >> android/app/build.gradle
-          rm notification_script.txt
-          echo "✅ Скрипт добавления POST_NOTIFICATIONS успешно внедрен в build.gradle"
-        else
-          echo "❌ Файл build.gradle не найден!"
-        fi
+        # Убеждаемся, что директория существует
+        mkdir -p android/app/src/main
+        
+        # Создаем файл манифеста с разрешением POST_NOTIFICATIONS
+        echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>" > android/app/src/main/AndroidManifest.xml
+        echo "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"" >> android/app/src/main/AndroidManifest.xml
+        echo "    xmlns:tools=\"http://schemas.android.com/tools\">" >> android/app/src/main/AndroidManifest.xml
+        echo "" >> android/app/src/main/AndroidManifest.xml
+        echo "    <!-- Разрешения для Android -->" >> android/app/src/main/AndroidManifest.xml
+        echo "    <uses-permission android:name=\"android.permission.INTERNET\" />" >> android/app/src/main/AndroidManifest.xml
+        echo "    <uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />" >> android/app/src/main/AndroidManifest.xml
+        echo "" >> android/app/src/main/AndroidManifest.xml
+        echo "    <!-- Разрешение для уведомлений на Android 13+ -->" >> android/app/src/main/AndroidManifest.xml
+        echo "    <uses-permission android:name=\"android.permission.POST_NOTIFICATIONS\" tools:targetApi=\"33\" />" >> android/app/src/main/AndroidManifest.xml
+        echo "" >> android/app/src/main/AndroidManifest.xml
+        echo "    <!-- Дополнительные разрешения для уведомлений -->" >> android/app/src/main/AndroidManifest.xml
+        echo "    <uses-permission android:name=\"android.permission.WAKE_LOCK\" />" >> android/app/src/main/AndroidManifest.xml
+        echo "    <uses-permission android:name=\"android.permission.VIBRATE\" />" >> android/app/src/main/AndroidManifest.xml
+        echo "    <uses-permission android:name=\"android.permission.RECEIVE_BOOT_COMPLETED\" />" >> android/app/src/main/AndroidManifest.xml
+        echo "" >> android/app/src/main/AndroidManifest.xml
+        echo "    <application></application>" >> android/app/src/main/AndroidManifest.xml
+        echo "</manifest>" >> android/app/src/main/AndroidManifest.xml
+        
+        echo "✅ AndroidManifest.xml с разрешением POST_NOTIFICATIONS создан"
         
         # Проверяем манифест на наличие разрешения после всех модификаций
         if [ -f "android/app/src/main/AndroidManifest.xml" ]; then
