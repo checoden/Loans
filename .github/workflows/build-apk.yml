@@ -188,39 +188,52 @@ jobs:
         echo "</widget>" >> android/app/src/main/res/xml/config.xml
         echo "✅ config.xml успешно создан"
         
-        # Создаем capacitor.settings.gradle для интеграции в процесс сборки
-        echo "Создаем capacitor.settings.gradle для процесса сборки..."
-        echo "// Этот файл используется для дополнительных настроек Capacitor" > android/capacitor.settings.gradle
-        echo "" >> android/capacitor.settings.gradle
-        echo "// Добавляем обработку разрешений" >> android/capacitor.settings.gradle
-        echo "ext {" >> android/capacitor.settings.gradle
-        echo "    // Указываем, что разрешение POST_NOTIFICATIONS должно быть сохранено" >> android/capacitor.settings.gradle
-        echo "    includePermissions = [\"android.permission.POST_NOTIFICATIONS\"]" >> android/capacitor.settings.gradle
-        echo "}" >> android/capacitor.settings.gradle
-        echo "" >> android/capacitor.settings.gradle
-        echo "// Простой способ добавления разрешения в AndroidManifest.xml" >> android/capacitor.settings.gradle
-        echo "android.applicationVariants.all { variant ->" >> android/capacitor.settings.gradle
-        echo "    variant.outputs.each { output ->" >> android/capacitor.settings.gradle
-        echo "        // Добавляем прямую модификацию манифеста через XML перед сборкой" >> android/capacitor.settings.gradle
-        echo "        output.processManifestProvider.get().doLast {" >> android/capacitor.settings.gradle
-        echo "            def manifestFile = output.processManifestProvider.get().manifestOutputFile" >> android/capacitor.settings.gradle
-        echo "            if (manifestFile.exists()) {" >> android/capacitor.settings.gradle
-        echo "                def manifestText = manifestFile.text" >> android/capacitor.settings.gradle
-        echo "                if (!manifestText.contains(\"android.permission.POST_NOTIFICATIONS\")) {" >> android/capacitor.settings.gradle
-        echo "                    def updatedManifest = manifestText.replace(\"<application\", \"<uses-permission android:name=\\\"android.permission.POST_NOTIFICATIONS\\\" />\\n    <application\")" >> android/capacitor.settings.gradle
-        echo "                    manifestFile.text = updatedManifest" >> android/capacitor.settings.gradle
-        echo "                }" >> android/capacitor.settings.gradle
-        echo "            }" >> android/capacitor.settings.gradle
-        echo "        }" >> android/capacitor.settings.gradle
-        echo "    }" >> android/capacitor.settings.gradle
-        echo "}" >> android/capacitor.settings.gradle
-        echo "✅ capacitor.settings.gradle успешно создан"
-        
-        # Добавляем включение настроек в build.gradle
+        # Модифицируем непосредственно build.gradle для добавления разрешения POST_NOTIFICATIONS
+        echo "Модифицируем build.gradle для добавления разрешения POST_NOTIFICATIONS..."
         if [ -f "android/app/build.gradle" ]; then
-          echo "Добавляем подключение capacitor.settings.gradle в build.gradle..."
-          sed -i '/apply plugin: "com.android.application"/a apply from: "../capacitor.settings.gradle"' android/app/build.gradle
-          echo "✅ capacitor.settings.gradle успешно подключен в build.gradle"
+          # Создаем временный файл для манипуляций
+          cat > notification_script.txt << 'EOF'
+
+// Код для добавления разрешения POST_NOTIFICATIONS
+android.applicationVariants.all { variant ->
+    variant.outputs.each { output ->
+        // Добавляем действие после обработки манифеста
+        def taskName = "addPostNotificationsTo${variant.name.capitalize()}"
+        tasks.register(taskName) {
+            doLast {
+                def manifestPath = "${buildDir}/intermediates/merged_manifest/${variant.name}/AndroidManifest.xml"
+                def manifestFile = file(manifestPath)
+                if (manifestFile.exists()) {
+                    def manifestText = manifestFile.text
+                    if (!manifestText.contains("android.permission.POST_NOTIFICATIONS")) {
+                        println "💡 Добавляем разрешение POST_NOTIFICATIONS в ${manifestPath}"
+                        def updatedText = manifestText.replace("<application", 
+                            "<uses-permission android:name=\"android.permission.POST_NOTIFICATIONS\" />\n    <application")
+                        manifestFile.write(updatedText)
+                        println "✅ Разрешение POST_NOTIFICATIONS успешно добавлено в манифест"
+                    } else {
+                        println "✅ Разрешение POST_NOTIFICATIONS уже присутствует в манифесте"
+                    }
+                } else {
+                    println "❌ Манифест не найден: ${manifestPath}"
+                }
+            }
+        }
+        
+        // Исполняем наш таск сразу после процессинга манифеста
+        tasks.matching { it.name == "process${variant.name.capitalize()}Manifest" }.all {
+            finalizedBy(taskName)
+        }
+    }
+}
+EOF
+
+          # Добавляем наш скрипт в конец build.gradle
+          cat notification_script.txt >> android/app/build.gradle
+          rm notification_script.txt
+          echo "✅ Скрипт добавления POST_NOTIFICATIONS успешно внедрен в build.gradle"
+        else
+          echo "❌ Файл build.gradle не найден!"
         fi
         
         # Проверяем манифест на наличие разрешения после всех модификаций
