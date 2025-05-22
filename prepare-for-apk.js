@@ -78,12 +78,8 @@ const config: CapacitorConfig = {
     }
   },
   android: {
-    buildOptions: {
-      keystorePath: 'keystore.jks',
-      keystoreAlias: 'key0',
-      keystorePassword: 'microloans',
-      keystoreAliasPassword: 'microloans'
-    },
+    // Подпись будет настроена в CI/CD workflow
+    
     // Дополнительные настройки безопасности и отладки
     allowMixedContent: true, // Временно разрешаем смешанный контент для отладки
     captureInput: true,      // Разрешить захват ввода для WebView
@@ -119,14 +115,8 @@ async function prepareForApk() {
     console.log('📋 Копирование файлов из public в www...');
     copyDirectory(PUBLIC_DIR, wwwDir);
     
-    // 4. Копируем google-services.json.template (если существует)
-    if (fs.existsSync(FIREBASE_TEMPLATE_PATH)) {
-      const destPath = path.join(CAPACITOR_DIR, 'google-services.json');
-      fs.copyFileSync(FIREBASE_TEMPLATE_PATH, destPath);
-      console.log('✅ Скопирован шаблон google-services.json');
-    } else {
-      console.warn('⚠️ Файл google-services.json.template не найден');
-    }
+    // google-services.json будет скопирован в CI/CD pipeline
+    console.log('⏭️ Пропускаем копирование google-services.json - будет выполнено в CI/CD');
     
     // 5. Создаем/обновляем capacitor.config.ts
     createCapacitorConfig();

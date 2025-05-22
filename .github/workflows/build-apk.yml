@@ -185,6 +185,7 @@ jobs:
       with:
         gradle-version: 8.5
         arguments: --no-daemon --stacktrace
+        build-cache-enabled: true
 
     # Шаг настройки Gradle Wrapper удален, так как setup-gradle@v3 уже содержит необходимую функциональность
 
