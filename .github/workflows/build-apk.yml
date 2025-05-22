@@ -239,8 +239,19 @@ jobs:
       run: |
         cd capacitor-app/android
         echo "Сборка APK с подписью с параметрами через CLI..."
+        # Получаем абсолютный путь к keystore
+        KEYSTORE_ABS_PATH="$(pwd)/app/android-keystore.keystore"
+        echo "Абсолютный путь к keystore: $KEYSTORE_ABS_PATH"
+        
+        # Проверяем наличие файла
+        if [ -f "$KEYSTORE_ABS_PATH" ]; then
+          echo "✅ Keystore найден по абсолютному пути"
+        else
+          echo "❌ Keystore не найден по абсолютному пути"
+        fi
+        
         ./gradlew :app:assembleRelease \
-          -Pandroid.injected.signing.store.file="android-keystore.keystore" \
+          -Pandroid.injected.signing.store.file="$KEYSTORE_ABS_PATH" \
           -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
           -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
           -Pandroid.injected.signing.key.password="$KEY_PASSWORD" \
