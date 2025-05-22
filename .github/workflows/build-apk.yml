@@ -296,22 +296,35 @@ EOF
     # 11. Находим и переименовываем собранный APK
     - name: Find and rename APK
       run: |
-        # Ищем собранный APK
+        # Добавляем подробный вывод всех собранных артефактов для отладки
+        echo "=== Содержимое директории сборки ==="
         cd capacitor-app/android
-        APK_FILES=$(find app/build/outputs/apk/release -name "*.apk" | grep -v unsigned)
+        find app/build -type f -name "*.apk" -o -name "*.aab" | xargs -I{} ls -la "{}"
+        
+        # Ищем собранный APK - сначала ищем подписанные
+        echo "Ищем подписанные релизные APK файлы..."
+        APK_FILES=$(find app/build/outputs/apk/release -name "*.apk" | grep -v unsigned || true)
         
         if [ -z "$APK_FILES" ]; then
-          echo "❌ Не найдены подписанные APK файлы. Ищем любые APK..."
-          APK_FILES=$(find app/build -name "*.apk")
+          echo "❌ Не найдены подписанные APK файлы. Проверяем другие пути..."
+          
+          # Проверяем другие распространенные пути
+          APK_FILES=$(find app/build -path "*/release/*.apk" | head -n 1 || true)
           
           if [ -z "$APK_FILES" ]; then
-            echo "❌ APK файлы не найдены вообще!"
-            exit 1
+            echo "❌ Не найдены релизные APK. Ищем ЛЮБЫЕ APK файлы..."
+            APK_FILES=$(find app/build -name "*.apk" || true)
+            
+            if [ -z "$APK_FILES" ]; then
+              echo "❌ APK файлы не найдены вообще! Выводим структуру директории сборки:"
+              find app/build -type d | sort
+              exit 1
+            fi
           fi
         fi
         
         echo "✅ Найдены следующие APK файлы:"
-        ls -la $APK_FILES
+        echo "$APK_FILES" | xargs -I{} ls -la "{}"
         
         # Копируем первый найденный APK в корень с нужным именем
         FIRST_APK=$(echo "$APK_FILES" | head -n 1)
@@ -325,31 +338,22 @@ EOF
     - name: Display certificate fingerprint
       run: |
         echo "Отпечаток сертификата (SHA1) для Firebase:"
-        keytool -list -v -keystore keystore.jks -alias "${{ secrets.KEY_ALIAS }}" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" | grep SHA1
-
-    - name: Copy APK files
-      run: |
-        # Создаем директорию для выходных файлов
-        mkdir -p output
-        
-        # Копируем все APK файлы, которые мы нашли
-        while IFS= read -r apk_file; do
-          echo "Копируем $apk_file"
-          cp "$apk_file" output/
-        done < apk-files.txt
-        
-        # Отображаем скопированные файлы
-        echo "Скопированные APK файлы:"
-        ls -la output/
-        
-        # Находим какие-либо APK файлы
-        RELEASE_APK=$(find output -name "*release*.apk" | head -n 1)
-        if [ -n "$RELEASE_APK" ]; then
-          # Копируем как итоговый APK
-          cp "$RELEASE_APK" "Loans-${{ github.ref_name }}.apk"
-          echo "✅ Итоговый APK: Loans-${{ github.ref_name }}.apk"
+        if [ -f "capacitor-app/android/app/android-keystore.keystore" ]; then
+          keytool -list -v -keystore capacitor-app/android/app/android-keystore.keystore -alias "${{ secrets.KEY_ALIAS }}" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" | grep SHA1
         else
-          echo "❌ Не найдено релизных APK файлов"
+          echo "❌ Keystore не найден для отображения отпечатка"
+        fi
+
+    # Этот шаг больше не нужен, так как у нас уже есть релизный APK из шага 11
+    # Оставляем его для совместимости, но делаем простую проверку
+    - name: Verify APK file
+      run: |
+        echo "Проверяем наличие итогового APK файла:"
+        if [ -f "Loans-${{ github.ref_name }}.apk" ]; then
+          echo "✅ Итоговый APK найден: Loans-${{ github.ref_name }}.apk"
+          ls -la "Loans-${{ github.ref_name }}.apk"
+        else
+          echo "❌ Итоговый APK не найден!"
           exit 1
         fi
 
