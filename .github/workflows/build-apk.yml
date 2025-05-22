@@ -250,12 +250,40 @@ jobs:
           echo "❌ Keystore не найден по абсолютному пути"
         fi
         
-        ./gradlew :app:assembleRelease \
-          -Pandroid.injected.signing.store.file="$KEYSTORE_ABS_PATH" \
-          -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
-          -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
-          -Pandroid.injected.signing.key.password="$KEY_PASSWORD" \
-          --stacktrace
+        # Создаем файл signing.gradle для правильной подписи
+        cat > app/signing.gradle << EOF
+android {
+    signingConfigs {
+        release {
+            storeFile file("$KEYSTORE_ABS_PATH")
+            storePassword "$KEYSTORE_PASSWORD"
+            keyAlias "$KEY_ALIAS"
+            keyPassword "$KEY_PASSWORD"
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+    }
+}
+EOF
+        
+        # Проверяем, что файл создан
+        echo "Проверка содержимого signing.gradle:"
+        cat app/signing.gradle
+        
+        # Применяем файл подписи перед сборкой
+        if ! grep -q "apply from: 'signing.gradle'" app/build.gradle; then
+          sed -i '1s/^/apply from: "signing.gradle"\n\n/' app/build.gradle
+          echo "☑️ Добавлен import signing.gradle в app/build.gradle"
+        fi
+        
+        # Теперь собираем APK с применением настроек подписи
+        ./gradlew :app:assembleRelease --stacktrace
 
     # 11. Находим и переименовываем собранный APK
     - name: Find and rename APK

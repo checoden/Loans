@@ -78,8 +78,12 @@ const config: CapacitorConfig = {
     }
   },
   android: {
-    // Подпись будет настроена в CI/CD workflow
-    
+    // Настройки релизной подписи
+    buildOptions: {
+      keystorePath: 'android-keystore.keystore',
+      keystoreAlias: 'key0',
+      // Пароли будут переданы через CI/CD
+    },
     // Дополнительные настройки безопасности и отладки
     allowMixedContent: true, // Временно разрешаем смешанный контент для отладки
     captureInput: true,      // Разрешить захват ввода для WebView
