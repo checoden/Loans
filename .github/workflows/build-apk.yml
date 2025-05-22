@@ -230,25 +230,30 @@ jobs:
           echo "Файл gradlew не найден, wrapper будет создан автоматически"
         fi
 
-    # 10. Сборка APK
-    - name: Build unsigned APK
+    # 10. Сборка APK с упрощенным подходом к подписи
+    - name: Build APK
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       run: |
-        # Создаем файл keystore сразу в корне проекта Android
-        mkdir -p capacitor-app/android
-        cd capacitor-app/android
+        # Декодируем keystore сразу в корень репозитория
         echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > keystore.jks
-        echo "Keystore создан в $(pwd)/keystore.jks"
         ls -la keystore.jks
         
-        # Создаем простой файл signing.gradle
-        cat > app/signing.gradle << 'EOF'
+        cd capacitor-app/android
+        
+        # Добавляем в конец app/build.gradle прямую настройку подписи без использования отдельного файла
+        cat >> app/build.gradle << EOF
+        
+// Signing configuration
 android {
     signingConfigs {
         release {
-            storeFile file("../keystore.jks")
-            storePassword System.getenv("KEYSTORE_PASSWORD")
-            keyAlias System.getenv("KEY_ALIAS")
-            keyPassword System.getenv("KEY_PASSWORD")
+            storeFile file("${GITHUB_WORKSPACE}/keystore.jks")
+            storePassword "${{ secrets.KEYSTORE_PASSWORD }}"
+            keyAlias "${{ secrets.KEY_ALIAS }}"
+            keyPassword "${{ secrets.KEY_PASSWORD }}"
             v1SigningEnabled true
             v2SigningEnabled true
         }
@@ -257,44 +262,35 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 }
 EOF
         
-        # Добавляем apply from в app/build.gradle
-        if ! grep -q "apply from: 'signing.gradle'" app/build.gradle; then
-          sed -i '1s/^/apply from: "signing.gradle"\n\n/' app/build.gradle
-          echo "☑️ Добавлен import signing.gradle в app/build.gradle"
-        fi
-        
-        # Установка переменных окружения для подписи
-        export KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}'
-        export KEY_ALIAS='${{ secrets.KEY_ALIAS }}'
-        export KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}'
-        echo "☑️ Экспортированы переменные окружения для подписи"
+        # Отображаем начало и конец app/build.gradle для проверки
+        echo "Первые 10 строк app/build.gradle:"
+        head -n 10 app/build.gradle
+        echo "Последние 20 строк app/build.gradle:"
+        tail -n 20 app/build.gradle
         
         # Собираем релизную версию
-        ./gradlew assembleRelease --info
+        ./gradlew :app:assembleRelease --stacktrace
 
-    # 11. Проверяем, что keystore на месте перед подписью
-    - name: Verify keystore
+    # 11. Подготовка к ручной подписи APK
+    - name: Prepare for signing
       run: |
-        # Проверяем наличие файла в нужной директории
-        if [ -f "capacitor-app/android/app/android-keystore.keystore" ]; then
-          echo "✅ Keystore найден в capacitor-app/android/app/android-keystore.keystore"
-          ls -la capacitor-app/android/app/android-keystore.keystore
-        else
-          echo "❌ Keystore не найден! Создаем его заново."
-          mkdir -p capacitor-app/android/app
-          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android/app/android-keystore.keystore
-          ls -la capacitor-app/android/app/android-keystore.keystore
-        fi
+        # Поиск собранного unsigned APK
+        find capacitor-app/android -name "*-release-unsigned.apk" -o -name "*-release.apk" > apk-files.txt
         
-        # Копируем keystore в корень для других шагов сборки
-        cp capacitor-app/android/app/android-keystore.keystore keystore.jks
+        if [ -s apk-files.txt ]; then
+          echo "✅ Найдены следующие APK файлы:"
+          cat apk-files.txt
+        else
+          echo "❌ APK файлы не найдены! Проверяем каталоги:"
+          find capacitor-app/android -type d -name "*build*" | sort
+          echo "❌ Ошибка сборки - APK не создан"
+          exit 1
+        fi
       
     # 11.1 Показываем SHA1 отпечаток сертификата (полезно для Firebase)
     - name: Display certificate fingerprint
@@ -302,32 +298,31 @@ EOF
         echo "Отпечаток сертификата (SHA1) для Firebase:"
         keytool -list -v -keystore keystore.jks -alias "${{ secrets.KEY_ALIAS }}" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" | grep SHA1
 
-    - name: Sign APK
+    - name: Copy APK files
       run: |
-        # Находим APK
-        UNSIGNED=$(find capacitor-app/android/app/build/outputs/apk/release -name '*release-unsigned.apk' | head -n 1)
-        echo "Unsigned APK: $UNSIGNED"
+        # Создаем директорию для выходных файлов
+        mkdir -p output
         
-        if [ -z "$UNSIGNED" ]; then
-          echo "APK file not found! Checking build directory..."
-          find capacitor-app/android/app/build -type f -name "*.apk" || echo "No APK files found!"
+        # Копируем все APK файлы, которые мы нашли
+        while IFS= read -r apk_file; do
+          echo "Копируем $apk_file"
+          cp "$apk_file" output/
+        done < apk-files.txt
+        
+        # Отображаем скопированные файлы
+        echo "Скопированные APK файлы:"
+        ls -la output/
+        
+        # Находим какие-либо APK файлы
+        RELEASE_APK=$(find output -name "*release*.apk" | head -n 1)
+        if [ -n "$RELEASE_APK" ]; then
+          # Копируем как итоговый APK
+          cp "$RELEASE_APK" "Loans-${{ github.ref_name }}.apk"
+          echo "✅ Итоговый APK: Loans-${{ github.ref_name }}.apk"
+        else
+          echo "❌ Не найдено релизных APK файлов"
           exit 1
         fi
-        
-        cp "$UNSIGNED" app-unsigned.apk
-        
-        # Подписываем APK
-        APKSIGNER="$ANDROID_HOME/build-tools/34.0.0/apksigner"
-        $APKSIGNER sign \
-          --ks keystore.jks \
-          --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
-          --ks-pass pass:"${{ secrets.KEYSTORE_PASSWORD }}" \
-          --key-pass pass:"${{ secrets.KEY_PASSWORD }}" \
-          --out Loans-${{ github.ref_name }}.apk \
-          app-unsigned.apk
-          
-        # Проверяем
-        $APKSIGNER verify --verbose Loans-${{ github.ref_name }}.apk
 
     # 12. Публикуем артефакт
     - uses: actions/upload-artifact@v4
