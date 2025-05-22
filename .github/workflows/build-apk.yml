@@ -218,8 +218,9 @@ jobs:
         KEYSTORE_ABS_PATH="$(pwd)/app/android-keystore.keystore"
         echo "Абсолютный путь к keystore: $KEYSTORE_ABS_PATH"
         
-        # Создаем файл signing.gradle для правильной подписи
-        echo 'android {
+        # Создаем файл signing.gradle
+        cat > app/signing.gradle <<'EOT'
+android {
     signingConfigs {
         release {
             storeFile file("app/android-keystore.keystore")
@@ -236,7 +237,8 @@ jobs:
             signingConfig signingConfigs.release
         }
     }
-}' > app/signing.gradle
+}
+EOT
         
         # Заменяем путь к keystore на правильный абсолютный путь
         sed -i "s|app/android-keystore.keystore|$KEYSTORE_ABS_PATH|g" app/signing.gradle
