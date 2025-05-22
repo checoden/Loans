@@ -86,17 +86,17 @@ jobs:
     - name: Add Android platform
       run: |
         # Для начала создадим директории, если они не существуют
-        mkdir -p capacitor-app/android
+        mkdir -p capacitor-app/android/app
         
         # Декодируем keystore для дальнейшего использования
-        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android/android-keystore.keystore
+        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android/app/android-keystore.keystore
         
         cd capacitor-app
         
         # Проверяем наличие файла keystore
-        if [ -f "android/android-keystore.keystore" ]; then
-          echo "✅ Файл keystore успешно создан в $(pwd)/android/android-keystore.keystore"
-          ls -la android/android-keystore.keystore
+        if [ -f "android/app/android-keystore.keystore" ]; then
+          echo "✅ Файл keystore успешно создан в $(pwd)/android/app/android-keystore.keystore"
+          ls -la android/app/android-keystore.keystore
         else
           echo "❌ Ошибка: файл keystore не найден"
           exit 1
