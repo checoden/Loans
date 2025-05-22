@@ -230,74 +230,58 @@ jobs:
           echo "Файл gradlew не найден, wrapper будет создан автоматически"
         fi
 
-    # 10. Сборка APK с упрощенным подходом к подписи
-    - name: Build APK
-      env:
-        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+    # 10. Сборка APK с прямой подписью из командной строки
+    - name: Build unsigned APK
       run: |
-        # Декодируем keystore сразу в корень репозитория
-        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > keystore.jks
-        ls -la keystore.jks
-        
         cd capacitor-app/android
+        echo "Собираем неподписанную версию APK"
+        ./gradlew assembleRelease --no-daemon
         
-        # Добавляем в конец app/build.gradle прямую настройку подписи без использования отдельного файла
-        # Получаем полный путь к keystore
-        KEYSTORE_PATH=$(realpath ../../keystore.jks)
-        echo "Полный путь к keystore: $KEYSTORE_PATH"
-        
-        # Создаем файл signing.gradle
-        cat > app/signing.gradle << EOF
-// Signing configuration
-android {
-    signingConfigs {
-        release {
-            storeFile file("$KEYSTORE_PATH")
-            storePassword "${{ secrets.KEYSTORE_PASSWORD }}"
-            keyAlias "${{ secrets.KEY_ALIAS }}"
-            keyPassword "${{ secrets.KEY_PASSWORD }}"
-            v1SigningEnabled true
-            v2SigningEnabled true
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-        }
-    }
-}
-EOF
-        
-        # Добавляем применение файла signing.gradle в начало build.gradle
-        sed -i '1s/^/apply from: "signing.gradle"\n\n/' app/build.gradle
-        
-        # Отображаем начало и конец app/build.gradle для проверки
-        echo "Первые 10 строк app/build.gradle:"
-        head -n 10 app/build.gradle
-        echo "Последние 20 строк app/build.gradle:"
-        tail -n 20 app/build.gradle
-        
-        # Собираем релизную версию
-        ./gradlew :app:assembleRelease --stacktrace
-
-    # 11. Подготовка к ручной подписи APK
-    - name: Prepare for signing
-      run: |
-        # Поиск собранного unsigned APK
-        find capacitor-app/android -name "*-release-unsigned.apk" -o -name "*-release.apk" > apk-files.txt
-        
-        if [ -s apk-files.txt ]; then
-          echo "✅ Найдены следующие APK файлы:"
-          cat apk-files.txt
-        else
-          echo "❌ APK файлы не найдены! Проверяем каталоги:"
-          find capacitor-app/android -type d -name "*build*" | sort
-          echo "❌ Ошибка сборки - APK не создан"
+        # Проверяем, был ли создан APK
+        UNSIGNED_APK=$(find app/build/outputs/apk/release -name "*-unsigned.apk" 2>/dev/null | head -n 1)
+        if [ -z "$UNSIGNED_APK" ]; then
+          echo "Не найден unsigned APK, ищем любой apk"
+          find app/build -name "*.apk" || echo "APK не найден!"
           exit 1
         fi
+        
+        echo "Найден unsigned APK: $UNSIGNED_APK"
+        # Копируем в корень для дальнейшей подписи
+        cp "$UNSIGNED_APK" ../../app-unsigned.apk
+        echo "APK скопирован в ../../app-unsigned.apk"
+
+    # 11. Подписываем APK с помощью apksigner
+    - name: Sign APK
+      run: |
+        # Создаем keystore
+        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > keystore.jks
+        echo "Keystore создан в $(pwd)/keystore.jks"
+        ls -la keystore.jks
+        
+        # Проверяем наличие unsigned APK
+        if [ ! -f "app-unsigned.apk" ]; then
+          echo "❌ Unsigned APK не найден!"
+          exit 1
+        fi
+        
+        # Подписываем APK
+        APKSIGNER="$ANDROID_HOME/build-tools/33.0.2/apksigner"
+        if [ ! -f "$APKSIGNER" ]; then
+          echo "❌ apksigner не найден по пути $APKSIGNER, ищем альтернативный путь..."
+          APKSIGNER=$(find $ANDROID_HOME/build-tools -name "apksigner" | sort -r | head -n 1)
+          echo "Найден apksigner: $APKSIGNER"
+        fi
+        
+        echo "Подписываем APK..."
+        $APKSIGNER sign --ks keystore.jks \
+          --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
+          --ks-pass pass:"${{ secrets.KEYSTORE_PASSWORD }}" \
+          --key-pass pass:"${{ secrets.KEY_PASSWORD }}" \
+          --out "Loans-${{ github.ref_name }}.apk" \
+          app-unsigned.apk
+          
+        echo "Проверяем подписанный APK..."
+        $APKSIGNER verify --verbose "Loans-${{ github.ref_name }}.apk"
       
     # 11.1 Показываем SHA1 отпечаток сертификата (полезно для Firebase)
     - name: Display certificate fingerprint
