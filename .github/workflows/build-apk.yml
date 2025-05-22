@@ -250,42 +250,19 @@ jobs:
           echo "❌ Keystore не найден по абсолютному пути"
         fi
         
-        # Создаем файл signing.gradle для правильной подписи
-        cat > app/signing.gradle << 'EOT'
-android {
-    signingConfigs {
-        release {
-            storeFile file("app/android-keystore.keystore")
-            storePassword System.getenv("KEYSTORE_PASSWORD")
-            keyAlias System.getenv("KEY_ALIAS")
-            keyPassword System.getenv("KEY_PASSWORD")
-            v1SigningEnabled true
-            v2SigningEnabled true
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-        }
-    }
-}
-EOT
-        # Заменяем путь к keystore на правильный абсолютный путь
-        sed -i "s|app/android-keystore.keystore|$KEYSTORE_ABS_PATH|g" app/signing.gradle
+        # Вместо создания отдельного файла, напрямую используем параметры CLI
+        echo "Переходим к сборке APK напрямую через CLI параметры..."
         
-        # Проверяем, что файл создан
-        echo "Проверка содержимого signing.gradle:"
-        cat app/signing.gradle
-        
-        # Применяем файл подписи перед сборкой
-        if ! grep -q "apply from: 'signing.gradle'" app/build.gradle; then
-          sed -i '1s/^/apply from: "signing.gradle"\n\n/' app/build.gradle
-          echo "☑️ Добавлен import signing.gradle в app/build.gradle"
-        fi
-        
-        # Теперь собираем APK с применением настроек подписи
-        ./gradlew :app:assembleRelease --stacktrace
+        # Собираем APK с параметрами подписи через командную строку
+        ./gradlew :app:assembleRelease \
+          -Pandroid.injected.signing.store.file="$KEYSTORE_ABS_PATH" \
+          -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+          -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+          -Pandroid.injected.signing.key.password="$KEY_PASSWORD" \
+          -Pandroid.injected.signing.v1-enabled=true \
+          -Pandroid.injected.signing.v2-enabled=true \
+          --debug \
+          --stacktrace
 
     # 11. Находим и переименовываем собранный APK
     - name: Find and rename APK
