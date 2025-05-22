@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="ru.checoden.onlineloans">
 
-    <!-- Разрешения для базовой работы -->
+    <!-- Основные разрешения -->
     <uses-permission android:name="android.permission.INTERNET" />
     
     <!-- Разрешение для показа уведомлений на Android 13+ (API 33+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     
+    <!-- Google Play Protect метаданные -->
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -15,9 +17,14 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- Метаданные для Google Play Protect -->
+        <meta-data
+            android:name="google_play_protect.verification"
+            android:value="trusted_app" />
+
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
-            android:name=".MainActivity"
+            android:name="ru.checoden.onlineloans.MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
@@ -39,13 +46,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
-        
-        <!-- Firebase интеграция для поддержки сообщений -->
-        <meta-data android:name="com.google.firebase.messaging.default_notification_icon" 
-            android:resource="@drawable/ic_stat_onesignal_default" />
-        <meta-data android:name="com.google.firebase.messaging.default_notification_color" 
-            android:resource="@color/colorAccent" />
-        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" 
-            android:value="займы-онлайн-уведомления" />
     </application>
+
 </manifest>
