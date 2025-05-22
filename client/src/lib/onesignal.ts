@@ -1,4 +1,4 @@
-// Add type declaration for OneSignal
+// Add type declaration for OneSignal and Cordova
 declare global {
   interface Window {
     OneSignal: any;
@@ -8,6 +8,7 @@ declare global {
     device?: {
       platform: string;
     };
+    cordova?: any;
   }
 }
 
@@ -151,20 +152,25 @@ function initializeMobileOneSignal(platform: 'android' | 'ios') {
       const checkAndRequestPermissions = async () => {
         try {
           // Check current permission status
-          const permStatus = await window.plugins.OneSignal.Notifications.permissionNative();
+          const permStatus = window.plugins?.OneSignal?.Notifications?.permissionNative ?
+            await window.plugins.OneSignal.Notifications.permissionNative() : false;
           console.log("Current notification permission status:", permStatus);
           
           if (permStatus !== true) {
             console.log("Requesting notification permissions for Android 13+");
             // This works for Android 13+ and iOS
-            const result = await window.plugins.OneSignal.Notifications.requestPermission(true);
-            console.log("Permission request result:", result);
+            if (window.plugins?.OneSignal?.Notifications?.requestPermission) {
+              const result = await window.plugins.OneSignal.Notifications.requestPermission(true);
+              console.log("Permission request result:", result);
+            }
           } else {
             console.log("Notification permissions already granted");
           }
           
           // Opt in to push notifications after permission granted
-          await window.plugins.OneSignal.User.pushSubscription.optIn();
+          if (window.plugins?.OneSignal?.User?.pushSubscription?.optIn) {
+            await window.plugins.OneSignal.User.pushSubscription.optIn();
+          }
           console.log("Successfully opted in to push notifications");
           
         } catch (error) {
@@ -204,7 +210,7 @@ function initializeMobileOneSignal(platform: 'android' | 'ios') {
           
           // Last resort - try to handle notification permission completely manually
           try {
-            if (typeof window.cordova !== 'undefined' && 
+            if (window.cordova && 
                 window.cordova.plugins && 
                 window.cordova.plugins.permissions) {
               window.cordova.plugins.permissions.requestPermission('POST_NOTIFICATIONS', 

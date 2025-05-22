@@ -251,14 +251,14 @@ jobs:
         fi
         
         # Создаем файл signing.gradle для правильной подписи
-        cat > app/signing.gradle << EOF
+        cat > app/signing.gradle << 'EOT'
 android {
     signingConfigs {
         release {
-            storeFile file("$KEYSTORE_ABS_PATH")
-            storePassword "$KEYSTORE_PASSWORD"
-            keyAlias "$KEY_ALIAS"
-            keyPassword "$KEY_PASSWORD"
+            storeFile file("app/android-keystore.keystore")
+            storePassword System.getenv("KEYSTORE_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
             v1SigningEnabled true
             v2SigningEnabled true
         }
@@ -270,7 +270,9 @@ android {
         }
     }
 }
-EOF
+EOT
+        # Заменяем путь к keystore на правильный абсолютный путь
+        sed -i "s|app/android-keystore.keystore|$KEYSTORE_ABS_PATH|g" app/signing.gradle
         
         # Проверяем, что файл создан
         echo "Проверка содержимого signing.gradle:"
