@@ -230,58 +230,83 @@ jobs:
           echo "Файл gradlew не найден, wrapper будет создан автоматически"
         fi
 
-    # 10. Сборка APK с прямой подписью из командной строки
-    - name: Build unsigned APK
+    # 10. Сборка APK с подписью через Gradle
+    - name: Build signed APK
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       run: |
-        cd capacitor-app/android
-        echo "Собираем неподписанную версию APK"
-        ./gradlew assembleRelease --no-daemon
+        # Создаем keystore прямо в директории android
+        cd capacitor-app
+        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > android/android-keystore.keystore
+        echo "Keystore создан в android/android-keystore.keystore"
+        ls -la android/android-keystore.keystore
         
-        # Проверяем, был ли создан APK
-        UNSIGNED_APK=$(find app/build/outputs/apk/release -name "*-unsigned.apk" 2>/dev/null | head -n 1)
-        if [ -z "$UNSIGNED_APK" ]; then
-          echo "Не найден unsigned APK, ищем любой apk"
-          find app/build -name "*.apk" || echo "APK не найден!"
-          exit 1
-        fi
-        
-        echo "Найден unsigned APK: $UNSIGNED_APK"
-        # Копируем в корень для дальнейшей подписи
-        cp "$UNSIGNED_APK" ../../app-unsigned.apk
-        echo "APK скопирован в ../../app-unsigned.apk"
+        # Создаем простой файл signing.gradle
+        cat > android/app/signing.gradle << EOF
+android {
+    signingConfigs {
+        release {
+            storeFile file('android-keystore.keystore')
+            storePassword "${{ secrets.KEYSTORE_PASSWORD }}"
+            keyAlias "${{ secrets.KEY_ALIAS }}"
+            keyPassword "${{ secrets.KEY_PASSWORD }}"
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
 
-    # 11. Подписываем APK с помощью apksigner
-    - name: Sign APK
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+    }
+}
+EOF
+        
+        # Добавляем apply from в app/build.gradle
+        cd android
+        if ! grep -q "apply from: 'signing.gradle'" app/build.gradle; then
+          sed -i '1s/^/apply from: "signing.gradle"\n\n/' app/build.gradle
+          echo "☑️ Добавлен import signing.gradle в app/build.gradle"
+        fi
+        
+        # Отображаем начало файла app/build.gradle
+        echo "Первые 10 строк app/build.gradle:"
+        head -n 10 app/build.gradle
+        
+        # Собираем релизную версию с подписью
+        echo "Сборка APK с подписью..."
+        ./gradlew :app:assembleRelease --info
+
+    # 11. Находим и переименовываем собранный APK
+    - name: Find and rename APK
       run: |
-        # Создаем keystore
-        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > keystore.jks
-        echo "Keystore создан в $(pwd)/keystore.jks"
-        ls -la keystore.jks
+        # Ищем собранный APK
+        cd capacitor-app/android
+        APK_FILES=$(find app/build/outputs/apk/release -name "*.apk" | grep -v unsigned)
         
-        # Проверяем наличие unsigned APK
-        if [ ! -f "app-unsigned.apk" ]; then
-          echo "❌ Unsigned APK не найден!"
-          exit 1
-        fi
-        
-        # Подписываем APK
-        APKSIGNER="$ANDROID_HOME/build-tools/33.0.2/apksigner"
-        if [ ! -f "$APKSIGNER" ]; then
-          echo "❌ apksigner не найден по пути $APKSIGNER, ищем альтернативный путь..."
-          APKSIGNER=$(find $ANDROID_HOME/build-tools -name "apksigner" | sort -r | head -n 1)
-          echo "Найден apksigner: $APKSIGNER"
-        fi
-        
-        echo "Подписываем APK..."
-        $APKSIGNER sign --ks keystore.jks \
-          --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
-          --ks-pass pass:"${{ secrets.KEYSTORE_PASSWORD }}" \
-          --key-pass pass:"${{ secrets.KEY_PASSWORD }}" \
-          --out "Loans-${{ github.ref_name }}.apk" \
-          app-unsigned.apk
+        if [ -z "$APK_FILES" ]; then
+          echo "❌ Не найдены подписанные APK файлы. Ищем любые APK..."
+          APK_FILES=$(find app/build -name "*.apk")
           
-        echo "Проверяем подписанный APK..."
-        $APKSIGNER verify --verbose "Loans-${{ github.ref_name }}.apk"
+          if [ -z "$APK_FILES" ]; then
+            echo "❌ APK файлы не найдены вообще!"
+            exit 1
+          fi
+        fi
+        
+        echo "✅ Найдены следующие APK файлы:"
+        ls -la $APK_FILES
+        
+        # Копируем первый найденный APK в корень с нужным именем
+        FIRST_APK=$(echo "$APK_FILES" | head -n 1)
+        cp "$FIRST_APK" "../../Loans-${{ github.ref_name }}.apk"
+        
+        cd ../../
+        echo "✅ Итоговый APK: Loans-${{ github.ref_name }}.apk"
+        ls -la "Loans-${{ github.ref_name }}.apk"
       
     # 11.1 Показываем SHA1 отпечаток сертификата (полезно для Firebase)
     - name: Display certificate fingerprint
