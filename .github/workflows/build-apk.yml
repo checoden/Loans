@@ -9,54 +9,259 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Setup
+    # 1. Клонируем репозиторий
     - uses: actions/checkout@v4
+
+    # 2. Устанавливаем Node.js
     - uses: actions/setup-node@v4
       with:
         node-version: '20'
-    - uses: actions/setup-java@v4
+
+    # 3. Устанавливаем Java 21 (для совместимости с Capacitor 7.2.0)
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '21'
+        
+    # 3.1 Очищаем кэш Gradle, чтобы предотвратить использование старой версии
+    - name: Clear Gradle cache
+      run: |
+        rm -rf /home/runner/.gradle || true
+        rm -rf ~/.gradle/wrapper/dists || true
+        echo "Кэш Gradle полностью очищен"
+
+    # 4. Установка зависимостей
+    - run: npm ci
+
+    # 5. Настройка переменных окружения для OneSignal
+    - name: Setup OneSignal Environment
+      run: |
+        echo "VITE_ONESIGNAL_APP_ID=${{ secrets.ONESIGNAL_APP_ID }}" >> $GITHUB_ENV
+        echo "VITE_ONESIGNAL_REST_API_KEY=${{ secrets.ONESIGNAL_REST_API_KEY }}" >> $GITHUB_ENV
+        echo "Переменные окружения для OneSignal установлены"
+
+    # 6. Подготовка проекта Capacitor
+    - name: Prepare Capacitor project
+      run: |
+        # Подготовка проекта - создает папку capacitor-app с нужными файлами
+        node prepare-for-apk.js
+        
+        cd capacitor-app
+        
+        # Очищаем и устанавливаем зависимости для Capacitor
+        echo "Установка зависимостей Capacitor..."
+        npm install
+        
+        # Очищаем проект перед добавлением платформы
+        echo "Удаляем существующую Android платформу, если она есть"
+        rm -rf android
+        
+        # Очищаем package.json от существующих Capacitor зависимостей
+        echo "Очищаем package.json от Capacitor зависимостей"
+        jq 'del(.dependencies."@capacitor/android") | del(.dependencies."@capacitor/core")' package.json > package.json.tmp
+        mv package.json.tmp package.json
+        
+        # Устанавливаем базовые зависимости
+        npm install
+        
+        # Создаём директорию для Gradle Wrapper
+        mkdir -p android/gradle/wrapper
+        
+        # Устанавливаем согласованные версии Capacitor
+        echo "Установка согласованных версий Capacitor"
+        npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 --legacy-peer-deps
+
+    # 7. Добавление Android платформы
+    - name: Add Android platform
+      run: |
+        # Декодируем keystore в нужное место
+        mkdir -p capacitor-app/android/app
+        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android/app/android-keystore.keystore
+        echo "Keystore создан в capacitor-app/android/app/android-keystore.keystore"
+        ls -la capacitor-app/android/app/android-keystore.keystore
+        
+        cd capacitor-app
+        
+        # Проверяем наличие файла keystore
+        if [ -f "android/app/android-keystore.keystore" ]; then
+          echo "✅ Файл keystore успешно создан в $(pwd)/android/app/android-keystore.keystore"
+          ls -la android/app/android-keystore.keystore
+        else
+          echo "❌ Ошибка: файл keystore не найден"
+          exit 1
+        fi
+        
+        # Добавляем Android платформу
+        echo "Добавляем Android платформу..."
+        npx cap add android || { 
+          echo "Ошибка при добавлении Android платформы, пытаемся глубоко очистить проект"; 
+          rm -rf android node_modules;
+          npm install;
+          npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 onesignal-cordova-plugin@5.2.13;
+          npx cap add android; 
+        }
+        
+        # Копируем google-services.json в нужные места
+        if [ -f "../google-services.json" ]; then
+          echo "Копируем google-services.json из корня проекта в директории Android"
+          
+          # Создаем директории, если их нет
+          mkdir -p android/app
+          
+          # Копируем файл в директорию android/app для Firebase плагина
+          cp ../google-services.json android/app/google-services.json
+          
+          # Копируем в корень android директории для резервного копирования
+          cp ../google-services.json android/google-services.json
+          
+          echo "Файл скопирован в необходимые директории Android"
+          echo "Проверяем наличие файла в android/app:"
+          ls -la android/app/google-services.json || echo "ФАЙЛ НЕ НАЙДЕН В android/app!"
+        elif [ -f "google-services.json" ]; then
+          echo "Копируем google-services.json из capacitor-app в директории Android"
+          
+          # Создаем директории, если их нет
+          mkdir -p android/app
+          
+          # Копируем файл в директорию android/app для Firebase плагина
+          cp google-services.json android/app/google-services.json
+          
+          # Копируем в корень android директории для резервного копирования
+          cp google-services.json android/google-services.json
+          
+          echo "Файл скопирован в необходимые директории Android"
+          echo "Проверяем наличие файла в android/app:"
+          ls -la android/app/google-services.json || echo "ФАЙЛ НЕ НАЙДЕН В android/app!"
+        else
+          echo "ВНИМАНИЕ: google-services.json не найден ни в корне проекта, ни в capacitor-app!"
+          echo "Push-уведомления могут не работать без этого файла!"
+        fi
+        
+        # Вручную копируем шаблон AndroidManifest с POST_NOTIFICATIONS
+        if [ -f "../capacitor-app/android/app/src/main/AndroidManifest-template.xml" ]; then
+          echo "Копируем AndroidManifest-template.xml с разрешением POST_NOTIFICATIONS..."
+          cp ../capacitor-app/android/app/src/main/AndroidManifest-template.xml android/app/src/main/AndroidManifest.xml
+          echo "✅ AndroidManifest обновлен с разрешением POST_NOTIFICATIONS"
+        fi
+        
+        cd ..
+        
+        # Настраиваем канал уведомлений ПЕРЕД синхронизацией Android
+        echo "Настраиваем канал уведомлений для Android..."
+        node setup-android-notification-channel.js
+        
+        cd capacitor-app
+        
+        # Синхронизируем проект с Android ПОСЛЕ настройки канала уведомлений
+        echo "Синхронизация Android проекта..."
+        npx cap sync android
+        
+        # Создаем необходимые директории и файлы для Android
+        echo "Создаем необходимые директории и файлы для Android..."
+        chmod +x ./create-directories.sh
+        ./create-directories.sh
+        
+        # Добавляем разрешение POST_NOTIFICATIONS в AndroidManifest.xml после синхронизации
+        echo "Запускаем скрипт добавления разрешения POST_NOTIFICATIONS..."
+        chmod +x ./add-notification-permission.sh
+        ./add-notification-permission.sh
+        
+        # Обновляем настройки подписи в build.gradle
+        echo "Обновляем настройки подписи для безопасной сборки..."
+        node update-gradle-signing.js
+        
+        # Обновляем версию Android Gradle Plugin до 8.9
+        echo "Обновляем версию Android Gradle Plugin до 8.9..."
+        node update-android-plugin.js
+        
+        # Проверяем версию Gradle в Wrapper
+        echo "Текущая версия Gradle Wrapper:"
+        cat android/gradle/wrapper/gradle-wrapper.properties
+
+    # 8. Android SDK и Gradle setup
+    - uses: android-actions/setup-android@v3
     - uses: gradle/actions/setup-gradle@v3
       with:
         gradle-version: 8.5
         build-cache-enabled: true
-        
-    # Install dependencies
-    - run: npm ci
-    
-    # Setup environment
-    - name: Setup Environment
+
+    # 10. Подготовка к сборке APK и настройка подписи
+    - name: Prepare APK signing
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       run: |
-        echo "VITE_ONESIGNAL_APP_ID=${{ secrets.ONESIGNAL_APP_ID }}" >> $GITHUB_ENV
-        echo "VITE_ONESIGNAL_REST_API_KEY=${{ secrets.ONESIGNAL_REST_API_KEY }}" >> $GITHUB_ENV
-    
-    # Prepare project
-    - name: Prepare Project
-      run: |
-        node prepare-for-apk.js
-        cd capacitor-app && npm install
-        npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 --legacy-peer-deps
-    
-    # Add platform
-    - name: Add Android Platform
-      run: |
-        mkdir -p capacitor-app/android/app
-        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android/app/android-keystore.keystore
         cd capacitor-app
-        npx cap add android
         
-        # Handle Google Services
-        if [ -f "../google-services.json" ]; then
-          cp ../google-services.json android/app/google-services.json
+        # Проверяем наличие keystore и его размер
+        if [ -f "android/app/android-keystore.keystore" ]; then
+          KEYSTORE_SIZE=$(stat -c%s "android/app/android-keystore.keystore")
+          echo "✅ Keystore уже существует, размер: $KEYSTORE_SIZE байт"
+          if [ "$KEYSTORE_SIZE" -lt 1000 ]; then
+            echo "⚠️ Внимание: keystore имеет подозрительно маленький размер. Пересоздаем его."
+            mkdir -p android/app
+            echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > android/app/android-keystore.keystore
+            ls -la android/app/android-keystore.keystore
+          fi
+        else
+          echo "❌ Keystore не найден, создаем его"
+          mkdir -p android/app
+          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > android/app/android-keystore.keystore
+          ls -la android/app/android-keystore.keystore
         fi
         
-        # Setup Android
-        npx cap sync android
-        node update-gradle-signing.js
-    
-    # Build APK
+        cd android
+        
+        # Получаем абсолютный путь к keystore
+        KEYSTORE_ABS_PATH="$(pwd)/app/android-keystore.keystore"
+        echo "Абсолютный путь к keystore: $KEYSTORE_ABS_PATH"
+        
+        # Создаем файл для подписи APK
+        mkdir -p app
+        # Используем тройные кавычки, чтобы избежать проблем с синтаксисом
+        cat > app/signing.gradle << 'END_HEREDOC'
+android {
+    signingConfigs {
+        release {
+            storeFile file("app/android-keystore.keystore")
+            storePassword System.getenv("KEYSTORE_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+    }
+}
+END_HEREDOC
+        
+        # Заменяем путь к keystore на правильный абсолютный путь
+        sed -i "s|app/android-keystore.keystore|$KEYSTORE_ABS_PATH|g" app/signing.gradle
+        
+        # Применяем файл подписи перед сборкой
+        if ! grep -q "apply from: 'signing.gradle'" app/build.gradle; then
+          sed -i '1s/^/apply from: "signing.gradle"\n\n/' app/build.gradle
+          echo "☑️ Добавлен import signing.gradle в app/build.gradle"
+        fi
+        
+        # Отладка пути к keystore
+        echo "=== Отладка пути к keystore ==="
+        ls -l app | grep keystore || true
+        ls -l . | grep keystore || true
+        ./gradlew :app:properties | grep -i signing || true
+        echo "============================="
+        
+        # Применяем настройки подписи
+        echo "✅ Настройки подписи подготовлены"
+        
+    # 10.1 Сборка APK с применением подготовленных настроек подписи
     - name: Build APK
       env:
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -64,29 +269,104 @@ jobs:
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       run: |
         cd capacitor-app/android
+        # Собираем APK с применением настроек подписи
         ./gradlew :app:assembleRelease --stacktrace
-    
-    # Package APK
-    - name: Package APK
+
+    # 11. Находим и переименовываем собранный APK
+    - name: Find and rename APK
       run: |
+        # Добавляем подробный вывод всех собранных артефактов для отладки
+        echo "=== Содержимое директории сборки ==="
         cd capacitor-app/android
+        find app/build -type f -name "*.apk" -o -name "*.aab" | xargs -I{} ls -la "{}"
+        
+        # Ищем собранный APK - сначала ищем подписанные
+        echo "Ищем подписанные релизные APK файлы..."
         APK_FILES=$(find app/build/outputs/apk/release -name "*.apk" | grep -v unsigned || true)
+        
+        if [ -z "$APK_FILES" ]; then
+          echo "❌ Не найдены подписанные APK файлы. Проверяем другие пути..."
+          
+          # Проверяем другие распространенные пути
+          APK_FILES=$(find app/build -path "*/release/*.apk" | head -n 1 || true)
+          
+          if [ -z "$APK_FILES" ]; then
+            echo "❌ Не найдены релизные APK. Ищем ЛЮБЫЕ APK файлы..."
+            APK_FILES=$(find app/build -name "*.apk" || true)
+            
+            if [ -z "$APK_FILES" ]; then
+              echo "❌ APK файлы не найдены вообще! Выводим структуру директории сборки:"
+              find app/build -type d | sort
+              exit 1
+            fi
+          fi
+        fi
+        
+        echo "✅ Найдены следующие APK файлы:"
+        echo "$APK_FILES" | xargs -I{} ls -la "{}"
+        
+        # Копируем первый найденный APK в корень с нужным именем
         FIRST_APK=$(echo "$APK_FILES" | head -n 1)
         cp "$FIRST_APK" "../../Loans-${{ github.ref_name }}.apk"
-    
-    # Upload artifacts
+        
+        cd ../../
+        echo "✅ Итоговый APK: Loans-${{ github.ref_name }}.apk"
+        ls -la "Loans-${{ github.ref_name }}.apk"
+      
+    # 11.1 Показываем SHA1 отпечаток сертификата (полезно для Firebase)
+    - name: Display certificate fingerprint
+      run: |
+        echo "Отпечаток сертификата (SHA1) для Firebase:"
+        # Проверяем наличие keystore в разных возможных местах
+        if [ -f "capacitor-app/android/app/android-keystore.keystore" ]; then
+          echo "Используем keystore из capacitor-app/android/app/"
+          keytool -list -v -keystore capacitor-app/android/app/android-keystore.keystore -alias "${{ secrets.KEY_ALIAS }}" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" | grep SHA1
+        elif [ -f "keystore.jks" ]; then
+          echo "Используем keystore из корня проекта"
+          keytool -list -v -keystore keystore.jks -alias "${{ secrets.KEY_ALIAS }}" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" | grep SHA1
+        else
+          echo "❌ Keystore не найден для отображения отпечатка"
+          find . -name "*.keystore" -o -name "*.jks" | xargs -I{} echo "Найден keystore: {}"
+        fi
+
+    # Этот шаг больше не нужен, так как у нас уже есть релизный APK из шага 11
+    # Оставляем его для совместимости, но делаем простую проверку
+    - name: Verify APK file
+      run: |
+        echo "Проверяем наличие итогового APK файла:"
+        if [ -f "Loans-${{ github.ref_name }}.apk" ]; then
+          echo "✅ Итоговый APK найден: Loans-${{ github.ref_name }}.apk"
+          ls -la "Loans-${{ github.ref_name }}.apk"
+        else
+          echo "❌ Итоговый APK не найден!"
+          exit 1
+        fi
+
+    # 12. Публикуем артефакт
     - uses: actions/upload-artifact@v4
       with:
         name: apk
         path: Loans-*.apk
         
-    # Create Release
+    # 13. Создаем релиз GitHub Release с APK
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: Loans-*.apk
+        draft: false
+        prerelease: false
         name: "Займы онлайн ${{ github.ref_name }}"
-        body: "Сборка версии ${{ github.ref_name }}"
+        body: |
+          ### Займы онлайн (версия ${{ github.ref_name }})
+          
+          **Функциональность:**
+          - Браузер займов с фильтрами
+          - Админ-панель для управления займами
+          - Push-уведомления через OneSignal
+          
+          **Технические детали:**
+          - Используется Capacitor для компиляции в APK
+          - Интеграция с Firebase для push-уведомлений
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
