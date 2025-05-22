@@ -88,6 +88,8 @@ jobs:
         # Декодируем keystore в нужное место
         mkdir -p capacitor-app/android/app
         echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android/app/android-keystore.keystore
+        echo "Keystore создан в capacitor-app/android/app/android-keystore.keystore"
+        ls -la capacitor-app/android/app/android-keystore.keystore
         
         cd capacitor-app
         
@@ -280,6 +282,12 @@ EOF
         # Отображаем начало файла app/build.gradle
         echo "Первые 10 строк app/build.gradle:"
         head -n 10 app/build.gradle
+        
+        # Отладка пути к keystore
+        echo "=== Отладка пути к keystore ==="
+        ls -lR app | grep keystore || true
+        ./gradlew :app:properties | grep signing
+        echo "============================="
         
         # Собираем релизную версию с подписью
         echo "Сборка APK с подписью..."
