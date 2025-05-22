@@ -220,27 +220,25 @@ jobs:
         
         # Создаем файл для подписи APK
         mkdir -p app
-        # Используем тройные кавычки, чтобы избежать проблем с синтаксисом
-        cat > app/signing.gradle << 'END_HEREDOC'
-android {
-    signingConfigs {
-        release {
-            storeFile file("app/android-keystore.keystore")
-            storePassword System.getenv("KEYSTORE_PASSWORD")
-            keyAlias System.getenv("KEY_ALIAS")
-            keyPassword System.getenv("KEY_PASSWORD")
-            v1SigningEnabled true
-            v2SigningEnabled true
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-        }
-    }
-}
-END_HEREDOC
+        # Создаем файл построчно
+        echo "android {" > app/signing.gradle
+        echo "    signingConfigs {" >> app/signing.gradle
+        echo "        release {" >> app/signing.gradle
+        echo "            storeFile file(\"app/android-keystore.keystore\")" >> app/signing.gradle
+        echo "            storePassword System.getenv(\"KEYSTORE_PASSWORD\")" >> app/signing.gradle
+        echo "            keyAlias System.getenv(\"KEY_ALIAS\")" >> app/signing.gradle
+        echo "            keyPassword System.getenv(\"KEY_PASSWORD\")" >> app/signing.gradle
+        echo "            v1SigningEnabled true" >> app/signing.gradle
+        echo "            v2SigningEnabled true" >> app/signing.gradle
+        echo "        }" >> app/signing.gradle
+        echo "    }" >> app/signing.gradle
+        echo "" >> app/signing.gradle
+        echo "    buildTypes {" >> app/signing.gradle
+        echo "        release {" >> app/signing.gradle
+        echo "            signingConfig signingConfigs.release" >> app/signing.gradle
+        echo "        }" >> app/signing.gradle
+        echo "    }" >> app/signing.gradle
+        echo "}" >> app/signing.gradle
         
         # Заменяем путь к keystore на правильный абсолютный путь
         sed -i "s|app/android-keystore.keystore|$KEYSTORE_ABS_PATH|g" app/signing.gradle
