@@ -233,7 +233,50 @@ jobs:
     # 10. Сборка APK
     - name: Build unsigned APK
       run: |
+        # Создаем файл keystore сразу в корне проекта Android
+        mkdir -p capacitor-app/android
         cd capacitor-app/android
+        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > keystore.jks
+        echo "Keystore создан в $(pwd)/keystore.jks"
+        ls -la keystore.jks
+        
+        # Создаем простой файл signing.gradle
+        cat > app/signing.gradle << 'EOF'
+android {
+    signingConfigs {
+        release {
+            storeFile file("../keystore.jks")
+            storePassword System.getenv("KEYSTORE_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+EOF
+        
+        # Добавляем apply from в app/build.gradle
+        if ! grep -q "apply from: 'signing.gradle'" app/build.gradle; then
+          sed -i '1s/^/apply from: "signing.gradle"\n\n/' app/build.gradle
+          echo "☑️ Добавлен import signing.gradle в app/build.gradle"
+        fi
+        
+        # Установка переменных окружения для подписи
+        export KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}'
+        export KEY_ALIAS='${{ secrets.KEY_ALIAS }}'
+        export KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}'
+        echo "☑️ Экспортированы переменные окружения для подписи"
+        
+        # Собираем релизную версию
         ./gradlew assembleRelease --info
 
     # 11. Проверяем, что keystore на месте перед подписью
