@@ -85,7 +85,19 @@ jobs:
     # 7. Добавление Android платформы
     - name: Add Android platform
       run: |
+        # Декодируем keystore для дальнейшего использования
+        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android-keystore.keystore
+        
         cd capacitor-app
+        
+        # Проверяем наличие файла keystore
+        if [ -f "android-keystore.keystore" ]; then
+          echo "✅ Файл keystore успешно создан в $(pwd)/android-keystore.keystore"
+          ls -la android-keystore.keystore
+        else
+          echo "❌ Ошибка: файл keystore не найден"
+          exit 1
+        fi
         
         # Добавляем Android платформу
         echo "Добавляем Android платформу..."
@@ -221,20 +233,21 @@ jobs:
         cd capacitor-app/android
         ./gradlew assembleRelease --info
 
-    # 11. Подготавливаем keystore для подписи
-    - name: Decode keystore
+    # 11. Проверяем, что keystore на месте перед подписью
+    - name: Verify keystore
       run: |
-        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > keystore.jks
-        # Копируем keystore в директорию capacitor-app для использования в скрипте подписи
-        cp keystore.jks capacitor-app/android-keystore.keystore
-        # Проверяем наличие файла
+        # Проверяем наличие файла в нужной директории
         if [ -f "capacitor-app/android-keystore.keystore" ]; then
-          echo "✅ Keystore успешно скопирован в capacitor-app/"
+          echo "✅ Keystore найден в capacitor-app/android-keystore.keystore"
           ls -la capacitor-app/android-keystore.keystore
         else
-          echo "❌ Ошибка при копировании keystore в capacitor-app/"
-          exit 1
+          echo "❌ Keystore не найден! Создаем его заново."
+          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android-keystore.keystore
+          ls -la capacitor-app/android-keystore.keystore
         fi
+        
+        # Копируем keystore в корень для других шагов сборки
+        cp capacitor-app/android-keystore.keystore keystore.jks
       
     # 11.1 Показываем SHA1 отпечаток сертификата (полезно для Firebase)
     - name: Display certificate fingerprint
