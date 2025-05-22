@@ -240,18 +240,18 @@ jobs:
     - name: Verify keystore
       run: |
         # Проверяем наличие файла в нужной директории
-        if [ -f "capacitor-app/android/android-keystore.keystore" ]; then
-          echo "✅ Keystore найден в capacitor-app/android/android-keystore.keystore"
-          ls -la capacitor-app/android/android-keystore.keystore
+        if [ -f "capacitor-app/android/app/android-keystore.keystore" ]; then
+          echo "✅ Keystore найден в capacitor-app/android/app/android-keystore.keystore"
+          ls -la capacitor-app/android/app/android-keystore.keystore
         else
           echo "❌ Keystore не найден! Создаем его заново."
-          mkdir -p capacitor-app/android
-          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android/android-keystore.keystore
-          ls -la capacitor-app/android/android-keystore.keystore
+          mkdir -p capacitor-app/android/app
+          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android/app/android-keystore.keystore
+          ls -la capacitor-app/android/app/android-keystore.keystore
         fi
         
         # Копируем keystore в корень для других шагов сборки
-        cp capacitor-app/android/android-keystore.keystore keystore.jks
+        cp capacitor-app/android/app/android-keystore.keystore keystore.jks
       
     # 11.1 Показываем SHA1 отпечаток сертификата (полезно для Firebase)
     - name: Display certificate fingerprint
