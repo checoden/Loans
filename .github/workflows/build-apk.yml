@@ -214,34 +214,9 @@ jobs:
           ls -la android/app/android-keystore.keystore
         fi
         
-        # Создаем простой файл signing.gradle - НЕ МЕНЯЕМ путь к keystore (должен быть именно такой)
-        cat > android/app/signing.gradle << EOF
-android {
-    signingConfigs {
-        release {
-            storeFile file('android-keystore.keystore')
-            storePassword "${{ secrets.KEYSTORE_PASSWORD }}"
-            keyAlias "${{ secrets.KEY_ALIAS }}"
-            keyPassword "${{ secrets.KEY_PASSWORD }}"
-            v1SigningEnabled true
-            v2SigningEnabled true
-        }
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-        }
-    }
-}
-EOF
-        
-        # Добавляем apply from в app/build.gradle
+        # Подпись будет передана через CLI-параметры, не используем файл signing.gradle
+        # Переходим в директорию для сборки
         cd android
-        if ! grep -q "apply from: 'signing.gradle'" app/build.gradle; then
-          sed -i '1s/^/apply from: "signing.gradle"\n\n/' app/build.gradle
-          echo "☑️ Добавлен import signing.gradle в app/build.gradle"
-        fi
         
         # Отображаем начало файла app/build.gradle
         echo "Первые 10 строк app/build.gradle:"
@@ -253,9 +228,14 @@ EOF
         ./gradlew :app:properties | grep signing
         echo "============================="
         
-        # Собираем релизную версию с подписью
-        echo "Сборка APK с подписью..."
-        ./gradlew :app:assembleRelease --info
+        # Собираем релизную версию с подписью, передавая параметры подписи напрямую
+        echo "Сборка APK с подписью с параметрами через CLI..."
+        ./gradlew :app:assembleRelease \
+          -Pandroid.injected.signing.store.file="android-keystore.keystore" \
+          -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+          -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+          -Pandroid.injected.signing.key.password="$KEY_PASSWORD" \
+          --info
 
     # 11. Находим и переименовываем собранный APK
     - name: Find and rename APK
@@ -302,10 +282,16 @@ EOF
     - name: Display certificate fingerprint
       run: |
         echo "Отпечаток сертификата (SHA1) для Firebase:"
+        # Проверяем наличие keystore в разных возможных местах
         if [ -f "capacitor-app/android/app/android-keystore.keystore" ]; then
+          echo "Используем keystore из capacitor-app/android/app/"
           keytool -list -v -keystore capacitor-app/android/app/android-keystore.keystore -alias "${{ secrets.KEY_ALIAS }}" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" | grep SHA1
+        elif [ -f "keystore.jks" ]; then
+          echo "Используем keystore из корня проекта"
+          keytool -list -v -keystore keystore.jks -alias "${{ secrets.KEY_ALIAS }}" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" | grep SHA1
         else
           echo "❌ Keystore не найден для отображения отпечатка"
+          find . -name "*.keystore" -o -name "*.jks" | xargs -I{} echo "Найден keystore: {}"
         fi
 
     # Этот шаг больше не нужен, так как у нас уже есть релизный APK из шага 11
