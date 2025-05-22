@@ -152,6 +152,11 @@ jobs:
         echo "Синхронизация Android проекта..."
         npx cap sync android
         
+        # Создаем необходимые директории и файлы для Android
+        echo "Создаем необходимые директории и файлы для Android..."
+        chmod +x ./create-directories.sh
+        ./create-directories.sh
+        
         # Добавляем разрешение POST_NOTIFICATIONS в AndroidManifest.xml после синхронизации
         echo "Запускаем скрипт добавления разрешения POST_NOTIFICATIONS..."
         chmod +x ./add-notification-permission.sh
