@@ -68,15 +68,15 @@ jobs:
         # Создаём директорию и файлы для Gradle Wrapper
         mkdir -p android/gradle/wrapper
         
-        # Создаём gradle-wrapper.properties с Gradle 8.4
+        # Создаём gradle-wrapper.properties с Gradle 8.5
         echo "distributionBase=GRADLE_USER_HOME" > android/gradle/wrapper/gradle-wrapper.properties
         echo "distributionPath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
-        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip" >> android/gradle/wrapper/gradle-wrapper.properties
+        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip" >> android/gradle/wrapper/gradle-wrapper.properties
         echo "zipStoreBase=GRADLE_USER_HOME" >> android/gradle/wrapper/gradle-wrapper.properties
         echo "zipStorePath=wrapper/dists" >> android/gradle/wrapper/gradle-wrapper.properties
         
         # Загружаем Gradle Wrapper JAR напрямую
-        curl -s -o android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradle/wrapper/gradle-wrapper.jar
+        curl -s -o android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.5.0/gradle/wrapper/gradle-wrapper.jar
         
         # Устанавливаем новые версии Capacitor
         echo "Установка актуальной версии Capacitor"
@@ -190,10 +190,10 @@ jobs:
         rm -rf gradle/wrapper
         mkdir -p gradle/wrapper
         
-        # Создаем gradle-wrapper.properties с Gradle 8.4
+        # Создаем gradle-wrapper.properties с Gradle 8.5
         echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
         echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
-        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-all.zip" >> gradle/wrapper/gradle-wrapper.properties
+        echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-all.zip" >> gradle/wrapper/gradle-wrapper.properties
         echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
         echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
         
@@ -201,12 +201,12 @@ jobs:
         cat gradle/wrapper/gradle-wrapper.properties
         
         # Загружаем Gradle Wrapper напрямую - используем JAR из актуальной версии Gradle
-        curl -s -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradle/wrapper/gradle-wrapper.jar
+        curl -s -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.5.0/gradle/wrapper/gradle-wrapper.jar
         
         # Выполняем команду обновления wrapper, если gradlew доступен
         if [ -f "./gradlew" ]; then
           chmod +x ./gradlew
-          ./gradlew wrapper --gradle-version 8.4 --distribution-type all
+          ./gradlew wrapper --gradle-version 8.5 --distribution-type all
         else
           echo "Файл gradlew не найден, wrapper будет создан автоматически"
         fi
