@@ -244,13 +244,17 @@ jobs:
         cd capacitor-app/android
         
         # Добавляем в конец app/build.gradle прямую настройку подписи без использования отдельного файла
-        cat >> app/build.gradle << EOF
+        # Получаем полный путь к keystore
+        KEYSTORE_PATH=$(realpath ../../keystore.jks)
+        echo "Полный путь к keystore: $KEYSTORE_PATH"
         
+        # Создаем файл signing.gradle
+        cat > app/signing.gradle << EOF
 // Signing configuration
 android {
     signingConfigs {
         release {
-            storeFile file("${GITHUB_WORKSPACE}/keystore.jks")
+            storeFile file("$KEYSTORE_PATH")
             storePassword "${{ secrets.KEYSTORE_PASSWORD }}"
             keyAlias "${{ secrets.KEY_ALIAS }}"
             keyPassword "${{ secrets.KEY_PASSWORD }}"
@@ -266,6 +270,9 @@ android {
     }
 }
 EOF
+        
+        # Добавляем применение файла signing.gradle в начало build.gradle
+        sed -i '1s/^/apply from: "signing.gradle"\n\n/' app/build.gradle
         
         # Отображаем начало и конец app/build.gradle для проверки
         echo "Первые 10 строк app/build.gradle:"
