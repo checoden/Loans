@@ -85,10 +85,8 @@ jobs:
     # 7. Добавление Android платформы
     - name: Add Android platform
       run: |
-        # Для начала создадим директории, если они не существуют
+        # Декодируем keystore в нужное место
         mkdir -p capacitor-app/android/app
-        
-        # Декодируем keystore для дальнейшего использования
         echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android/app/android-keystore.keystore
         
         cd capacitor-app
@@ -237,13 +235,20 @@ jobs:
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       run: |
-        # Создаем keystore прямо в директории android
         cd capacitor-app
-        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > android/android-keystore.keystore
-        echo "Keystore создан в android/android-keystore.keystore"
-        ls -la android/android-keystore.keystore
         
-        # Создаем простой файл signing.gradle
+        # Проверяем наличие keystore
+        if [ -f "android/app/android-keystore.keystore" ]; then
+          echo "✅ Keystore уже существует"
+          ls -la android/app/android-keystore.keystore
+        else
+          echo "❌ Keystore не найден, создаем его повторно"
+          mkdir -p android/app
+          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > android/app/android-keystore.keystore
+          ls -la android/app/android-keystore.keystore
+        fi
+        
+        # Создаем простой файл signing.gradle - НЕ МЕНЯЕМ путь к keystore (должен быть именно такой)
         cat > android/app/signing.gradle << EOF
 android {
     signingConfigs {
