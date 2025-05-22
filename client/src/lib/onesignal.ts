@@ -120,71 +120,111 @@ function initializeMobileOneSignal(platform: 'android' | 'ios') {
   if (typeof window !== 'undefined' && window.plugins?.OneSignal) {
     console.log(`Initializing ${platform} OneSignal with app ID:`, import.meta.env.VITE_ONESIGNAL_APP_ID);
     
-    // Common settings for both platforms
-    const settings = {
-      appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
-      // Disable automatic prompting
-      promptForPushNotificationsWithUserResponse: false,
-      // Set notification channel for Android
-      ...(platform === 'android' && {
-        android: {
-          // For Android set a default notification channel
-          channelId: "займы-онлайн-уведомления",
-          // Use small icon from resources
-          smallIcon: "ic_stat_onesignal_default",
-          // Accent color for notifications (orange color)
-          accentColor: "FF9829",
-          // Make notifications visible on lock screen
-          lockScreenVisibility: 1
-        }
-      }),
-      // Set specific iOS settings
-      ...(platform === 'ios' && {
-        ios: {
-          // Request permission automatically at startup
-          kOSSettingsKeyAutoPrompt: true,
-          // Always display in-app alerts
-          kOSSettingsKeyInAppAlerts: true,
-          // Include default categories like "Accept" and "Decline"
-          kOSSettingsKeyInFocusDisplayOption: 2
-        }
-      })
-    };
-
-    // Initialize the OneSignal plugin with appropriate settings
+    // Initialize the OneSignal plugin with app ID
     window.plugins.OneSignal.setAppId(import.meta.env.VITE_ONESIGNAL_APP_ID);
     
-    // Запрашиваем разрешение на показ уведомлений (важно для Android 13+)
-    // Новый метод в OneSignal 5.0+
-    if (window.plugins.OneSignal.Notifications && typeof window.plugins.OneSignal.Notifications.requestPermission === 'function') {
-      console.log("Requesting notification permission with new API (OneSignal 5.0+)");
-      window.plugins.OneSignal.Notifications.requestPermission(true)
-        .then((accepted: boolean) => {
-          console.log("User accepted notifications (new API):", accepted);
-        })
-        .catch((error: any) => {
-          console.error("Error requesting notification permission:", error);
-        });
-    } else {
-      // Старый метод запроса разрешений для OneSignal 3.x
-      console.log("Requesting notification permission with legacy API (OneSignal 3.x)");
-      if (platform === 'ios') {
-        window.plugins.OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
-          console.log("User accepted notifications (legacy API):", accepted);
-        });
-      } else {
-        // Для Android < 13 разрешения не требовались, но теперь нужно явно запрашивать
-        console.log("Android platform detected, attempting to request permissions");
+    // Configure channel for Android
+    if (platform === 'android') {
+      try {
+        // Setup Android notification channel if available
+        if (typeof window.plugins.OneSignal.setNotificationChannel === 'function') {
+          window.plugins.OneSignal.setNotificationChannel({
+            id: "займы-онлайн-уведомления",
+            name: "Займы онлайн уведомления",
+            description: "Уведомления о новых займах и предложениях",
+            importance: 4, // HIGH
+            enableVibrate: true,
+            enableSound: true,
+            showBadge: true
+          });
+        }
+      } catch (e) {
+        console.warn("Error configuring notification channel:", e);
+      }
+    }
+    
+    // Modern API (OneSignal SDK v5+)
+    if (window.plugins.OneSignal.Notifications) {
+      console.log("Initializing using OneSignal SDK v5+ API");
+      
+      // Check permissions first
+      const checkAndRequestPermissions = async () => {
         try {
-          // Пробуем вызвать API, который может быть доступен
-          if (typeof window.plugins.OneSignal.promptForPushNotificationsWithUserResponse === 'function') {
+          // Check current permission status
+          const permStatus = await window.plugins.OneSignal.Notifications.permissionNative();
+          console.log("Current notification permission status:", permStatus);
+          
+          if (permStatus !== true) {
+            console.log("Requesting notification permissions for Android 13+");
+            // This works for Android 13+ and iOS
+            const result = await window.plugins.OneSignal.Notifications.requestPermission(true);
+            console.log("Permission request result:", result);
+          } else {
+            console.log("Notification permissions already granted");
+          }
+          
+          // Opt in to push notifications after permission granted
+          await window.plugins.OneSignal.User.pushSubscription.optIn();
+          console.log("Successfully opted in to push notifications");
+          
+        } catch (error) {
+          console.error("Error during permission handling:", error);
+        }
+      };
+      
+      // Execute permission check and request
+      checkAndRequestPermissions();
+      
+      // Setup notification opened handler
+      window.plugins.OneSignal.Notifications.addEventListener('click', (event: any) => {
+        console.log('Notification clicked:', event);
+        // Handle notification click event
+      });
+      
+    } else {
+      // Legacy API (OneSignal SDK v3.x)
+      console.log("Initializing using OneSignal SDK v3.x API");
+      
+      // For Android 13+ (API level 33+), we need to explicitly request POST_NOTIFICATIONS permission
+      if (platform === 'android') {
+        try {
+          // Check permissions and request if needed
+          if (typeof window.plugins.OneSignal.checkPermissionAndRequestPermission === 'function') {
+            window.plugins.OneSignal.checkPermissionAndRequestPermission((state: any) => {
+              console.log("Permission status:", state);
+            });
+          } else {
+            // Fallback to standard request method
             window.plugins.OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
-              console.log("Android user accepted notifications:", accepted);
+              console.log("User accepted notifications:", accepted);
             });
           }
         } catch (e) {
-          console.warn("Could not request notification permission on Android:", e);
+          console.warn("Error requesting notification permissions:", e);
+          
+          // Last resort - try to handle notification permission completely manually
+          try {
+            if (typeof window.cordova !== 'undefined' && 
+                window.cordova.plugins && 
+                window.cordova.plugins.permissions) {
+              window.cordova.plugins.permissions.requestPermission('POST_NOTIFICATIONS', 
+                (status: any) => {
+                  console.log("Manual permission request status:", status);
+                }, 
+                (error: any) => {
+                  console.error("Error requesting permission manually:", error);
+                }
+              );
+            }
+          } catch (manualError) {
+            console.error("Could not request permissions manually:", manualError);
+          }
         }
+      } else if (platform === 'ios') {
+        // iOS permissions
+        window.plugins.OneSignal.promptForPushNotificationsWithUserResponse((accepted: boolean) => {
+          console.log("iOS user accepted notifications:", accepted);
+        });
       }
     }
     
