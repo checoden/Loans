@@ -183,24 +183,10 @@ jobs:
     - uses: android-actions/setup-android@v3
     - uses: gradle/actions/setup-gradle@v3
       with:
-        gradle-version: 8.11
+        gradle-version: 8.5
         arguments: --no-daemon --stacktrace
 
-    # 9. Настройка Gradle Wrapper
-    - name: Setup correct Gradle Wrapper
-      run: |
-        cd capacitor-app/android
-        
-        # Создаем директорию для wrapper, если её нет
-        mkdir -p gradle/wrapper
-        
-        # Выполняем команду для генерации wrapper целиком
-        # Это создаст и wrapper.jar, и gradlew, и gradle-wrapper.properties
-        gradle wrapper --gradle-version 8.11.1 --distribution-type all
-        
-        # Проверка результата
-        chmod +x ./gradlew
-        ./gradlew --version
+    # Шаг настройки Gradle Wrapper удален, так как setup-gradle@v3 уже содержит необходимую функциональность
 
     # 10. Сборка APK с подписью через Gradle
     - name: Build signed APK
@@ -211,12 +197,18 @@ jobs:
       run: |
         cd capacitor-app
         
-        # Проверяем наличие keystore
+        # Проверяем наличие keystore и его размер
         if [ -f "android/app/android-keystore.keystore" ]; then
-          echo "✅ Keystore уже существует"
-          ls -la android/app/android-keystore.keystore
+          KEYSTORE_SIZE=$(stat -c%s "android/app/android-keystore.keystore")
+          echo "✅ Keystore уже существует, размер: $KEYSTORE_SIZE байт"
+          if [ "$KEYSTORE_SIZE" -lt 1000 ]; then
+            echo "⚠️ Внимание: keystore имеет подозрительно маленький размер. Пересоздаем его."
+            mkdir -p android/app
+            echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > android/app/android-keystore.keystore
+            ls -la android/app/android-keystore.keystore
+          fi
         else
-          echo "❌ Keystore не найден, создаем его повторно"
+          echo "❌ Keystore не найден, создаем его"
           mkdir -p android/app
           echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > android/app/android-keystore.keystore
           ls -la android/app/android-keystore.keystore
