@@ -217,9 +217,20 @@ jobs:
         cd capacitor-app/android
         ./gradlew assembleRelease --info
 
-    # 11. Подписываем APK
+    # 11. Подготавливаем keystore для подписи
     - name: Decode keystore
-      run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > keystore.jks
+      run: |
+        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > keystore.jks
+        # Копируем keystore в директорию capacitor-app для использования в скрипте подписи
+        cp keystore.jks capacitor-app/android-keystore.keystore
+        # Проверяем наличие файла
+        if [ -f "capacitor-app/android-keystore.keystore" ]; then
+          echo "✅ Keystore успешно скопирован в capacitor-app/"
+          ls -la capacitor-app/android-keystore.keystore
+        else
+          echo "❌ Ошибка при копировании keystore в capacitor-app/"
+          exit 1
+        fi
       
     # 11.1 Показываем SHA1 отпечаток сертификата (полезно для Firebase)
     - name: Display certificate fingerprint

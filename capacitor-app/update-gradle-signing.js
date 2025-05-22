@@ -31,7 +31,7 @@ function updateGradleSigning() {
     const signingConfigsBlock = `
     signingConfigs {
         release {
-            storeFile file("../../keystore.jks")
+            storeFile file("../android-keystore.keystore")
             storePassword System.getenv("KEYSTORE_PASSWORD") ?: "password"
             keyAlias System.getenv("KEY_ALIAS") ?: "key0"
             keyPassword System.getenv("KEY_PASSWORD") ?: "password"
