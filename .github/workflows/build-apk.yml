@@ -238,7 +238,7 @@ android {
         }
     }
 }
-EOT
+        EOT
         
         # Заменяем путь к keystore на правильный абсолютный путь
         sed -i "s|app/android-keystore.keystore|$KEYSTORE_ABS_PATH|g" app/signing.gradle
