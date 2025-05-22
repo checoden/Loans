@@ -225,18 +225,26 @@ jobs:
         
         # Отладка пути к keystore
         echo "=== Отладка пути к keystore ==="
-        ls -lR app | grep keystore || true
-        ./gradlew :app:properties | grep signing
+        ls -l app | grep keystore || true
+        ls -l . | grep keystore || true
+        ./gradlew :app:properties | grep -i signing || true
         echo "============================="
-        
-        # Собираем релизную версию с подписью, передавая параметры подписи напрямую
+
+    # 10.1. Сборка APK с подписью через Gradle CLI
+    - name: Build signed APK
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      run: |
+        cd capacitor-app/android
         echo "Сборка APK с подписью с параметрами через CLI..."
         ./gradlew :app:assembleRelease \
           -Pandroid.injected.signing.store.file="android-keystore.keystore" \
           -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
           -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
           -Pandroid.injected.signing.key.password="$KEY_PASSWORD" \
-          --info
+          --stacktrace
 
     # 11. Находим и переименовываем собранный APK
     - name: Find and rename APK
