@@ -186,8 +186,6 @@ jobs:
         gradle-version: 8.5
         build-cache-enabled: true
 
-    # Шаг настройки Gradle Wrapper удален, так как setup-gradle@v3 уже содержит необходимую функциональность
-
     # 10. Подготовка к сборке APK и настройка подписи
     - name: Prepare APK signing
       env:
@@ -214,40 +212,11 @@ jobs:
           ls -la android/app/android-keystore.keystore
         fi
         
-        # Подпись будет передана через CLI-параметры, не используем файл signing.gradle
-        # Переходим в директорию для сборки
         cd android
         
-        # Отображаем начало файла app/build.gradle
-        echo "Первые 10 строк app/build.gradle:"
-        head -n 10 app/build.gradle
-        
-        # Отладка пути к keystore
-        echo "=== Отладка пути к keystore ==="
-        ls -l app | grep keystore || true
-        ls -l . | grep keystore || true
-        ./gradlew :app:properties | grep -i signing || true
-        echo "============================="
-
-    # 10.1. Сборка APK с подписью через Gradle CLI
-    - name: Build signed APK
-      env:
-        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      run: |
-        cd capacitor-app/android
-        echo "Сборка APK с подписью с параметрами через CLI..."
         # Получаем абсолютный путь к keystore
         KEYSTORE_ABS_PATH="$(pwd)/app/android-keystore.keystore"
         echo "Абсолютный путь к keystore: $KEYSTORE_ABS_PATH"
-        
-        # Проверяем наличие файла
-        if [ -f "$KEYSTORE_ABS_PATH" ]; then
-          echo "✅ Keystore найден по абсолютному пути"
-        else
-          echo "❌ Keystore не найден по абсолютному пути"
-        fi
         
         # Создаем файл signing.gradle для правильной подписи
         cat > app/signing.gradle <<'EOT'
@@ -279,6 +248,13 @@ EOT
           sed -i '1s/^/apply from: "signing.gradle"\n\n/' app/build.gradle
           echo "☑️ Добавлен import signing.gradle в app/build.gradle"
         fi
+        
+        # Отладка пути к keystore
+        echo "=== Отладка пути к keystore ==="
+        ls -l app | grep keystore || true
+        ls -l . | grep keystore || true
+        ./gradlew :app:properties | grep -i signing || true
+        echo "============================="
         
         # Применяем настройки подписи
         echo "✅ Настройки подписи подготовлены"
