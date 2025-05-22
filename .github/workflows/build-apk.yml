@@ -85,15 +85,18 @@ jobs:
     # 7. Добавление Android платформы
     - name: Add Android platform
       run: |
+        # Для начала создадим директории, если они не существуют
+        mkdir -p capacitor-app/android
+        
         # Декодируем keystore для дальнейшего использования
-        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android-keystore.keystore
+        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android/android-keystore.keystore
         
         cd capacitor-app
         
         # Проверяем наличие файла keystore
-        if [ -f "android-keystore.keystore" ]; then
-          echo "✅ Файл keystore успешно создан в $(pwd)/android-keystore.keystore"
-          ls -la android-keystore.keystore
+        if [ -f "android/android-keystore.keystore" ]; then
+          echo "✅ Файл keystore успешно создан в $(pwd)/android/android-keystore.keystore"
+          ls -la android/android-keystore.keystore
         else
           echo "❌ Ошибка: файл keystore не найден"
           exit 1
@@ -237,17 +240,18 @@ jobs:
     - name: Verify keystore
       run: |
         # Проверяем наличие файла в нужной директории
-        if [ -f "capacitor-app/android-keystore.keystore" ]; then
-          echo "✅ Keystore найден в capacitor-app/android-keystore.keystore"
-          ls -la capacitor-app/android-keystore.keystore
+        if [ -f "capacitor-app/android/android-keystore.keystore" ]; then
+          echo "✅ Keystore найден в capacitor-app/android/android-keystore.keystore"
+          ls -la capacitor-app/android/android-keystore.keystore
         else
           echo "❌ Keystore не найден! Создаем его заново."
-          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android-keystore.keystore
-          ls -la capacitor-app/android-keystore.keystore
+          mkdir -p capacitor-app/android
+          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android/android-keystore.keystore
+          ls -la capacitor-app/android/android-keystore.keystore
         fi
         
         # Копируем keystore в корень для других шагов сборки
-        cp capacitor-app/android-keystore.keystore keystore.jks
+        cp capacitor-app/android/android-keystore.keystore keystore.jks
       
     # 11.1 Показываем SHA1 отпечаток сертификата (полезно для Firebase)
     - name: Display certificate fingerprint
