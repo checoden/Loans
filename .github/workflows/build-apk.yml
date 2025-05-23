@@ -204,14 +204,14 @@ jobs:
         
         cd android
         
-        # Получаем абсолютный путь к keystore
-        KEYSTORE_ABS_PATH="$(pwd)/app/android-keystore.keystore"
-        echo "Абсолютный путь к keystore: $KEYSTORE_ABS_PATH"
+        # Используем относительный путь к keystore
+        KEYSTORE_PATH="android-keystore.keystore"
+        echo "Относительный путь к keystore: $KEYSTORE_PATH"
         
         # Используем отдельный скрипт для добавления настроек подписи
         cd app
         chmod +x ../../../add-signing-config.sh
-        ../../../add-signing-config.sh "$KEYSTORE_ABS_PATH"
+        ../../../add-signing-config.sh "$KEYSTORE_PATH"
         cd ..
         
         # Отладка пути к keystore
