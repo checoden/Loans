@@ -199,7 +199,7 @@ jobs:
         # Создаем keystore в правильном месте
         echo "❌ Создаем keystore в правильной директории"
         mkdir -p android/app
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/android-keystore.keystore
+        echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > android/app/android-keystore.keystore
         ls -la android/app/android-keystore.keystore
         
         cd android
