@@ -219,8 +219,10 @@ jobs:
         echo "Абсолютный путь к keystore: $KEYSTORE_ABS_PATH"
         
         # Используем отдельный скрипт для добавления настроек подписи
-        chmod +x ../../add-signing-config.sh
-        ../../add-signing-config.sh "$KEYSTORE_ABS_PATH"
+        cd app
+        chmod +x ../../../add-signing-config.sh
+        ../../../add-signing-config.sh "$KEYSTORE_ABS_PATH"
+        cd ..
         
         # Отладка пути к keystore
         echo "=== Отладка пути к keystore ==="

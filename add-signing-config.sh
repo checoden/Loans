@@ -3,7 +3,7 @@
 # Скрипт для добавления настроек подписи в build.gradle
 KEYSTORE_PATH="$1"
 
-if ! grep -q "signingConfigs" app/build.gradle; then
+if ! grep -q "signingConfigs" build.gradle; then
     echo "Добавляем настройки подписи в build.gradle..."
     
     # Добавляем signingConfigs после android {
@@ -17,10 +17,10 @@ if ! grep -q "signingConfigs" app/build.gradle; then
             v1SigningEnabled true\\
             v2SigningEnabled true\\
         }\\
-    }" app/build.gradle
+    }" build.gradle
     
     # Добавляем signingConfig в buildTypes release
-    sed -i "/buildTypes {/,/release {/a\\            signingConfig signingConfigs.release" app/build.gradle
+    sed -i "/buildTypes {/,/release {/a\\            signingConfig signingConfigs.release" build.gradle
     
     echo "☑️ Настройки подписи добавлены в build.gradle"
 else
