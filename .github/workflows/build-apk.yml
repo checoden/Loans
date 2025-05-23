@@ -196,21 +196,11 @@ jobs:
         cd capacitor-app
         
         # Проверяем наличие keystore и его размер
-        if [ -f "android/app/android-keystore.keystore" ]; then
-          KEYSTORE_SIZE=$(stat -c%s "android/app/android-keystore.keystore")
-          echo "✅ Keystore уже существует, размер: $KEYSTORE_SIZE байт"
-          if [ "$KEYSTORE_SIZE" -lt 1000 ]; then
-            echo "⚠️ Внимание: keystore имеет подозрительно маленький размер. Пересоздаем его."
-            mkdir -p android/app
-            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/android-keystore.keystore
-            ls -la android/app/android-keystore.keystore
-          fi
-        else
-          echo "❌ Keystore не найден, создаем его"
-          mkdir -p android/app
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/android-keystore.keystore
-          ls -la android/app/android-keystore.keystore
-        fi
+        # Создаем keystore в правильном месте
+        echo "❌ Создаем keystore в правильной директории"
+        mkdir -p android/app
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/android-keystore.keystore
+        ls -la android/app/android-keystore.keystore
         
         cd android
         
