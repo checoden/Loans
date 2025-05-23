@@ -218,30 +218,9 @@ jobs:
         KEYSTORE_ABS_PATH="$(pwd)/app/android-keystore.keystore"
         echo "Абсолютный путь к keystore: $KEYSTORE_ABS_PATH"
         
-        # Добавляем настройки подписи прямо в build.gradle
-        if ! grep -q "signingConfigs" app/build.gradle; then
-          echo "Добавляем настройки подписи в build.gradle..."
-          
-          # Добавляем signingConfigs после android {
-          sed -i "/android {/a\\
-    signingConfigs {\\
-        release {\\
-            storeFile file(\"$KEYSTORE_ABS_PATH\")\\
-            storePassword System.getenv(\"KEYSTORE_PASSWORD\")\\
-            keyAlias System.getenv(\"KEY_ALIAS\")\\
-            keyPassword System.getenv(\"KEY_PASSWORD\")\\
-            v1SigningEnabled true\\
-            v2SigningEnabled true\\
-        }\\
-    }" app/build.gradle
-          
-          # Добавляем signingConfig в buildTypes release
-          sed -i "/buildTypes {/,/release {/a\\            signingConfig signingConfigs.release" app/build.gradle
-          
-          echo "☑️ Настройки подписи добавлены в build.gradle"
-        else
-          echo "☑️ Настройки подписи уже существуют в build.gradle"
-        fi
+        # Используем отдельный скрипт для добавления настроек подписи
+        chmod +x ../../add-signing-config.sh
+        ../../add-signing-config.sh "$KEYSTORE_ABS_PATH"
         
         # Отладка пути к keystore
         echo "=== Отладка пути к keystore ==="
