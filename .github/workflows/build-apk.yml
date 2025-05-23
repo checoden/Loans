@@ -223,7 +223,17 @@ jobs:
           echo "Добавляем настройки подписи в build.gradle..."
           
           # Добавляем signingConfigs после android {
-          sed -i "/android {/a\\    signingConfigs {\\n        release {\\n            storeFile file('$KEYSTORE_ABS_PATH')\\n            storePassword System.getenv('KEYSTORE_PASSWORD')\\n            keyAlias System.getenv('KEY_ALIAS')\\n            keyPassword System.getenv('KEY_PASSWORD')\\n            v1SigningEnabled true\\n            v2SigningEnabled true\\n        }\\n    }" app/build.gradle
+          sed -i "/android {/a\\
+    signingConfigs {\\
+        release {\\
+            storeFile file(\"$KEYSTORE_ABS_PATH\")\\
+            storePassword System.getenv(\"KEYSTORE_PASSWORD\")\\
+            keyAlias System.getenv(\"KEY_ALIAS\")\\
+            keyPassword System.getenv(\"KEY_PASSWORD\")\\
+            v1SigningEnabled true\\
+            v2SigningEnabled true\\
+        }\\
+    }" app/build.gradle
           
           # Добавляем signingConfig в buildTypes release
           sed -i "/buildTypes {/,/release {/a\\            signingConfig signingConfigs.release" app/build.gradle
