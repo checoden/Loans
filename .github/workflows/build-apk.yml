@@ -202,13 +202,13 @@ jobs:
           if [ "$KEYSTORE_SIZE" -lt 1000 ]; then
             echo "⚠️ Внимание: keystore имеет подозрительно маленький размер. Пересоздаем его."
             mkdir -p android/app
-            echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > android/app/android-keystore.keystore
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/android-keystore.keystore
             ls -la android/app/android-keystore.keystore
           fi
         else
           echo "❌ Keystore не найден, создаем его"
           mkdir -p android/app
-          echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > android/app/android-keystore.keystore
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/android-keystore.keystore
           ls -la android/app/android-keystore.keystore
         fi
         
