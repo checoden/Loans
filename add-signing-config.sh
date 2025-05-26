@@ -19,6 +19,7 @@ sed -i "/android {/a\\
     }" build.gradle
 
 # Добавляем signingConfig в buildTypes release
-sed -i "/release {/a\\            signingConfig signingConfigs.release" build.gradle
+sed -i "/buildTypes {/,/release {/{/release {/a\\            signingConfig signingConfigs.release
+}" build.gradle
 
 echo "☑️ Настройки подписи добавлены в build.gradle"
