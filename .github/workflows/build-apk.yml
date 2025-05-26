@@ -214,11 +214,15 @@ jobs:
         ../../../add-signing-config.sh "$KEYSTORE_PATH"
         cd ..
         
+        # Проверяем что добавилось в build.gradle
+        echo "=== Содержимое build.gradle после скрипта ==="
+        cat app/build.gradle | grep -A 20 -B 5 signingConfigs || echo "signingConfigs не найден!"
+        echo "==============================================="
+        
         # Отладка пути к keystore
         echo "=== Отладка пути к keystore ==="
         ls -l app | grep keystore || true
         ls -l . | grep keystore || true
-        ./gradlew :app:properties | grep -i signing || true
         echo "============================="
         
         # Применяем настройки подписи

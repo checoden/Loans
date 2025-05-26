@@ -1,0 +1,56 @@
+В вашем файле capacitor-app/android/app/build.gradle нет секции signingConfigs вообще — именно поэтому Gradle использует настройки по умолчанию из верхнего уровня и не находит нужный файл keystore, либо использует ошибочный путь, который был (возможно) задан где-то автоматически или скриптами.
+
+Почему возникла ошибка
+Capacitor не генерирует настройки подписи сам по себе. Обычно секция signingConfigs должна быть прописана в app/build.gradle вручную или отдельным скриптом.
+
+Ваш build.gradle, судя по всему, полностью генерируется автоматически при каждой сборке.
+
+Файл keystore кладётся в capacitor-app/android/app/android-keystore.keystore (путь подтверждается выводом ls).
+
+Но Gradle ищет его в app/app/android-keystore.keystore, то есть как будто внутри app ещё раз вложена папка app.
+
+Как исправить
+1. Добавьте (или сгенерируйте автоматически) секцию signingConfigs
+Обычно её вставляют примерно так (пример на Groovy):
+
+groovy
+Копировать
+Редактировать
+android {
+    ...
+    signingConfigs {
+        release {
+            storeFile file("android-keystore.keystore")
+            storePassword System.getenv("KEYSTORE_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            ...
+        }
+    }
+}
+storeFile: путь к keystore относительно папки app/ (ВАЖНО!).
+Если keystore реально лежит в capacitor-app/android/app/android-keystore.keystore, то указывайте просто: storeFile file("android-keystore.keystore")
+
+Все пароли лучше брать из переменных среды, а не хардкодить!
+
+2. Вставьте этот кусок через свой скрипт
+Судя по workflow, у вас есть скрипт add-signing-config.sh или node-скрипт update-gradle-signing.js, который должен добавлять секцию подписи.
+Проверьте, реально ли после всех автоматических вставок этот фрагмент появляется в build.gradle.
+
+Проверьте результат на этапе CI:
+Добавьте в workflow после запуска скрипта строчку:
+cat capacitor-app/android/app/build.gradle
+
+Посмотрите, появляется ли блок signingConfigs и прописаны ли переменные корректно.
+
+Почему путь становится неправильным
+Если в секции storeFile будет путь, начинающийся с app/, то результат будет app/app/android-keystore.keystore.
+
+Нужно указывать путь от папки app (т.е. android-keystore.keystore).
+
+Если вы используете абсолютные пути или относительные относительно других директорий, возможен "уход" файла на уровень выше.
