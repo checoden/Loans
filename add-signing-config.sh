@@ -12,7 +12,7 @@ sed -i "/android {/a\\    compileSdk 34" build.gradle
 sed -i "/compileSdk 34/a\\
     signingConfigs {\\
         release {\\
-            storeFile file(\"android-keystore.keystore\")\\
+            storeFile file(\"$KEYSTORE_PATH\")\\
             storePassword System.getenv(\"KEYSTORE_PASSWORD\")\\
             keyAlias System.getenv(\"KEY_ALIAS\")\\
             keyPassword System.getenv(\"KEY_PASSWORD\")\\
