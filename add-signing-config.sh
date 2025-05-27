@@ -10,16 +10,16 @@ sed -i "/android {/a\\    compileSdk 34" build.gradle
 
 # Добавляем signingConfigs после compileSdk
 sed -i "/compileSdk 34/a\\
-    signingConfigs {\\
-        release {\\
-            storeFile file("android-keystore.keystore")\\
-            storePassword System.getenv(\"KEYSTORE_PASSWORD\")\\
-            keyAlias System.getenv(\"KEY_ALIAS\")\\
-            keyPassword System.getenv(\"KEY_PASSWORD\")\\
-            v1SigningEnabled true\\
-            v2SigningEnabled true\\
-        }\\
-    }" build.gradle
+\\    signingConfigs {\\
+\\        release {\\
+\\            storeFile file('android-keystore.keystore')\\
+\\            storePassword System.getenv('KEYSTORE_PASSWORD')\\
+\\            keyAlias System.getenv('KEY_ALIAS')\\
+\\            keyPassword System.getenv('KEY_PASSWORD')\\
+\\            v1SigningEnabled true\\
+\\            v2SigningEnabled true\\
+\\        }\\
+\\    }" build.gradle
 
 # Добавляем signingConfig в buildTypes release
 sed -i "/buildTypes {/,/release {/{/release {/a\\            signingConfig signingConfigs.release
