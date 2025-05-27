@@ -47,8 +47,6 @@
 
             - name: Add Android platform
               run: |
-                mkdir -p capacitor-app/android/app
-                echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > capacitor-app/android/app/android-keystore.keystore
                 cd capacitor-app
                 npx cap add android || {
                   rm -rf android node_modules;
