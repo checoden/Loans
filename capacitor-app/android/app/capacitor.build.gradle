@@ -3,22 +3,19 @@
 android {
     compileSdkVersion 34
 
+    defaultConfig {
+        minSdkVersion 22
+        targetSdkVersion 34
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21
     }
 
-    defaultConfig {
-        applicationId "com.checoden.loans" // Замените на свой, если отличается
-        minSdkVersion 22
-        targetSdkVersion 34
-        versionCode 1
-        versionName "1.0"
-    }
-
     signingConfigs {
         release {
-            storeFile file("../app/android-keystore.keystore")
+            storeFile file("android-keystore.keystore") // 🔧 путь БЕЗ ../
             storePassword System.getenv("KEYSTORE_PASSWORD")
             keyAlias System.getenv("KEY_ALIAS")
             keyPassword System.getenv("KEY_PASSWORD")
@@ -32,7 +29,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         debug {
-            signingConfig signingConfigs.release // Для CI, если надо дебаг-сборку подписывать
+            signingConfig signingConfigs.release
         }
     }
 }
