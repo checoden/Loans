@@ -210,8 +210,8 @@ jobs:
         
         # Используем отдельный скрипт для добавления настроек подписи
         cd app
-        chmod +x ../../../add-signing-config.sh
-        ../../../add-signing-config.sh
+        chmod +x ../../add-signing-config.sh
+        ../../add-signing-config.sh
         cd ..
         
         # Проверяем что добавилось в build.gradle
