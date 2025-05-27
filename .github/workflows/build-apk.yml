@@ -127,8 +127,18 @@
 
             - name: Display certificate fingerprint
               run: |
-                echo "SHA1:"
-                keytool -list -v -keystore capacitor-app/android/app/android-keystore.keystore -alias "${{ secrets.KEY_ALIAS }}" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" | grep SHA1
+                echo "=== Проверяем подпись APK ==="
+                APK_FILE=$(find capacitor-app/android/app/build/outputs/apk/release -name "*.apk" | grep -v unsigned | head -n 1)
+                if [ -n "$APK_FILE" ]; then
+                  echo "Найден APK: $APK_FILE"
+                  # Проверяем подпись APK
+                  jarsigner -verify -verbose -certs "$APK_FILE" || echo "APK не подписан!"
+                  # Показываем сертификат keystore
+                  echo "=== Сертификат keystore ==="
+                  keytool -list -v -keystore capacitor-app/android/app/android-keystore.keystore -alias "${{ secrets.KEY_ALIAS }}" -storepass "${{ secrets.KEYSTORE_PASSWORD }}" | grep SHA1
+                else
+                  echo "APK не найден!"
+                fi
 
             - name: Verify APK file
               run: |
