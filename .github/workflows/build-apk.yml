@@ -55,7 +55,6 @@
                   npx cap add android;
                 }
                 cp ../google-services.json android/app/google-services.json || true
-                cp ../google-services.json android/google-services.json || true
                 cp ../capacitor-app/android/app/src/main/AndroidManifest-template.xml android/app/src/main/AndroidManifest.xml || true
                 cd ..
                 node setup-android-notification-channel.js
