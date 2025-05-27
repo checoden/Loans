@@ -20,15 +20,14 @@ function fixKeystorePath() {
   if (buildGradleContent.includes('signingConfigs {')) {
     console.log('Настройки signingConfigs уже существуют, обновляем путь к keystore');
     
-    // Обновляем путь к keystore на абсолютный
-    const projectRootDir = path.resolve(__dirname, '..');
-    const keystorePath = path.join(projectRootDir, 'keystore.jks');
-    console.log('Используем абсолютный путь к keystore:', keystorePath);
+    // Используем правильный относительный путь к keystore
+    const keystorePath = 'app/android-keystore.keystore';
+    console.log('Используем правильный путь к keystore:', keystorePath);
     
-    // Заменяем существующую строку storeFile на абсолютный путь
+    // Заменяем существующую строку storeFile на правильный путь
     buildGradleContent = buildGradleContent.replace(
       /storeFile\s+file\(['"](.*?)['"]\)/,
-      `storeFile file("${keystorePath.replace(/\\/g, '\\\\')}")`
+      `storeFile file("${keystorePath}")`
     );
     
     fs.writeFileSync(appBuildGradlePath, buildGradleContent);
@@ -36,10 +35,9 @@ function fixKeystorePath() {
   } else {
     console.log('Настройки signingConfigs не найдены, создаем их');
     
-    // Определяем путь к корневому keystore
-    const projectRootDir = path.resolve(__dirname, '..');
-    const keystorePath = path.join(projectRootDir, 'keystore.jks');
-    console.log('Используем абсолютный путь к keystore:', keystorePath);
+    // Используем правильный относительный путь к keystore
+    const keystorePath = 'app/android-keystore.keystore';
+    console.log('Используем правильный путь к keystore:', keystorePath);
     
     // Ищем блок android
     const androidBlockRegex = /android\s*\{/;
@@ -53,7 +51,7 @@ function fixKeystorePath() {
     const signingConfigBlock = `
     signingConfigs {
         release {
-            storeFile file("${keystorePath.replace(/\\/g, '\\\\')}")
+            storeFile file("${keystorePath}")
             storePassword System.getenv("KEYSTORE_PASSWORD") ?: "password"
             keyAlias System.getenv("KEY_ALIAS") ?: "key0"
             keyPassword System.getenv("KEY_PASSWORD") ?: "password"
