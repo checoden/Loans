@@ -26,6 +26,19 @@
                 rm -rf /home/runner/.gradle || true
                 rm -rf ~/.gradle/wrapper/dists || true
 
+            - name: Cache dependencies
+              uses: actions/cache@v3
+              with:
+                path: |
+                  ~/.npm
+                  ~/.gradle/caches
+                  ~/.gradle/wrapper
+                  node_modules
+                  capacitor-app/node_modules
+                key: ${{ runner.os }}-build-${{ hashFiles('**/package-lock.json', '**/*.gradle*', '**/gradle-wrapper.properties') }}
+                restore-keys: |
+                  ${{ runner.os }}-build-
+
             - run: npm ci
 
             - name: Setup OneSignal Environment
@@ -95,7 +108,7 @@
                   exit 1
                 fi
                 echo "✅ Keystore файл готов для сборки"
-                ./gradlew :app:assembleRelease --stacktrace
+                ./gradlew --no-daemon :app:assembleRelease --stacktrace
 
             - name: Find and rename APK
               run: |
