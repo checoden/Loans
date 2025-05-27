@@ -56,10 +56,10 @@
                 }
                 cp ../google-services.json android/app/google-services.json || true
                 cp ../capacitor-app/android/app/src/main/AndroidManifest-template.xml android/app/src/main/AndroidManifest.xml || true
+                npx cap sync android
                 cd ..
                 node setup-android-notification-channel.js
                 cd capacitor-app
-                npx cap sync android
                 chmod +x ./create-directories.sh
                 ./create-directories.sh
                 chmod +x ./add-notification-permission.sh
