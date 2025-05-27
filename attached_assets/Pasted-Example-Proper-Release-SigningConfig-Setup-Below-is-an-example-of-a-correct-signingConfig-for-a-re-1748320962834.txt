@@ -1,0 +1,29 @@
+Example: Proper Release SigningConfig Setup
+Below is an example of a correct signingConfig for a release build in the app’s Gradle configuration, adjusted for this project’s context. This snippet assumes the keystore file is located in the app directory and that the sensitive values are provided via environment variables (as is done in CI):
+groovy
+
+android {
+    signingConfigs {
+        release {
+            // Reference keystore file in app directory
+            storeFile file("android-keystore.keystore")
+            // Use CI-provided environment variables for credentials
+            storePassword System.getenv("KEYSTORE_PASSWORD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+    buildTypes {
+        release {
+            // Link the release build type with the signing config
+            signingConfig signingConfigs.release
+            // (Other release build settings like minify/proguard can go here)
+        }
+        // debug and other buildTypes...
+    }
+}
+In this configuration, the keystore path is correctly specified relative to the app module (storeFile file("android-keystore.keystore")), so Gradle will find the file at android/app/android-keystore.keystore without interpreting an extra app directory. The passwords and alias are pulled from environment variables (which should be set in the CI environment) rather than being hard-coded, which aligns with how the GitHub Actions pipeline provides those secrets. This ensures that the app will be signed with the provided keystore on CI using the release signing config. Using the above setup, the Gradle build will locate the keystore properly and the release APK will be signed without path errors. The key points are to place the keystore in the correct folder and reference it with the correct relative path in build.gradle
+coderwall.com
+, which resolves the earlier path issue and makes the configuration CI-friendly.

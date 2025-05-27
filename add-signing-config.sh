@@ -5,10 +5,11 @@ KEYSTORE_PATH="$1"
 
 echo "Добавляем настройки подписи в build.gradle..."
 
-# Добавляем compileSdk и signingConfigs после android {
-sed -i "/android {/a\\
-    compileSdk 34\\
-    \\
+# Добавляем compileSdk после android {
+sed -i "/android {/a\\    compileSdk 34" build.gradle
+
+# Добавляем signingConfigs после compileSdk
+sed -i "/compileSdk 34/a\\
     signingConfigs {\\
         release {\\
             storeFile file(\"android-keystore.keystore\")\\
