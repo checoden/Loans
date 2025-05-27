@@ -204,7 +204,7 @@ jobs:
         
         cd android
         
-        # Используем относительный путь к keystore
+        # Используем относительный путь к keystore (скрипт выполняется из папки app)
         KEYSTORE_PATH="android-keystore.keystore"
         echo "Относительный путь к keystore: $KEYSTORE_PATH"
         
