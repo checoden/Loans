@@ -103,6 +103,10 @@
                 echo "=== Создаем keystore файл перед сборкой ==="
                 mkdir -p app
                 echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > app/android-keystore.keystore
+                echo "=== Проверяем местонахождение keystore ==="
+                ls -la app/android-keystore.keystore
+                echo "=== Проверяем содержимое build.gradle ==="
+                grep -A 5 -B 5 "storeFile" app/build.gradle
                 if [ ! -f "app/android-keystore.keystore" ]; then
                   echo "❌ Keystore не найден в app/"
                   exit 1
