@@ -76,21 +76,12 @@
                 gradle-version: 8.5
                 build-cache-enabled: true
 
-            - name: Prepare APK signing
-              env:
-                KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-                KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-                KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+            - name: Verify signing configuration
               run: |
-                cd capacitor-app
-                mkdir -p android/app
-                echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > android/app/android-keystore.keystore
-                cd android/app
-                chmod +x ../../../add-signing-config.sh
-                ../../../add-signing-config.sh
-                cd ../
-                echo "=== build.gradle подписан ==="
+                cd capacitor-app/android
+                echo "=== Проверяем настройки подписи ==="
                 grep -A 10 signingConfigs app/build.gradle || echo "signingConfigs не найден!"
+                ls -la app/android-keystore.keystore || echo "Keystore не найден!"
 
             - name: Build APK
               env:
