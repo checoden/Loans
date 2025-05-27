@@ -90,10 +90,14 @@
                 KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
               run: |
                 cd capacitor-app/android
+                echo "=== Создаем keystore файл перед сборкой ==="
+                mkdir -p app
+                echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > app/android-keystore.keystore
                 if [ ! -f "app/android-keystore.keystore" ]; then
                   echo "❌ Keystore не найден в app/"
                   exit 1
                 fi
+                echo "✅ Keystore файл готов для сборки"
                 ./gradlew :app:assembleRelease --stacktrace
 
             - name: Find and rename APK
