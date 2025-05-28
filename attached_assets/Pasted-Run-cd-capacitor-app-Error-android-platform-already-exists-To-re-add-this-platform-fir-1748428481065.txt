@@ -1,0 +1,96 @@
+Run cd capacitor-app
+Error:  android platform already exists.
+        To re-add this platform, first remove ./android, then run this command again.
+        WARNING: Your native project will be completely removed.
+
+added 112 packages, and audited 113 packages in 933ms
+
+19 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+up to date, audited 113 packages in 580ms
+
+19 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+✔ Adding native android project in android in 36.50ms
+✔ add in 37.21ms
+✔ Copying web assets from www to android/app/src/main/assets/public in 4.04ms
+✔ Creating capacitor.config.json in android/app/src/main/assets in 368.63μs
+[info] Found 1 Cordova plugin for android:
+       onesignal-cordova-plugin@5.2.13
+✔ copy android in 33.75ms
+✔ Updating Android plugins in 2.63ms
+[info] Found 1 Cordova plugin for android:
+       onesignal-cordova-plugin@5.2.13
+✔ update android in 35.84ms
+✔ Syncing Gradle in 188.64μs
+[success] android platform added!
+Follow the Developer Workflow guide to get building:
+https://capacitorjs.com/docs/basics/workflow
+cp: cannot stat '../capacitor-app/android/app/src/main/AndroidManifest-template.xml': No such file or directory
+✔ Copying web assets from www to android/app/src/main/assets/public in 8.86ms
+✔ Creating capacitor.config.json in android/app/src/main/assets in 976.01μs
+[info] Found 1 Cordova plugin for android:
+       onesignal-cordova-plugin@5.2.13
+✔ copy android in 40.67ms
+✔ Updating Android plugins in 2.64ms
+[info] Found 1 Cordova plugin for android:
+       onesignal-cordova-plugin@5.2.13
+✔ update android in 48.56ms
+[info] Sync finished in 0.103s
+✅ network_security_config.xml создан
+✅ ic_stat_onesignal_default.xml создан
+✅ Все необходимые директории и файлы для Android созданы
+🔧 Начинаем добавление разрешений push-уведомлений...
+📂 Путь к манифесту: android/app/src/main/AndroidManifest.xml
+✅ Файл AndroidManifest.xml найден
+⚙️ Добавляем разрешения push-уведомлений в AndroidManifest.xml
+sed: -e expression #1, char 14: unterminated `s' command
+❌ Ошибка: не удалось добавить разрешения
+📄 Содержимое манифеста:
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+    </application>
+
+    <!-- Permissions -->
+
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>
+Error: Process completed with exit code 1.

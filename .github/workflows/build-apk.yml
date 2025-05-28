@@ -68,7 +68,7 @@
                   npx cap add android;
                 }
                 cp ../google-services.json android/app/google-services.json || true
-                cp ../capacitor-app/android/app/src/main/AndroidManifest-template.xml android/app/src/main/AndroidManifest.xml || true
+                cp ../AndroidManifest-template.xml android/app/src/main/AndroidManifest.xml || true
                 npx cap sync android
                 chmod +x ./create-directories.sh
                 ./create-directories.sh
