@@ -96,16 +96,16 @@ function updateAndroidSDK() {
       
       wrapperContent = wrapperContent.replace(
         /gradle-[0-9.]+-all\.zip/g,
-        'gradle-8.11-all.zip'
+        'gradle-8.11.1-all.zip'
       );
       
       wrapperContent = wrapperContent.replace(
         /distributionUrl=.*/g,
-        'distributionUrl=https\\://services.gradle.org/distributions/gradle-8.11-all.zip'
+        'distributionUrl=https\\://services.gradle.org/distributions/gradle-8.11.1-all.zip'
       );
       
       fs.writeFileSync(gradleWrapperPath, wrapperContent);
-      console.log('✅ Gradle Wrapper обновлен до 8.11');
+      console.log('✅ Gradle Wrapper обновлен до 8.11.1');
     }
     
     console.log('\n🎉 Android SDK успешно обновлен!');
@@ -113,7 +113,7 @@ function updateAndroidSDK() {
     console.log('   - compileSdk: 34 (Android 14)');
     console.log('   - targetSdk: 34 (Android 14)');
     console.log('   - minSdk: 24 (Android 7.0+)');
-    console.log('   - Gradle: 8.11');
+    console.log('   - Gradle: 8.11.1');
     console.log('   - Android Gradle Plugin: 8.9.0');
     console.log('\n✨ Теперь приложение полностью совместимо с Android 15!');
     
