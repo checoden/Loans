@@ -121,7 +121,7 @@
                 
                 echo "🔧 Обновляем Android SDK до версии 34..."
                 cd ..
-                node update-android-sdk.js
+                node update-android-sdk.cjs
                 cd capacitor-app
 
             - uses: android-actions/setup-android@v3
