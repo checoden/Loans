@@ -60,6 +60,25 @@ function checkAndFixPackageId() {
     const packageRegex = /package="(.*?)"/;
     const match = manifest.match(packageRegex);
     
+    // Добавляем push-разрешения если их нет
+    if (!manifest.includes('android.permission.POST_NOTIFICATIONS')) {
+      console.log('⚙️ Добавляем push-разрешения в AndroidManifest.xml');
+      const pushPermissions = `
+    <!-- Push notification permissions -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />`;
+      
+      manifest = manifest.replace('</manifest>', pushPermissions + '\n</manifest>');
+      fs.writeFileSync(manifestPath, manifest);
+      console.log('✅ Push-разрешения добавлены в AndroidManifest.xml');
+    } else {
+      console.log('✅ Push-разрешения уже есть в AndroidManifest.xml');
+    }
+    
     if (match && match[1] !== expectedPackageId) {
       console.log(`⚠️ В AndroidManifest.xml обнаружен неправильный package: ${match[1]}`);
       manifest = manifest.replace(
