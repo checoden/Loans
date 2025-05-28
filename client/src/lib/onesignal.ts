@@ -164,13 +164,21 @@ function initializeMobileOneSignal(platform: 'android' | 'ios') {
           }
         }, 1000);
         
-        // Метод 2: Прямой вызов Android API через OneSignal
+        // Метод 2: Правильный API для OneSignal SDK v5.2.13
         setTimeout(() => {
           try {
-            // Для Android 13+ (API 33+) нужен POST_NOTIFICATIONS
-            if (window.plugins?.OneSignal?.requestPermission) {
+            // SDK v5+ использует Notifications.requestPermission
+            if (window.plugins?.OneSignal?.Notifications?.requestPermission) {
+              window.plugins.OneSignal.Notifications.requestPermission(true).then((result: boolean) => {
+                console.log("✅ OneSignal v5 requestPermission результат:", result);
+              }).catch((error: any) => {
+                console.warn("⚠️ Ошибка OneSignal v5 requestPermission:", error);
+              });
+            }
+            // Fallback для старых версий
+            else if (window.plugins?.OneSignal?.requestPermission) {
               window.plugins.OneSignal.requestPermission((success: boolean) => {
-                console.log("✅ requestPermission результат:", success);
+                console.log("✅ Legacy requestPermission результат:", success);
               });
             }
           } catch (e) {
