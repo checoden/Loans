@@ -72,8 +72,6 @@
                 npx cap sync android
                 chmod +x ./create-directories.sh
                 ./create-directories.sh
-                chmod +x ./add-notification-permission.sh
-                ./add-notification-permission.sh
                 cd ..
                 node setup-android-notification-channel.js
                 cd capacitor-app
