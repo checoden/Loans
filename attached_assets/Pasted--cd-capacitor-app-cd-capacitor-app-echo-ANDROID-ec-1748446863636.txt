@@ -1,0 +1,344 @@
+ cd capacitor-app
+  cd capacitor-app
+  echo "🚀 === НАЧАЛО СОЗДАНИЯ ANDROID ПРОЕКТА ==="
+  
+  echo "📁 Проверяем наличие шаблона манифеста:"
+  ls -la ../AndroidManifest-template.xml && echo "✅ Шаблон найден" || echo "❌ Шаблон не найден"
+  
+  echo "🔧 Создаем Android платформу..."
+  npx cap add android || {
+    echo "⚠️ Повторное создание Android платформы..."
+    rm -rf android node_modules;
+    npm install;
+    npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 onesignal-cordova-plugin@5.2.13;
+    npx cap add android;
+  }
+  
+  echo "📄 Проверяем базовый манифест после cap add:"
+  cat android/app/src/main/AndroidManifest.xml
+  echo "📋 Разрешения в базовом манифесте:"
+  grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "Нет разрешений в базовом манифесте"
+  
+  echo "📦 Копируем google-services.json..."
+  cp ../google-services.json android/app/google-services.json || true
+  
+  echo "🔄 Выполняем cap sync android..."
+  npx cap sync android
+  
+  echo "📄 Проверяем манифест после cap sync:"
+  cat android/app/src/main/AndroidManifest.xml
+  echo "📋 Разрешения после cap sync:"
+  grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "Нет разрешений после cap sync"
+  
+  echo "📝 Копируем наш шаблон манифеста..."
+  cp ../AndroidManifest-template.xml android/app/src/main/AndroidManifest.xml || {
+    echo "❌ Ошибка копирования шаблона!"
+    ls -la ../AndroidManifest-template.xml
+    exit 1
+  }
+  
+  echo "✅ === ФИНАЛЬНЫЙ МАНИФЕСТ ПОСЛЕ КОПИРОВАНИЯ ШАБЛОНА ==="
+  cat android/app/src/main/AndroidManifest.xml
+  echo "🔍 === СПИСОК ВСЕХ РАЗРЕШЕНИЙ ==="
+  grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "❌ Разрешения не найдены в финальном манифесте!"
+  
+  chmod +x ./create-directories.sh
+  ./create-directories.sh
+  cd ..
+  
+  echo "🔧 Запускаем setup-android-notification-channel.js..."
+  node setup-android-notification-channel.js
+  
+  echo "📄 Проверяем манифест после notification script:"
+  cat capacitor-app/android/app/src/main/AndroidManifest.xml
+  echo "📋 Разрешения после notification script:"
+  grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml || echo "Нет разрешений после notification script"
+  
+  cd capacitor-app
+  node update-gradle-signing.js
+  node update-android-plugin.js
+  shell: /usr/bin/bash -e {0}
+  env:
+    JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.7-6/x64
+    JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.7-6/x64
+    VITE_ONESIGNAL_APP_ID: ***
+    VITE_ONESIGNAL_REST_API_KEY: ***
+🚀 === НАЧАЛО СОЗДАНИЯ ANDROID ПРОЕКТА ===
+📁 Проверяем наличие шаблона манифеста:
+-rw-r--r-- 1 runner docker 2028 May 28 15:21 ../AndroidManifest-template.xml
+✅ Шаблон найден
+🔧 Создаем Android платформу...
+Error:  android platform already exists.
+        To re-add this platform, first remove ./android, then run this command again.
+        WARNING: Your native project will be completely removed.
+⚠️ Повторное создание Android платформы...
+
+added 112 packages, and audited 113 packages in 935ms
+
+19 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+
+up to date, audited 113 packages in 550ms
+
+19 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+✔ Adding native android project in android in 35.71ms
+✔ add in 36.41ms
+✔ Copying web assets from www to android/app/src/main/assets/public in 4.09ms
+✔ Creating capacitor.config.json in android/app/src/main/assets in 403.25μs
+[info] Found 1 Cordova plugin for android:
+       onesignal-cordova-plugin@5.2.13
+✔ copy android in 34.47ms
+✔ Updating Android plugins in 2.67ms
+[info] Found 1 Cordova plugin for android:
+       onesignal-cordova-plugin@5.2.13
+✔ update android in 35.14ms
+✔ Syncing Gradle in 173.88μs
+[success] android platform added!
+Follow the Developer Workflow guide to get building:
+https://capacitorjs.com/docs/basics/workflow
+📄 Проверяем базовый манифест после cap add:
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+    </application>
+
+    <!-- Permissions -->
+
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>
+📋 Разрешения в базовом манифесте:
+    <uses-permission android:name="android.permission.INTERNET" />
+📦 Копируем google-services.json...
+🔄 Выполняем cap sync android...
+✔ Copying web assets from www to android/app/src/main/assets/public in 8.96ms
+✔ Creating capacitor.config.json in android/app/src/main/assets in 1.00ms
+[info] Found 1 Cordova plugin for android:
+       onesignal-cordova-plugin@5.2.13
+✔ copy android in 42.95ms
+✔ Updating Android plugins in 2.67ms
+[info] Found 1 Cordova plugin for android:
+       onesignal-cordova-plugin@5.2.13
+✔ update android in 43.89ms
+[info] Sync finished in 0.101s
+📄 Проверяем манифест после cap sync:
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+    </application>
+
+    <!-- Permissions -->
+
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>
+📋 Разрешения после cap sync:
+    <uses-permission android:name="android.permission.INTERNET" />
+📝 Копируем наш шаблон манифеста...
+✅ === ФИНАЛЬНЫЙ МАНИФЕСТ ПОСЛЕ КОПИРОВАНИЯ ШАБЛОНА ===
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+    </application>
+
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    
+    <!-- Push notification permissions -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+</manifest>🔍 === СПИСОК ВСЕХ РАЗРЕШЕНИЙ ===
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+✅ network_security_config.xml создан
+✅ ic_stat_onesignal_default.xml создан
+✅ Все необходимые директории и файлы для Android созданы
+🔧 Запускаем setup-android-notification-channel.js...
+🔍 Проверяю и корректирую идентификатор пакета...
+✅ applicationId в build.gradle уже установлен правильно: ru.checoden.online***
+✅ Push-разрешения уже есть в AndroidManifest.xml
+⚠️ Не удалось найти package в AndroidManifest.xml
+
+🔔 Начинаю настройку канала уведомлений для Android...
+📝 Модифицирую файл MainActivity.java...
+✅ Код для канала уведомлений успешно добавлен в MainActivity.java
+
+✅ Канал уведомлений успешно настроен!
+
+📱 Теперь вы можете продолжить сборку APK:
+1. Откройте Android Studio: npx cap open android
+2. Выполните сборку приложения (Build > Build Bundle(s) / APK(s) > Build APK(s))
+
+🔔 Важно! Для работы push-уведомлений:
+1. Убедитесь, что google-services.json в папке capacitor-app содержит правильный package_name: ru.checoden.online***
+2. Убедитесь, что файл создан для ЭТОГО проекта в Firebase Console и содержит правильные API-ключи
+📄 Проверяем манифест после notification script:
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+    </application>
+
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    
+    <!-- Push notification permissions -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+</manifest>📋 Разрешения после notification script:
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+Обновляем настройки подписи в build.gradle...
+✅ Настройки подписи успешно обновлены в build.gradle
+Обновляем версию Android Gradle Plugin до 8.9...
+✅ Версия Android Gradle Plugin обновлена до 8.9
+✅ Файл gradle.properties обновлен для поддержки AGP 8.9
+✅ Файл app/build.gradle обновлен для поддержки AGP 8.9

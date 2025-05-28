@@ -139,6 +139,64 @@ function initializeMobileOneSignal(platform: 'android' | 'ios') {
             showBadge: true
           });
         }
+        
+        // ПРИНУДИТЕЛЬНЫЙ ЗАПРОС РАЗРЕШЕНИЙ ДЛЯ ANDROID 15+
+        console.log("🚀 Принудительный запрос push-разрешений для Android 15+");
+        
+        // Метод 1: Через нативный Android API
+        setTimeout(() => {
+          try {
+            if (window.cordova?.exec) {
+              window.cordova.exec(
+                (success: any) => {
+                  console.log("✅ Разрешения запрошены через cordova.exec:", success);
+                },
+                (error: any) => {
+                  console.warn("⚠️ Ошибка запроса через cordova.exec:", error);
+                },
+                'OneSignal',
+                'requestPermission',
+                []
+              );
+            }
+          } catch (e) {
+            console.warn("Cordova.exec недоступен:", e);
+          }
+        }, 1000);
+        
+        // Метод 2: Прямой вызов Android API через OneSignal
+        setTimeout(() => {
+          try {
+            // Для Android 13+ (API 33+) нужен POST_NOTIFICATIONS
+            if (window.plugins?.OneSignal?.requestPermission) {
+              window.plugins.OneSignal.requestPermission((success: boolean) => {
+                console.log("✅ requestPermission результат:", success);
+              });
+            }
+          } catch (e) {
+            console.warn("OneSignal.requestPermission недоступен:", e);
+          }
+        }, 2000);
+        
+        // Метод 3: Через Permissions API если доступен
+        setTimeout(() => {
+          try {
+            if (window.cordova?.plugins?.permissions) {
+              window.cordova.plugins.permissions.requestPermission(
+                'android.permission.POST_NOTIFICATIONS',
+                (status: any) => {
+                  console.log("✅ POST_NOTIFICATIONS статус:", status);
+                },
+                (error: any) => {
+                  console.warn("⚠️ Ошибка POST_NOTIFICATIONS:", error);
+                }
+              );
+            }
+          } catch (e) {
+            console.warn("Permissions plugin недоступен:", e);
+          }
+        }, 3000);
+        
       } catch (e) {
         console.warn("Error configuring notification channel:", e);
       }
