@@ -24,9 +24,9 @@ if ! grep -q "xmlns:tools=" "$MANIFEST_PATH"; then
   sed -i 's/<manifest xmlns:android="http:\/\/schemas.android.com\/apk\/res\/android"/<manifest xmlns:android="http:\/\/schemas.android.com\/apk\/res\/android" xmlns:tools="http:\/\/schemas.android.com\/tools"/g' "$MANIFEST_PATH"
 fi
 
-# Добавляем разрешение POST_NOTIFICATIONS перед закрывающим тегом </manifest>
-echo "⚙️ Добавляем разрешение POST_NOTIFICATIONS в AndroidManifest.xml"
-sed -i 's/<\/manifest>/    <!-- Разрешение для push-уведомлений на Android 13+ -->\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" \/>\n<\/manifest>/g' "$MANIFEST_PATH"
+# Добавляем все разрешения для push-уведомлений перед закрывающим тегом </manifest>
+echo "⚙️ Добавляем разрешения для push-уведомлений в AndroidManifest.xml"
+sed -i 's/<\/manifest>/    <!-- Разрешения для push-уведомлений -->\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" \/>\n    <uses-permission android:name="android.permission.WAKE_LOCK" \/>\n    <uses-permission android:name="android.permission.VIBRATE" \/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" \/>\n    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" \/>\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" \/>\n<\/manifest>/g' "$MANIFEST_PATH"
 
 # Проверяем, что разрешение добавлено
 if grep -q "android.permission.POST_NOTIFICATIONS" "$MANIFEST_PATH"; then
