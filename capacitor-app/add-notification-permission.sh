@@ -51,9 +51,3 @@ else
 fi
 
 exit 0
-else
-  echo "❌ Ошибка: не удалось добавить разрешение POST_NOTIFICATIONS"
-  exit 1
-fi
-
-exit 0
