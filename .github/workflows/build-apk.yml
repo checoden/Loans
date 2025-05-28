@@ -118,6 +118,11 @@
                 cd capacitor-app
                 node update-gradle-signing.js
                 node update-android-plugin.js
+                
+                echo "🔧 Обновляем Android SDK до версии 34..."
+                cd ..
+                node update-android-sdk.js
+                cd capacitor-app
 
             - uses: android-actions/setup-android@v3
             - uses: gradle/actions/setup-gradle@v3
