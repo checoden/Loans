@@ -46,9 +46,10 @@ function updateAndroidSDK() {
           
           const postNotificationsConfig = `
     // Поддержка POST_NOTIFICATIONS для Android 13+
-    packagingOptions {
-        pickFirst '**/libc++_shared.so'
-        pickFirst '**/libjsc.so'
+    packaging {
+        resources {
+            pickFirsts += ['**/libc++_shared.so', '**/libjsc.so']
+        }
     }
     
     compileOptions {
