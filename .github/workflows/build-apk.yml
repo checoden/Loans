@@ -61,23 +61,60 @@
             - name: Add Android platform
               run: |
                 cd capacitor-app
+                echo "🚀 === НАЧАЛО СОЗДАНИЯ ANDROID ПРОЕКТА ==="
+                
+                echo "📁 Проверяем наличие шаблона манифеста:"
+                ls -la ../AndroidManifest-template.xml && echo "✅ Шаблон найден" || echo "❌ Шаблон не найден"
+                
+                echo "🔧 Создаем Android платформу..."
                 npx cap add android || {
+                  echo "⚠️ Повторное создание Android платформы..."
                   rm -rf android node_modules;
                   npm install;
                   npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 onesignal-cordova-plugin@5.2.13;
                   npx cap add android;
                 }
+                
+                echo "📄 Проверяем базовый манифест после cap add:"
+                cat android/app/src/main/AndroidManifest.xml
+                echo "📋 Разрешения в базовом манифесте:"
+                grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "Нет разрешений в базовом манифесте"
+                
+                echo "📦 Копируем google-services.json..."
                 cp ../google-services.json android/app/google-services.json || true
+                
+                echo "🔄 Выполняем cap sync android..."
                 npx cap sync android
-                cp ../AndroidManifest-template.xml android/app/src/main/AndroidManifest.xml || true
+                
+                echo "📄 Проверяем манифест после cap sync:"
+                cat android/app/src/main/AndroidManifest.xml
+                echo "📋 Разрешения после cap sync:"
+                grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "Нет разрешений после cap sync"
+                
+                echo "📝 Копируем наш шаблон манифеста..."
+                cp ../AndroidManifest-template.xml android/app/src/main/AndroidManifest.xml || {
+                  echo "❌ Ошибка копирования шаблона!"
+                  ls -la ../AndroidManifest-template.xml
+                  exit 1
+                }
+                
+                echo "✅ === ФИНАЛЬНЫЙ МАНИФЕСТ ПОСЛЕ КОПИРОВАНИЯ ШАБЛОНА ==="
+                cat android/app/src/main/AndroidManifest.xml
+                echo "🔍 === СПИСОК ВСЕХ РАЗРЕШЕНИЙ ==="
+                grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "❌ Разрешения не найдены в финальном манифесте!"
+                
                 chmod +x ./create-directories.sh
                 ./create-directories.sh
-                echo "=== ПРОВЕРКА ФИНАЛЬНОГО МАНИФЕСТА ==="
-                cat android/app/src/main/AndroidManifest.xml
-                echo "=== СПИСОК РАЗРЕШЕНИЙ ==="
-                grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "Разрешения не найдены!"
                 cd ..
+                
+                echo "🔧 Запускаем setup-android-notification-channel.js..."
                 node setup-android-notification-channel.js
+                
+                echo "📄 Проверяем манифест после notification script:"
+                cat capacitor-app/android/app/src/main/AndroidManifest.xml
+                echo "📋 Разрешения после notification script:"
+                grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml || echo "Нет разрешений после notification script"
+                
                 cd capacitor-app
                 node update-gradle-signing.js
                 node update-android-plugin.js
