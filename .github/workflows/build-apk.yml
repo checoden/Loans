@@ -72,6 +72,10 @@
                 cp ../AndroidManifest-template.xml android/app/src/main/AndroidManifest.xml || true
                 chmod +x ./create-directories.sh
                 ./create-directories.sh
+                echo "=== ПРОВЕРКА ФИНАЛЬНОГО МАНИФЕСТА ==="
+                cat android/app/src/main/AndroidManifest.xml
+                echo "=== СПИСОК РАЗРЕШЕНИЙ ==="
+                grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "Разрешения не найдены!"
                 cd ..
                 node setup-android-notification-channel.js
                 cd capacitor-app
