@@ -185,16 +185,9 @@
                 fi
                 
                 echo ""
-                echo "✅ ФИНАЛЬНЫЙ МАНИФЕСТ ПОСЛЕ ДОБАВЛЕНИЯ РАЗРЕШЕНИЙ:"
-                echo "--- НАЧАЛО ФИНАЛЬНОГО МАНИФЕСТА ---"
-                cat "$MANIFEST_PATH"
-                echo "--- КОНЕЦ ФИНАЛЬНОГО МАНИФЕСТА ---"
-                echo ""
-                echo "📋 СПИСОК ВСЕХ РАЗРЕШЕНИЙ В МАНИФЕСТЕ:"
-                grep "uses-permission" "$MANIFEST_PATH" | while read line; do
-                  permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
-                  echo "  ✓ $permission"
-                done || echo "❌ Разрешения не найдены в финальном манифесте!"
+                echo "✅ РАЗРЕШЕНИЯ УСПЕШНО ДОБАВЛЕНЫ:"
+                echo "📋 Всего разрешений: $(grep -c "uses-permission" "$MANIFEST_PATH")"
+                echo "🎯 POST_NOTIFICATIONS: $(grep -q "POST_NOTIFICATIONS" "$MANIFEST_PATH" && echo "✓" || echo "✗")"
                 
                 chmod +x ./create-directories.sh
                 ./create-directories.sh
@@ -209,30 +202,28 @@
                 echo "✅ Скрипт настройки уведомлений завершен"
                 
                 echo ""
-                echo "📄 ПРОВЕРКА МАНИФЕСТА ПОСЛЕ НАСТРОЙКИ УВЕДОМЛЕНИЙ:"
+                echo "📄 КРАТКАЯ ПРОВЕРКА ПОСЛЕ НАСТРОЙКИ УВЕДОМЛЕНИЙ:"
                 MANIFEST_PATH="capacitor-app/android/app/src/main/AndroidManifest.xml"
                 if [ -f "$MANIFEST_PATH" ]; then
-                  echo "--- МАНИФЕСТ ПОСЛЕ NOTIFICATION SCRIPT ---"
-                  cat "$MANIFEST_PATH"
-                  echo "--- КОНЕЦ МАНИФЕСТА ---"
-                  echo ""
-                  echo "📋 Разрешения после notification script:"
-                  grep "uses-permission" "$MANIFEST_PATH" | while read line; do
-                    permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
-                    echo "  ✓ $permission"
-                  done || echo "❌ Нет разрешений после notification script"
+                  echo "✅ Манифест найден"
+                  echo "📋 Количество разрешений: $(grep -c "uses-permission" "$MANIFEST_PATH")"
+                  if grep -q "POST_NOTIFICATIONS" "$MANIFEST_PATH"; then
+                    echo "✅ POST_NOTIFICATIONS присутствует"
+                  else
+                    echo "❌ POST_NOTIFICATIONS отсутствует"
+                  fi
                 else
                   echo "❌ Манифест не найден: $MANIFEST_PATH"
                 fi
                 
-                echo "📱 Проверяем MainActivity.java после добавления POST_NOTIFICATIONS:"
+                echo "📱 Проверка MainActivity.java:"
                 if [ -f "capacitor-app/android/app/src/main/java/ru/checoden/onlineloans/MainActivity.java" ]; then
                   echo "✅ MainActivity.java найден"
-                  echo "🔍 Содержимое MainActivity.java:"
-                  cat capacitor-app/android/app/src/main/java/ru/checoden/onlineloans/MainActivity.java
-                  echo "📋 Проверяем наличие POST_NOTIFICATIONS кода:"
-                  grep -n "POST_NOTIFICATIONS" capacitor-app/android/app/src/main/java/ru/checoden/onlineloans/MainActivity.java || echo "❌ POST_NOTIFICATIONS код не найден"
-                  grep -n "ActivityCompat.requestPermissions" capacitor-app/android/app/src/main/java/ru/checoden/onlineloans/MainActivity.java || echo "❌ requestPermissions код не найден"
+                  if grep -q "POST_NOTIFICATIONS" capacitor-app/android/app/src/main/java/ru/checoden/onlineloans/MainActivity.java; then
+                    echo "✅ Код запроса POST_NOTIFICATIONS присутствует"
+                  else
+                    echo "❌ Код запроса POST_NOTIFICATIONS отсутствует"
+                  fi
                 else
                   echo "❌ MainActivity.java не найден!"
                 fi
@@ -261,26 +252,17 @@
                 fi
                 
                 echo ""
-                echo "🔍 ФИНАЛЬНАЯ ПРОВЕРКА РАЗРЕШЕНИЙ ПЕРЕД СБОРКОЙ:"
+                echo "🔍 ФИНАЛЬНАЯ ПРОВЕРКА ПЕРЕД СБОРКОЙ:"
                 FINAL_MANIFEST="capacitor-app/android/app/src/main/AndroidManifest.xml"
                 if [ -f "$FINAL_MANIFEST" ]; then
-                  echo "Все разрешения в финальном манифесте:"
-                  grep "uses-permission" "$FINAL_MANIFEST" | while read line; do
-                    permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
-                    echo "  ✓ $permission"
-                  done
-                  
-                  echo ""
-                  echo "🎯 КРИТИЧЕСКАЯ ПРОВЕРКА POST_NOTIFICATIONS:"
                   if grep -q "POST_NOTIFICATIONS" "$FINAL_MANIFEST"; then
-                    echo "  ✅ POST_NOTIFICATIONS присутствует в манифесте - готов к сборке"
+                    echo "✅ POST_NOTIFICATIONS готов - можно собирать APK"
                   else
-                    echo "  ❌ POST_NOTIFICATIONS ОТСУТСТВУЕТ в манифесте!"
-                    echo "  🚨 СБОРКА БУДЕТ ОСТАНОВЛЕНА - Android 13+ требует это разрешение"
+                    echo "❌ POST_NOTIFICATIONS отсутствует - сборка остановлена"
                     exit 1
                   fi
                 else
-                  echo "❌ Финальный манифест не найден: $FINAL_MANIFEST"
+                  echo "❌ Манифест не найден - сборка остановлена"
                   exit 1
                 fi
                 
@@ -444,15 +426,13 @@
                 echo "OneSignal: $(grep 'onesignal-cordova-plugin' ../package.json | cut -d':' -f2 | tr -d ' "^,')"
                 echo ""
                 
-                echo "🔐 ВСЕ РАЗРЕШЕНИЯ В МАНИФЕСТЕ:"
+                echo "🔐 РАЗРЕШЕНИЯ В МАНИФЕСТЕ:"
                 REPORT_MANIFEST="capacitor-app/android/app/src/main/AndroidManifest.xml"
                 if [ -f "$REPORT_MANIFEST" ]; then
-                  grep "uses-permission" "$REPORT_MANIFEST" | while read line; do
-                    permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
-                    echo "  ✓ $permission"
-                  done
+                  echo "  Всего разрешений: $(grep -c "uses-permission" "$REPORT_MANIFEST")"
+                  echo "  POST_NOTIFICATIONS: $(grep -q "POST_NOTIFICATIONS" "$REPORT_MANIFEST" && echo "✓" || echo "✗")"
                 else
-                  echo "  ❌ Манифест не найден для отчета"
+                  echo "  ❌ Манифест недоступен"
                 fi
                 echo ""
                 
