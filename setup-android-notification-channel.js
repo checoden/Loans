@@ -133,11 +133,11 @@ function setupNotificationChannel() {
   if (!javaCode.includes('import android.app.NotificationChannel;')) {
     javaCode = javaCode.replace(
       'import android.os.Bundle;', 
-      'import android.os.Bundle;\nimport android.app.NotificationChannel;\nimport android.app.NotificationManager;\nimport android.content.Context;'
+      'import android.os.Bundle;\nimport android.app.NotificationChannel;\nimport android.app.NotificationManager;\nimport android.content.Context;\nimport android.Manifest;\nimport android.content.pm.PackageManager;\nimport androidx.core.content.ContextCompat;\nimport androidx.core.app.ActivityCompat;'
     );
   }
   
-  // Добавляем код создания канала уведомлений в метод onCreate
+  // Добавляем код создания канала уведомлений и запрос POST_NOTIFICATIONS в метод onCreate
   javaCode = javaCode.replace(
     'public void onCreate(Bundle savedInstanceState) {\n    super.onCreate(savedInstanceState);',
     `public void onCreate(Bundle savedInstanceState) {
@@ -157,6 +157,13 @@ function setupNotificationChannel() {
         notificationManager.createNotificationChannel(channel);
         
         System.out.println("Канал уведомлений 'займы-онлайн-уведомления' создан");
+    }
+    
+    // Запрашиваем разрешение POST_NOTIFICATIONS для Android 13+
+    if (android.os.Build.VERSION.SDK_INT >= 33 &&
+        ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1001);
+        System.out.println("Запрашиваем разрешение POST_NOTIFICATIONS для Android 13+");
     }
     
     // Запрашиваем разрешения на показ уведомлений для Android 13+ (API 33+)
