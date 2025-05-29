@@ -30,6 +30,9 @@
                 echo "org.gradle.configureondemand=true" >> ~/.gradle/gradle.properties
                 echo "org.gradle.configuration-cache=true" >> ~/.gradle/gradle.properties
                 echo "org.gradle.configuration-cache.problems=warn" >> ~/.gradle/gradle.properties
+                echo "org.gradle.vfs.watch=false" >> ~/.gradle/gradle.properties
+                echo "org.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8" >> ~/.gradle/gradle.properties
+                echo "org.gradle.workers.max=2" >> ~/.gradle/gradle.properties
 
             - name: Cache dependencies
               uses: actions/cache@v3
