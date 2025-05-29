@@ -11,7 +11,7 @@ import PushNotificationPage from "@/pages/PushNotificationPage";
 import NotFound from "@/pages/not-found";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AdminAuthProvider } from "@/hooks/use-admin-auth";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { initializeOneSignal } from "@/lib/onesignal";
 
 function Router() {
@@ -29,7 +29,15 @@ function Router() {
 function App() {
   useEffect(() => {
     // Initialize OneSignal for push notifications
-    initializeOneSignal();
+    const initPushNotifications = async () => {
+      try {
+        await initializeOneSignal();
+      } catch (error) {
+        console.error('Failed to initialize push notifications:', error);
+      }
+    };
+    
+    initPushNotifications();
   }, []);
 
   return (

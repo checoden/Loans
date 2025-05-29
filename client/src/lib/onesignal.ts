@@ -1,3 +1,5 @@
+import { PushNotifications } from '@capacitor/push-notifications';
+
 // Add type declaration for OneSignal and Cordova
 declare global {
   interface Window {
@@ -26,9 +28,58 @@ function detectEnvironment(): 'web' | 'android' | 'ios' {
 }
 
 // Initialize OneSignal for push notifications
-export function initializeOneSignal() {
+export async function initializeOneSignal() {
   const environment = detectEnvironment();
   console.log(`Initializing OneSignal for platform: ${environment}`);
+  
+  // For mobile platforms, first request proper push notification permissions
+  if (environment === 'android' || environment === 'ios') {
+    try {
+      console.log('Requesting push notification permissions...');
+      
+      // Check current permission status
+      const permissionStatus = await PushNotifications.checkPermissions();
+      console.log('Current permission status:', permissionStatus);
+      
+      if (permissionStatus.receive !== 'granted') {
+        // Request permission
+        const result = await PushNotifications.requestPermissions();
+        console.log('Permission request result:', result);
+        
+        if (result.receive === 'granted') {
+          console.log('Push notifications permission granted');
+          await PushNotifications.register();
+          console.log('Registered for push notifications');
+        } else {
+          console.warn('Push notifications permission denied');
+          return; // Don't initialize OneSignal if permission denied
+        }
+      } else {
+        console.log('Push notifications already permitted');
+        await PushNotifications.register();
+      }
+      
+      // Set up push notification listeners
+      PushNotifications.addListener('registration', (token) => {
+        console.log('Push registration success, token: ' + token.value);
+      });
+      
+      PushNotifications.addListener('registrationError', (error) => {
+        console.error('Error on registration: ' + JSON.stringify(error));
+      });
+      
+      PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        console.log('Push notification received: ', notification);
+      });
+      
+      PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+        console.log('Push notification action performed', notification.actionId, notification.inputValue);
+      });
+      
+    } catch (error) {
+      console.error('Error setting up push notifications:', error);
+    }
+  }
   
   // Wait for device ready if in mobile environment
   const onDeviceReady = () => {

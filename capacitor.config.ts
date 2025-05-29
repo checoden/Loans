@@ -18,6 +18,10 @@ const config: CapacitorConfig = {
     errorPath: "/error.html"
   },
   plugins: {
+    // Конфигурация PushNotifications для правильной работы с Android 13+
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
     // Конфигурация OneSignal согласно официальной документации
     OneSignal: {
       appId: process.env.VITE_ONESIGNAL_APP_ID,
