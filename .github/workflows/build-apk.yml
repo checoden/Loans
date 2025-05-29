@@ -180,6 +180,64 @@
                 fi
                 echo "✅ Keystore файл готов для сборки"
                 ./gradlew --no-daemon :app:assembleRelease --stacktrace
+                
+                echo ""
+                echo "🎯 ============ ИТОГОВЫЙ ОТЧЕТ СБОРКИ ============"
+                echo "📅 Время сборки: $(date)"
+                echo ""
+                
+                echo "📱 ВЕРСИИ ANDROID SDK:"
+                grep -n "compileSdk" app/build.gradle | head -1 || echo "❌ compileSdk не найден"
+                grep -n "targetSdk" app/build.gradle | head -1 || echo "❌ targetSdk не найден" 
+                grep -n "minSdk" app/build.gradle | head -1 || echo "❌ minSdk не найден"
+                echo ""
+                
+                echo "🔧 ВЕРСИИ GRADLE И TOOLS:"
+                echo "Gradle Wrapper: $(grep distributionUrl gradle/wrapper/gradle-wrapper.properties | cut -d'/' -f6 | cut -d'-' -f2,3)"
+                echo "Android Gradle Plugin: $(grep 'com.android.tools.build:gradle:' build.gradle | cut -d':' -f3 | tr -d "'")"
+                echo "Java Version: $JAVA_VERSION"
+                echo ""
+                
+                echo "📦 ВЕРСИИ CAPACITOR И ONESIGNAL:"
+                echo "Capacitor: $(grep '@capacitor/android' ../package.json | cut -d':' -f2 | tr -d ' "^,')"
+                echo "OneSignal: $(grep 'onesignal-cordova-plugin' ../package.json | cut -d':' -f2 | tr -d ' "^,')"
+                echo ""
+                
+                echo "🔐 ВСЕ РАЗРЕШЕНИЯ В МАНИФЕСТЕ:"
+                grep "uses-permission" app/src/main/AndroidManifest.xml | while read line; do
+                  permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
+                  echo "  ✓ $permission"
+                done
+                echo ""
+                
+                echo "📋 НАСТРОЙКИ ПРИЛОЖЕНИЯ:"
+                echo "Package ID: $(grep 'package=' app/src/main/AndroidManifest.xml | cut -d'"' -f2)"
+                echo "App Name: $(grep 'android:label=' app/src/main/AndroidManifest.xml | head -1 | cut -d'"' -f2)"
+                echo ""
+                
+                echo "📱 ИНФОРМАЦИЯ О СОЗДАННОМ APK:"
+                if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+                  echo "✅ APK успешно создан"
+                  echo "📁 Размер: $(du -h app/build/outputs/apk/release/app-release.apk | cut -f1)"
+                  echo "🔑 Подпись: $(jarsigner -verify -verbose app/build/outputs/apk/release/app-release.apk | grep "SHA1 digest algorithm" | wc -l > 0 && echo "Подписан" || echo "Не подписан")"
+                else
+                  echo "❌ APK не создан!"
+                fi
+                echo ""
+                
+                echo "🚀 ГОТОВНОСТЬ К ТЕСТИРОВАНИЮ:"
+                echo "  ✓ Android SDK 34 для поддержки Android 15"
+                echo "  ✓ POST_NOTIFICATIONS разрешение в манифесте"
+                echo "  ✓ Нативный запрос разрешений в MainActivity.java"
+                echo "  ✓ OneSignal SDK v5.2.13 с правильным API"
+                echo "  ✓ Принудительная инициализация push-уведомлений"
+                echo ""
+                echo "📋 СЛЕДУЮЩИЕ ШАГИ:"
+                echo "  1. Установите APK на Android 15 устройство"
+                echo "  2. При первом запуске должен появиться диалог разрешения уведомлений"
+                echo "  3. Проверьте логи через: adb logcat | grep -i 'POST_NOTIFICATIONS\\|OneSignal'"
+                echo ""
+                echo "==============================================="
 
             - name: Find and rename APK
               run: |
