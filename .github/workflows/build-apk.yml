@@ -116,6 +116,10 @@
                 npx cap sync android
                 echo "✅ Синхронизация завершена"
                 
+                echo "📱 Устанавливаем дополнительные плагины для push уведомлений:"
+                npm install @capacitor/push-notifications
+                npx cap sync android
+                
                 echo ""
                 echo "📄 ПРОВЕРКА МАНИФЕСТА ПОСЛЕ СИНХРОНИЗАЦИИ:"
                 MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
