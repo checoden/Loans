@@ -91,14 +91,39 @@
                 echo "📋 Разрешения после cap sync:"
                 grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "Нет разрешений после cap sync"
                 
-                echo "📝 Копируем наш шаблон манифеста..."
-                cp ../AndroidManifest-template.xml android/app/src/main/AndroidManifest.xml || {
-                  echo "❌ Ошибка копирования шаблона!"
-                  ls -la ../AndroidManifest-template.xml
-                  exit 1
-                }
+                echo "📝 Добавляем POST_NOTIFICATIONS разрешение к существующему манифесту..."
                 
-                echo "✅ === ФИНАЛЬНЫЙ МАНИФЕСТ ПОСЛЕ КОПИРОВАНИЯ ШАБЛОНА ==="
+                # Проверяем, есть ли уже POST_NOTIFICATIONS
+                if ! grep -q "POST_NOTIFICATIONS" android/app/src/main/AndroidManifest.xml; then
+                  echo "Добавляем POST_NOTIFICATIONS разрешение..."
+                  # Добавляем разрешение перед закрывающим тегом </manifest>
+                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n</manifest>|' android/app/src/main/AndroidManifest.xml
+                else
+                  echo "POST_NOTIFICATIONS разрешение уже присутствует"
+                fi
+                
+                # Добавляем другие push-разрешения если их нет
+                if ! grep -q "WAKE_LOCK" android/app/src/main/AndroidManifest.xml; then
+                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.WAKE_LOCK" />\n</manifest>|' android/app/src/main/AndroidManifest.xml
+                fi
+                
+                if ! grep -q "VIBRATE" android/app/src/main/AndroidManifest.xml; then
+                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>|' android/app/src/main/AndroidManifest.xml
+                fi
+                
+                if ! grep -q "RECEIVE_BOOT_COMPLETED" android/app/src/main/AndroidManifest.xml; then
+                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n</manifest>|' android/app/src/main/AndroidManifest.xml
+                fi
+                
+                if ! grep -q "com.google.android.c2dm.permission.RECEIVE" android/app/src/main/AndroidManifest.xml; then
+                  sed -i 's|</manifest>|    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />\n</manifest>|' android/app/src/main/AndroidManifest.xml
+                fi
+                
+                if ! grep -q "ACCESS_NETWORK_STATE" android/app/src/main/AndroidManifest.xml; then
+                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n</manifest>|' android/app/src/main/AndroidManifest.xml
+                fi
+                
+                echo "✅ === ФИНАЛЬНЫЙ МАНИФЕСТ ПОСЛЕ ДОБАВЛЕНИЯ РАЗРЕШЕНИЙ ==="
                 cat android/app/src/main/AndroidManifest.xml
                 echo "🔍 === СПИСОК ВСЕХ РАЗРЕШЕНИЙ ==="
                 grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "❌ Разрешения не найдены в финальном манифесте!"
