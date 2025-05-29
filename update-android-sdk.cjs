@@ -37,30 +37,8 @@ function updateAndroidSDK() {
         'minSdk 24'
       );
       
-      // Добавляем поддержку POST_NOTIFICATIONS если её нет
-      if (!buildGradleContent.includes('POST_NOTIFICATIONS')) {
-        const dependenciesIndex = buildGradleContent.indexOf('dependencies {');
-        if (dependenciesIndex !== -1) {
-          const beforeDependencies = buildGradleContent.substring(0, dependenciesIndex);
-          const afterDependencies = buildGradleContent.substring(dependenciesIndex);
-          
-          const postNotificationsConfig = `
-    // Поддержка POST_NOTIFICATIONS для Android 13+
-    packaging {
-        resources {
-            pickFirsts += ['**/libc++_shared.so', '**/libjsc.so']
-        }
-    }
-    
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-    
-`;
-          buildGradleContent = beforeDependencies + postNotificationsConfig + afterDependencies;
-        }
-      }
+      // Только базовые настройки - без дополнительных конфигураций
+      console.log('📱 Обновляем только версии SDK - без дополнительных настроек для максимальной совместимости');
       
       fs.writeFileSync(buildGradlePath, buildGradleContent);
       console.log('✅ app/build.gradle обновлен до SDK 34');
