@@ -384,6 +384,29 @@
                 cd capacitor-app/android
                 
                 echo ""
+                echo "🔍 КРИТИЧЕСКАЯ ПРОВЕРКА МАНИФЕСТА ПЕРЕД GRADLE BUILD:"
+                MANIFEST_PATH="app/src/main/AndroidManifest.xml"
+                if [ -f "$MANIFEST_PATH" ]; then
+                  echo "✅ Манифест найден: $MANIFEST_PATH"
+                  if grep -q "POST_NOTIFICATIONS" "$MANIFEST_PATH"; then
+                    echo "✅ POST_NOTIFICATIONS присутствует в манифесте"
+                  else
+                    echo "❌ POST_NOTIFICATIONS ОТСУТСТВУЕТ - ДОБАВЛЯЕМ ВРУЧНУЮ"
+                    # Принудительно добавляем POST_NOTIFICATIONS
+                    sed -i 's|<application|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <application|' "$MANIFEST_PATH"
+                    echo "✅ POST_NOTIFICATIONS добавлен вручную"
+                  fi
+                  
+                  echo ""
+                  echo "📋 ВСЕ РАЗРЕШЕНИЯ В МАНИФЕСТЕ ПЕРЕД СБОРКОЙ:"
+                  grep "uses-permission" "$MANIFEST_PATH" || echo "❌ Нет разрешений!"
+                  
+                else
+                  echo "❌ КРИТИЧЕСКАЯ ОШИБКА: Манифест не найден перед сборкой!"
+                  exit 1
+                fi
+                
+                echo ""
                 echo "🎯 ============ СБОРКА APK ============"
                 echo "📅 Время начала сборки: $(date)"
                 echo "✅ Keystore файл готов для сборки"
