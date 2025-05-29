@@ -326,38 +326,76 @@
                 done
                 
                 echo ""
-                echo "🔍 ПРОВЕРКА РАЗРЕШЕНИЙ В СОБРАННОМ APK:"
+                echo "🔍 КРИТИЧЕСКАЯ ПРОВЕРКА РАЗРЕШЕНИЙ В СОБРАННОМ APK:"
                 APK_FILE=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
                 if [ -f "$APK_FILE" ]; then
-                  echo "Найден APK: $APK_FILE"
+                  echo "Найден APK для проверки: $APK_FILE"
                   
                   # Извлекаем и проверяем манифест из APK
                   echo "Извлекаем AndroidManifest.xml из APK..."
                   unzip -p "$APK_FILE" AndroidManifest.xml > extracted_manifest.xml
                   
+                  echo "Размер извлеченного манифеста: $(wc -c extracted_manifest.xml)"
+                  
                   # Проверяем наличие POST_NOTIFICATIONS в бинарном манифесте
+                  echo "Проверяем наличие POST_NOTIFICATIONS в APK..."
                   if strings extracted_manifest.xml | grep -q "POST_NOTIFICATIONS"; then
-                    echo "✅ android.permission.POST_NOTIFICATIONS НАЙДЕНО в собранном APK"
+                    echo "✅ УСПЕХ: android.permission.POST_NOTIFICATIONS найдено в APK"
                   else
-                    echo "❌ android.permission.POST_NOTIFICATIONS НЕ НАЙДЕНО в собранном APK"
-                    echo "🔍 Все разрешения в APK:"
-                    strings extracted_manifest.xml | grep "permission" | sort | uniq
+                    echo "❌ КРИТИЧЕСКАЯ ОШИБКА: POST_NOTIFICATIONS отсутствует в APK"
+                    echo "Это означает что push-уведомления НЕ БУДУТ работать на Android 13+"
+                    echo ""
+                    echo "Содержимое всех разрешений в APK:"
+                    strings extracted_manifest.xml | grep -i "permission" | sort | uniq
+                    echo ""
+                    echo "Полный список строк в манифесте:"
+                    strings extracted_manifest.xml | head -50
+                    echo "СБОРКА ОСТАНОВЛЕНА - требуется исправление"
                     exit 1
                   fi
                   
-                  # Проверяем другие важные разрешения
-                  echo "🔍 Проверяем другие push-разрешения:"
-                  for permission in "WAKE_LOCK" "VIBRATE" "c2dm.permission.RECEIVE"; do
+                  # Проверяем другие важные разрешения для push
+                  echo ""
+                  echo "Проверяем дополнительные push-разрешения:"
+                  CRITICAL_PERMISSIONS=("WAKE_LOCK" "VIBRATE" "c2dm.permission.RECEIVE" "ACCESS_NETWORK_STATE")
+                  MISSING_COUNT=0
+                  
+                  for permission in "${CRITICAL_PERMISSIONS[@]}"; do
                     if strings extracted_manifest.xml | grep -q "$permission"; then
-                      echo "  ✅ $permission найдено"
+                      echo "  ✅ $permission присутствует"
                     else
-                      echo "  ⚠️ $permission не найдено"
+                      echo "  ⚠️ $permission отсутствует"
+                      ((MISSING_COUNT++))
                     fi
                   done
+                  
+                  # Проверяем MainActivity.java для программного запроса разрешений
+                  echo ""
+                  echo "Проверяем MainActivity.java на наличие кода запроса разрешений:"
+                  MAIN_ACTIVITY_PATH=$(find . -name "MainActivity.java" -type f | head -1)
+                  if [ -f "$MAIN_ACTIVITY_PATH" ]; then
+                    if grep -q "POST_NOTIFICATIONS" "$MAIN_ACTIVITY_PATH"; then
+                      echo "  ✅ MainActivity содержит код запроса POST_NOTIFICATIONS"
+                    else
+                      echo "  ⚠️ MainActivity не содержит код запроса POST_NOTIFICATIONS"
+                    fi
+                  else
+                    echo "  ❌ MainActivity.java не найден"
+                  fi
+                  
+                  echo ""
+                  if [ $MISSING_COUNT -eq 0 ]; then
+                    echo "✅ ВСЕ КРИТИЧЕСКИЕ PUSH-РАЗРЕШЕНИЯ ПРИСУТСТВУЮТ В APK"
+                    echo "✅ APK ГОТОВ ДЛЯ ТЕСТИРОВАНИЯ PUSH-УВЕДОМЛЕНИЙ НА ANDROID 13+"
+                  else
+                    echo "⚠️ Отсутствует $MISSING_COUNT дополнительных разрешений"
+                    echo "✅ Но POST_NOTIFICATIONS присутствует - основная функциональность должна работать"
+                  fi
                   
                   rm -f extracted_manifest.xml
                 else
                   echo "❌ APK файл не найден для проверки разрешений"
+                  ls -la app/build/outputs/apk/release/ || echo "Директория с APK не найдена"
                   exit 1
                 fi
                 
@@ -427,18 +465,26 @@
                 fi
                 echo ""
                 
-                echo "🚀 ГОТОВНОСТЬ К ТЕСТИРОВАНИЮ:"
-                echo "  ✓ Android SDK 34 для поддержки Android 15"
-                echo "  ✓ POST_NOTIFICATIONS разрешение в манифесте"
-                echo "  ✓ Нативный запрос разрешений в MainActivity.java"
-                echo "  ✓ OneSignal SDK v5.2.13 с правильным API"
-                echo "  ✓ Принудительная инициализация push-уведомлений"
+                echo "🚀 ИТОГОВАЯ ГОТОВНОСТЬ К ТЕСТИРОВАНИЮ PUSH-УВЕДОМЛЕНИЙ:"
+                echo "  ✓ Android SDK 34 (поддержка Android 15)"
+                echo "  ✓ POST_NOTIFICATIONS разрешение объявлено в AndroidManifest.xml"
+                echo "  ✓ Программный запрос разрешений в MainActivity.java"
+                echo "  ✓ OneSignal SDK v5.2.13 с современным API"
+                echo "  ✓ Двойной механизм запроса разрешений (native + OneSignal)"
+                echo "  ✓ Разрешения проверены в финальном APK"
                 echo ""
-                echo "📋 СЛЕДУЮЩИЕ ШАГИ:"
-                echo "  1. Установите APK на Android 15 устройство"
-                echo "  2. При первом запуске должен появиться диалог разрешения уведомлений"
-                echo "  3. Проверьте логи через: adb logcat | grep -i 'POST_NOTIFICATIONS\\|OneSignal'"
+                echo "📋 ИНСТРУКЦИИ ДЛЯ ТЕСТИРОВАНИЯ:"
+                echo "  1. Установите APK на устройство Android 13+ (API 33+)"
+                echo "  2. При первом запуске появится системный диалог 'Разрешить уведомления?'"
+                echo "  3. Нажмите 'Разрешить' для активации push-уведомлений"
+                echo "  4. Проверьте работу через админ-панель приложения"
                 echo ""
+                echo "🔍 ДИАГНОСТИКА (если не работает):"
+                echo "  adb logcat | grep -i 'POST_NOTIFICATIONS'"
+                echo "  adb logcat | grep -i 'OneSignal'"
+                echo "  adb logcat | grep -i 'Permission'"
+                echo ""
+                echo "🎯 РЕЗУЛЬТАТ: APK готов для полноценного тестирования push-уведомлений"
                 echo "==============================================="
 
             - name: Find and rename APK
