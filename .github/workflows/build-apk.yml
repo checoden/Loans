@@ -130,10 +130,21 @@
                 cd capacitor-app
                 node update-gradle-signing.js
                 node update-android-plugin.js
-                
-                echo "🔧 Обновляем Android SDK до версии 34..."
                 cd ..
+                
+                echo "🔧 Обновляем Android SDK до версии 34 (ПОСЛЕ всех Capacitor настроек)..."
                 node update-android-sdk.cjs
+                
+                echo "📋 Проверяем финальные настройки SDK в build.gradle:"
+                if [ -f "capacitor-app/android/app/build.gradle" ]; then
+                  echo "🔍 Проверяем compileSdk и targetSdk:"
+                  grep -n "compileSdk" capacitor-app/android/app/build.gradle || echo "compileSdk не найден"
+                  grep -n "targetSdk" capacitor-app/android/app/build.gradle || echo "targetSdk не найден"
+                  grep -n "minSdk" capacitor-app/android/app/build.gradle || echo "minSdk не найден"
+                else
+                  echo "❌ build.gradle не найден!"
+                fi
+                
                 cd capacitor-app
 
             - uses: android-actions/setup-android@v3
