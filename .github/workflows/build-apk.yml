@@ -118,18 +118,25 @@
                 
                 echo ""
                 echo "📄 ПРОВЕРКА МАНИФЕСТА ПОСЛЕ СИНХРОНИЗАЦИИ:"
-                if [ -f "capacitor-app/android/app/src/main/AndroidManifest.xml" ]; then
-                  echo "✅ Манифест найден после sync"
+                MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
+                
+                if [ -f "$MANIFEST_PATH" ]; then
+                  echo "✅ Манифест найден после sync по пути: $MANIFEST_PATH"
                   echo "--- СОДЕРЖИМОЕ ПОСЛЕ SYNC ---"
-                  cat capacitor-app/android/app/src/main/AndroidManifest.xml
+                  cat "$MANIFEST_PATH"
                   echo "--- КОНЕЦ МАНИФЕСТА ---"
                   echo ""
                   echo "📋 Разрешения после cap sync:"
-                  grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml || echo "❌ Нет разрешений после cap sync"
+                  grep "uses-permission" "$MANIFEST_PATH" || echo "❌ Нет разрешений после cap sync"
                 else
-                  echo "❌ Манифест не найден после sync!"
-                  echo "📂 Структура после sync:"
-                  find capacitor-app -name "AndroidManifest.xml" -type f
+                  echo "❌ Манифест не найден по пути: $MANIFEST_PATH"
+                  echo "📂 Текущая директория: $(pwd)"
+                  echo "📂 Структура android/:"
+                  find android -name "AndroidManifest.xml" -type f 2>/dev/null || echo "Нет файлов AndroidManifest.xml в android/"
+                  echo "📂 Все манифесты в проекте:"
+                  find . -name "AndroidManifest.xml" -type f 2>/dev/null || echo "Нет файлов AndroidManifest.xml"
+                  echo "📂 Содержимое android/app/src/main/:"
+                  ls -la android/app/src/main/ 2>/dev/null || echo "Директория не существует"
                 fi
                 
                 echo ""
@@ -137,11 +144,13 @@
                 echo "📅 Время: $(date)"
                 echo "📝 Добавляем POST_NOTIFICATIONS разрешение к существующему манифесту..."
                 
+                MANIFEST_PATH="android/app/src/main/AndroidManifest.xml"
+                
                 # Проверяем, есть ли уже POST_NOTIFICATIONS
-                if ! grep -q "POST_NOTIFICATIONS" capacitor-app/android/app/src/main/AndroidManifest.xml; then
+                if ! grep -q "POST_NOTIFICATIONS" "$MANIFEST_PATH"; then
                   echo "⚡ Добавляем POST_NOTIFICATIONS разрешение..."
                   # Добавляем разрешение перед закрывающим тегом </manifest>
-                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n</manifest>|' capacitor-app/android/app/src/main/AndroidManifest.xml
+                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n</manifest>|' "$MANIFEST_PATH"
                   echo "✅ POST_NOTIFICATIONS добавлено"
                 else
                   echo "✅ POST_NOTIFICATIONS разрешение уже присутствует"
@@ -150,39 +159,39 @@
                 echo "⚡ Добавляем дополнительные push-разрешения..."
                 
                 # Добавляем другие push-разрешения если их нет
-                if ! grep -q "WAKE_LOCK" capacitor-app/android/app/src/main/AndroidManifest.xml; then
+                if ! grep -q "WAKE_LOCK" "$MANIFEST_PATH"; then
                   echo "  + Добавляем WAKE_LOCK"
-                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.WAKE_LOCK" />\n</manifest>|' capacitor-app/android/app/src/main/AndroidManifest.xml
+                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.WAKE_LOCK" />\n</manifest>|' "$MANIFEST_PATH"
                 fi
                 
-                if ! grep -q "VIBRATE" capacitor-app/android/app/src/main/AndroidManifest.xml; then
+                if ! grep -q "VIBRATE" "$MANIFEST_PATH"; then
                   echo "  + Добавляем VIBRATE"
-                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>|' capacitor-app/android/app/src/main/AndroidManifest.xml
+                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>|' "$MANIFEST_PATH"
                 fi
                 
-                if ! grep -q "RECEIVE_BOOT_COMPLETED" capacitor-app/android/app/src/main/AndroidManifest.xml; then
+                if ! grep -q "RECEIVE_BOOT_COMPLETED" "$MANIFEST_PATH"; then
                   echo "  + Добавляем RECEIVE_BOOT_COMPLETED"
-                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n</manifest>|' capacitor-app/android/app/src/main/AndroidManifest.xml
+                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n</manifest>|' "$MANIFEST_PATH"
                 fi
                 
-                if ! grep -q "com.google.android.c2dm.permission.RECEIVE" capacitor-app/android/app/src/main/AndroidManifest.xml; then
+                if ! grep -q "com.google.android.c2dm.permission.RECEIVE" "$MANIFEST_PATH"; then
                   echo "  + Добавляем C2DM_RECEIVE"
-                  sed -i 's|</manifest>|    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />\n</manifest>|' capacitor-app/android/app/src/main/AndroidManifest.xml
+                  sed -i 's|</manifest>|    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />\n</manifest>|' "$MANIFEST_PATH"
                 fi
                 
-                if ! grep -q "ACCESS_NETWORK_STATE" capacitor-app/android/app/src/main/AndroidManifest.xml; then
+                if ! grep -q "ACCESS_NETWORK_STATE" "$MANIFEST_PATH"; then
                   echo "  + Добавляем ACCESS_NETWORK_STATE"
-                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n</manifest>|' capacitor-app/android/app/src/main/AndroidManifest.xml
+                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n</manifest>|' "$MANIFEST_PATH"
                 fi
                 
                 echo ""
                 echo "✅ ФИНАЛЬНЫЙ МАНИФЕСТ ПОСЛЕ ДОБАВЛЕНИЯ РАЗРЕШЕНИЙ:"
                 echo "--- НАЧАЛО ФИНАЛЬНОГО МАНИФЕСТА ---"
-                cat capacitor-app/android/app/src/main/AndroidManifest.xml
+                cat "$MANIFEST_PATH"
                 echo "--- КОНЕЦ ФИНАЛЬНОГО МАНИФЕСТА ---"
                 echo ""
                 echo "📋 СПИСОК ВСЕХ РАЗРЕШЕНИЙ В МАНИФЕСТЕ:"
-                grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml | while read line; do
+                grep "uses-permission" "$MANIFEST_PATH" | while read line; do
                   permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
                   echo "  ✓ $permission"
                 done || echo "❌ Разрешения не найдены в финальном манифесте!"
@@ -201,15 +210,20 @@
                 
                 echo ""
                 echo "📄 ПРОВЕРКА МАНИФЕСТА ПОСЛЕ НАСТРОЙКИ УВЕДОМЛЕНИЙ:"
-                echo "--- МАНИФЕСТ ПОСЛЕ NOTIFICATION SCRIPT ---"
-                cat capacitor-app/android/app/src/main/AndroidManifest.xml
-                echo "--- КОНЕЦ МАНИФЕСТА ---"
-                echo ""
-                echo "📋 Разрешения после notification script:"
-                grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml | while read line; do
-                  permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
-                  echo "  ✓ $permission"
-                done || echo "❌ Нет разрешений после notification script"
+                MANIFEST_PATH="capacitor-app/android/app/src/main/AndroidManifest.xml"
+                if [ -f "$MANIFEST_PATH" ]; then
+                  echo "--- МАНИФЕСТ ПОСЛЕ NOTIFICATION SCRIPT ---"
+                  cat "$MANIFEST_PATH"
+                  echo "--- КОНЕЦ МАНИФЕСТА ---"
+                  echo ""
+                  echo "📋 Разрешения после notification script:"
+                  grep "uses-permission" "$MANIFEST_PATH" | while read line; do
+                    permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
+                    echo "  ✓ $permission"
+                  done || echo "❌ Нет разрешений после notification script"
+                else
+                  echo "❌ Манифест не найден: $MANIFEST_PATH"
+                fi
                 
                 echo "📱 Проверяем MainActivity.java после добавления POST_NOTIFICATIONS:"
                 if [ -f "capacitor-app/android/app/src/main/java/ru/checoden/onlineloans/MainActivity.java" ]; then
@@ -248,19 +262,25 @@
                 
                 echo ""
                 echo "🔍 ФИНАЛЬНАЯ ПРОВЕРКА РАЗРЕШЕНИЙ ПЕРЕД СБОРКОЙ:"
-                echo "Все разрешения в финальном манифесте:"
-                grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml | while read line; do
-                  permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
-                  echo "  ✓ $permission"
-                done
-                
-                echo ""
-                echo "🎯 КРИТИЧЕСКАЯ ПРОВЕРКА POST_NOTIFICATIONS:"
-                if grep -q "POST_NOTIFICATIONS" capacitor-app/android/app/src/main/AndroidManifest.xml; then
-                  echo "  ✅ POST_NOTIFICATIONS присутствует в манифесте - готов к сборке"
+                FINAL_MANIFEST="capacitor-app/android/app/src/main/AndroidManifest.xml"
+                if [ -f "$FINAL_MANIFEST" ]; then
+                  echo "Все разрешения в финальном манифесте:"
+                  grep "uses-permission" "$FINAL_MANIFEST" | while read line; do
+                    permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
+                    echo "  ✓ $permission"
+                  done
+                  
+                  echo ""
+                  echo "🎯 КРИТИЧЕСКАЯ ПРОВЕРКА POST_NOTIFICATIONS:"
+                  if grep -q "POST_NOTIFICATIONS" "$FINAL_MANIFEST"; then
+                    echo "  ✅ POST_NOTIFICATIONS присутствует в манифесте - готов к сборке"
+                  else
+                    echo "  ❌ POST_NOTIFICATIONS ОТСУТСТВУЕТ в манифесте!"
+                    echo "  🚨 СБОРКА БУДЕТ ОСТАНОВЛЕНА - Android 13+ требует это разрешение"
+                    exit 1
+                  fi
                 else
-                  echo "  ❌ POST_NOTIFICATIONS ОТСУТСТВУЕТ в манифесте!"
-                  echo "  🚨 СБОРКА БУДЕТ ОСТАНОВЛЕНА - Android 13+ требует это разрешение"
+                  echo "❌ Финальный манифест не найден: $FINAL_MANIFEST"
                   exit 1
                 fi
                 
@@ -425,15 +445,24 @@
                 echo ""
                 
                 echo "🔐 ВСЕ РАЗРЕШЕНИЯ В МАНИФЕСТЕ:"
-                grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml | while read line; do
-                  permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
-                  echo "  ✓ $permission"
-                done
+                REPORT_MANIFEST="capacitor-app/android/app/src/main/AndroidManifest.xml"
+                if [ -f "$REPORT_MANIFEST" ]; then
+                  grep "uses-permission" "$REPORT_MANIFEST" | while read line; do
+                    permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
+                    echo "  ✓ $permission"
+                  done
+                else
+                  echo "  ❌ Манифест не найден для отчета"
+                fi
                 echo ""
                 
                 echo "📋 НАСТРОЙКИ ПРИЛОЖЕНИЯ:"
-                echo "Package ID: $(grep 'package=' capacitor-app/android/app/src/main/AndroidManifest.xml | cut -d'"' -f2)"
-                echo "App Name: $(grep 'android:label=' capacitor-app/android/app/src/main/AndroidManifest.xml | head -1 | cut -d'"' -f2)"
+                if [ -f "$REPORT_MANIFEST" ]; then
+                  echo "Package ID: $(grep 'package=' "$REPORT_MANIFEST" | cut -d'"' -f2)"
+                  echo "App Name: $(grep 'android:label=' "$REPORT_MANIFEST" | head -1 | cut -d'"' -f2)"
+                else
+                  echo "❌ Не удается получить настройки приложения"
+                fi
                 echo ""
                 
                 echo "📱 ИНФОРМАЦИЯ О СОЗДАННОМ APK:"
