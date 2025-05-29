@@ -135,6 +135,18 @@
                 echo "🔧 Обновляем Android SDK до версии 34 (ПОСЛЕ всех Capacitor настроек)..."
                 node update-android-sdk.cjs
                 
+                echo "🔍 ПРОВЕРКА РАЗРЕШЕНИЙ ПЕРЕД СБОРКОЙ:"
+                echo "Разрешения в финальном манифесте перед сборкой:"
+                grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml | while read line; do
+                  echo "  ✓ $line"
+                done
+                
+                if grep -q "POST_NOTIFICATIONS" capacitor-app/android/app/src/main/AndroidManifest.xml; then
+                  echo "  ✅ POST_NOTIFICATIONS присутствует в манифесте"
+                else
+                  echo "  ❌ POST_NOTIFICATIONS ОТСУТСТВУЕТ в манифесте!"
+                fi
+                
                 echo "📋 Проверяем финальные настройки SDK в build.gradle:"
                 if [ -f "capacitor-app/android/app/build.gradle" ]; then
                   echo "🔍 Проверяем compileSdk и targetSdk:"
@@ -220,6 +232,25 @@
                   echo "✅ APK успешно создан"
                   echo "📁 Размер: $(du -h app/build/outputs/apk/release/app-release.apk | cut -f1)"
                   echo "🔑 Подпись: $(jarsigner -verify -verbose app/build/outputs/apk/release/app-release.apk | grep "SHA1 digest algorithm" | wc -l > 0 && echo "Подписан" || echo "Не подписан")"
+                  
+                  echo ""
+                  echo "🔍 ПРОВЕРКА РАЗРЕШЕНИЙ В ФИНАЛЬНОМ APK:"
+                  if command -v aapt &> /dev/null; then
+                    echo "Все разрешения в APK:"
+                    aapt dump permissions app/build/outputs/apk/release/app-release.apk | grep "uses-permission" | while read line; do
+                      echo "  ✓ $line"
+                    done
+                    
+                    echo ""
+                    echo "🎯 Проверка POST_NOTIFICATIONS:"
+                    if aapt dump permissions app/build/outputs/apk/release/app-release.apk | grep -q "POST_NOTIFICATIONS"; then
+                      echo "  ✅ android.permission.POST_NOTIFICATIONS НАЙДЕНО в APK"
+                    else
+                      echo "  ❌ android.permission.POST_NOTIFICATIONS НЕ НАЙДЕНО в APK"
+                    fi
+                  else
+                    echo "  ⚠️ aapt недоступен для проверки разрешений"
+                  fi
                 else
                   echo "❌ APK не создан!"
                 fi
