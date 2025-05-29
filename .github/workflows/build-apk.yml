@@ -246,6 +246,50 @@
                 echo "✅ Android SDK обновлен"
                 
                 echo ""
+                echo "🚨 КРИТИЧЕСКИ ВАЖНО: ФИНАЛЬНОЕ ДОБАВЛЕНИЕ POST_NOTIFICATIONS"
+                echo "📅 Время: $(date)"
+                echo "🔧 Добавляем POST_NOTIFICATIONS в САМОМ КОНЦЕ после всех Capacitor операций..."
+                
+                FINAL_MANIFEST="capacitor-app/android/app/src/main/AndroidManifest.xml"
+                if [ -f "$FINAL_MANIFEST" ]; then
+                  echo "✅ Финальный манифест найден"
+                  
+                  # Добавляем POST_NOTIFICATIONS если его нет
+                  if ! grep -q "POST_NOTIFICATIONS" "$FINAL_MANIFEST"; then
+                    echo "🚨 POST_NOTIFICATIONS отсутствует - ДОБАВЛЯЕМ СРОЧНО"
+                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n</manifest>|' "$FINAL_MANIFEST"
+                  else
+                    echo "✅ POST_NOTIFICATIONS уже есть"
+                  fi
+                  
+                  # Добавляем остальные разрешения для push-уведомлений
+                  if ! grep -q "WAKE_LOCK" "$FINAL_MANIFEST"; then
+                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.WAKE_LOCK" />\n</manifest>|' "$FINAL_MANIFEST"
+                  fi
+                  
+                  if ! grep -q "VIBRATE" "$FINAL_MANIFEST"; then
+                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>|' "$FINAL_MANIFEST"
+                  fi
+                  
+                  if ! grep -q "RECEIVE_BOOT_COMPLETED" "$FINAL_MANIFEST"; then
+                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n</manifest>|' "$FINAL_MANIFEST"
+                  fi
+                  
+                  if ! grep -q "c2dm.permission.RECEIVE" "$FINAL_MANIFEST"; then
+                    sed -i 's|</manifest>|    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />\n</manifest>|' "$FINAL_MANIFEST"
+                  fi
+                  
+                  if ! grep -q "ACCESS_NETWORK_STATE" "$FINAL_MANIFEST"; then
+                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n</manifest>|' "$FINAL_MANIFEST"
+                  fi
+                  
+                  echo "✅ Все push-разрешения добавлены в финальный манифест"
+                else
+                  echo "❌ КРИТИЧЕСКАЯ ОШИБКА: Финальный манифест не найден!"
+                  exit 1
+                fi
+                
+                echo ""
                 echo "📋 ПРОВЕРКА НАСТРОЕК GRADLE ПОСЛЕ ОБНОВЛЕНИЯ SDK:"
                 if [ -f "capacitor-app/android/app/build.gradle" ]; then
                   echo "--- НАСТРОЙКИ SDK В BUILD.GRADLE ---"
@@ -262,8 +306,17 @@
                   if grep -q "POST_NOTIFICATIONS" "$FINAL_MANIFEST"; then
                     echo "✅ POST_NOTIFICATIONS готов - можно собирать APK"
                   else
-                    echo "❌ POST_NOTIFICATIONS отсутствует - сборка остановлена"
-                    exit 1
+                    echo "❌ POST_NOTIFICATIONS отсутствует - КРИТИЧЕСКАЯ ОШИБКА"
+                    echo "🚨 ДОБАВЛЯЕМ POST_NOTIFICATIONS ЭКСТРЕННО ПЕРЕД СБОРКОЙ"
+                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n</manifest>|' "$FINAL_MANIFEST"
+                    
+                    # Проверяем еще раз
+                    if grep -q "POST_NOTIFICATIONS" "$FINAL_MANIFEST"; then
+                      echo "✅ POST_NOTIFICATIONS успешно добавлен экстренно"
+                    else
+                      echo "❌ КРИТИЧЕСКАЯ ОШИБКА: Не удалось добавить POST_NOTIFICATIONS"
+                      exit 1
+                    fi
                   fi
                 else
                   echo "❌ Манифест не найден - сборка остановлена"
