@@ -341,7 +341,7 @@
                 cd capacitor-app
 
             - uses: android-actions/setup-android@v3
-            - uses: gradle/actions/setup-gradle@v3
+            - uses: gradle/gradle-build-action@v3
               with:
                 gradle-version: 8.5
                 build-cache-enabled: true
@@ -386,7 +386,7 @@
                 echo "✅ Keystore файл готов для сборки"
                 echo "🔨 Запускаем сборку APK с оптимизацией..."
                 
-                ./gradlew :app:assembleRelease --parallel --daemon --stacktrace --info
+                ./gradlew :app:assembleRelease --build-cache --parallel --daemon --stacktrace --info
                 
                 echo ""
                 echo "✅ СБОРКА APK ЗАВЕРШЕНА"
