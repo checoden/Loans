@@ -60,85 +60,156 @@
 
             - name: Add Android platform
               run: |
+                BUILD_START_TIME=$(date +%s)
+                echo "🎯 ============ СОЗДАНИЕ ANDROID ПЛАТФОРМЫ ============"
+                echo "📅 Время начала: $(date)"
+                
                 cd capacitor-app
-                echo "🚀 === НАЧАЛО СОЗДАНИЯ ANDROID ПРОЕКТА ==="
+                echo "📂 Рабочая директория: $(pwd)"
+                echo "📋 Содержимое capacitor-app:"
+                ls -la
                 
-                echo "📁 Проверяем наличие шаблона манифеста:"
-                ls -la ../AndroidManifest-template.xml && echo "✅ Шаблон найден" || echo "❌ Шаблон не найден"
-                
-                echo "🔧 Создаем Android платформу..."
+                echo ""
+                echo "🔧 СОЗДАНИЕ ANDROID ПЛАТФОРМЫ:"
+                echo "Выполняем: npx cap add android"
                 npx cap add android || {
-                  echo "⚠️ Повторное создание Android платформы..."
-                  rm -rf android node_modules;
-                  npm install;
-                  npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 onesignal-cordova-plugin@5.2.13;
-                  npx cap add android;
+                  echo "⚠️ Ошибка при создании Android платформы, пробуем переустановку..."
+                  echo "🗂️ Удаляем старые файлы:"
+                  rm -rf android node_modules
+                  echo "📦 Переустанавливаем зависимости:"
+                  npm install
+                  npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 onesignal-cordova-plugin@5.2.13
+                  echo "🔧 Повторно создаем Android платформу:"
+                  npx cap add android
                 }
                 
-                echo "📄 Проверяем базовый манифест после cap add:"
-                cat android/app/src/main/AndroidManifest.xml
-                echo "📋 Разрешения в базовом манифесте:"
-                grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "Нет разрешений в базовом манифесте"
+                echo ""
+                echo "✅ ПРОВЕРКА СОЗДАННОЙ СТРУКТУРЫ:"
+                echo "📂 Структура android/:"
+                find android -type f -name "*.xml" -o -name "*.gradle" | head -20
+                
+                echo ""
+                echo "📄 БАЗОВЫЙ МАНИФЕСТ ПОСЛЕ СОЗДАНИЯ:"
+                if [ -f "android/app/src/main/AndroidManifest.xml" ]; then
+                  echo "✅ Манифест создан успешно"
+                  echo "--- СОДЕРЖИМОЕ МАНИФЕСТА ---"
+                  cat android/app/src/main/AndroidManifest.xml
+                  echo "--- КОНЕЦ МАНИФЕСТА ---"
+                  echo ""
+                  echo "📋 Разрешения в базовом манифесте:"
+                  grep "uses-permission" android/app/src/main/AndroidManifest.xml || echo "❌ Нет разрешений в базовом манифесте"
+                else
+                  echo "❌ Манифест не создан!"
+                  echo "📂 Содержимое android/app/src/main/:"
+                  ls -la android/app/src/main/ || echo "Директория не существует"
+                  exit 1
+                fi
                 
                 echo "📦 Копируем google-services.json..."
                 cp ../google-services.json android/app/google-services.json || true
                 
+                echo ""
+                echo "🎯 ============ СИНХРОНИЗАЦИЯ CAPACITOR ============"
+                echo "📅 Время: $(date)"
                 echo "🔄 Выполняем cap sync android..."
+                
                 npx cap sync android
+                echo "✅ Синхронизация завершена"
                 
-                echo "📄 Проверяем манифест после cap sync:"
-                cat capacitor-app/android/app/src/main/AndroidManifest.xml
-                echo "📋 Разрешения после cap sync:"
-                grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml || echo "Нет разрешений после cap sync"
+                echo ""
+                echo "📄 ПРОВЕРКА МАНИФЕСТА ПОСЛЕ СИНХРОНИЗАЦИИ:"
+                if [ -f "capacitor-app/android/app/src/main/AndroidManifest.xml" ]; then
+                  echo "✅ Манифест найден после sync"
+                  echo "--- СОДЕРЖИМОЕ ПОСЛЕ SYNC ---"
+                  cat capacitor-app/android/app/src/main/AndroidManifest.xml
+                  echo "--- КОНЕЦ МАНИФЕСТА ---"
+                  echo ""
+                  echo "📋 Разрешения после cap sync:"
+                  grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml || echo "❌ Нет разрешений после cap sync"
+                else
+                  echo "❌ Манифест не найден после sync!"
+                  echo "📂 Структура после sync:"
+                  find capacitor-app -name "AndroidManifest.xml" -type f
+                fi
                 
+                echo ""
+                echo "🎯 ============ ДОБАВЛЕНИЕ PUSH-РАЗРЕШЕНИЙ ============"
+                echo "📅 Время: $(date)"
                 echo "📝 Добавляем POST_NOTIFICATIONS разрешение к существующему манифесту..."
                 
                 # Проверяем, есть ли уже POST_NOTIFICATIONS
                 if ! grep -q "POST_NOTIFICATIONS" capacitor-app/android/app/src/main/AndroidManifest.xml; then
-                  echo "Добавляем POST_NOTIFICATIONS разрешение..."
+                  echo "⚡ Добавляем POST_NOTIFICATIONS разрешение..."
                   # Добавляем разрешение перед закрывающим тегом </manifest>
                   sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n</manifest>|' capacitor-app/android/app/src/main/AndroidManifest.xml
+                  echo "✅ POST_NOTIFICATIONS добавлено"
                 else
-                  echo "POST_NOTIFICATIONS разрешение уже присутствует"
+                  echo "✅ POST_NOTIFICATIONS разрешение уже присутствует"
                 fi
+                
+                echo "⚡ Добавляем дополнительные push-разрешения..."
                 
                 # Добавляем другие push-разрешения если их нет
                 if ! grep -q "WAKE_LOCK" capacitor-app/android/app/src/main/AndroidManifest.xml; then
+                  echo "  + Добавляем WAKE_LOCK"
                   sed -i 's|</manifest>|    <uses-permission android:name="android.permission.WAKE_LOCK" />\n</manifest>|' capacitor-app/android/app/src/main/AndroidManifest.xml
                 fi
                 
                 if ! grep -q "VIBRATE" capacitor-app/android/app/src/main/AndroidManifest.xml; then
+                  echo "  + Добавляем VIBRATE"
                   sed -i 's|</manifest>|    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>|' capacitor-app/android/app/src/main/AndroidManifest.xml
                 fi
                 
                 if ! grep -q "RECEIVE_BOOT_COMPLETED" capacitor-app/android/app/src/main/AndroidManifest.xml; then
+                  echo "  + Добавляем RECEIVE_BOOT_COMPLETED"
                   sed -i 's|</manifest>|    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n</manifest>|' capacitor-app/android/app/src/main/AndroidManifest.xml
                 fi
                 
                 if ! grep -q "com.google.android.c2dm.permission.RECEIVE" capacitor-app/android/app/src/main/AndroidManifest.xml; then
+                  echo "  + Добавляем C2DM_RECEIVE"
                   sed -i 's|</manifest>|    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />\n</manifest>|' capacitor-app/android/app/src/main/AndroidManifest.xml
                 fi
                 
                 if ! grep -q "ACCESS_NETWORK_STATE" capacitor-app/android/app/src/main/AndroidManifest.xml; then
+                  echo "  + Добавляем ACCESS_NETWORK_STATE"
                   sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n</manifest>|' capacitor-app/android/app/src/main/AndroidManifest.xml
                 fi
                 
-                echo "✅ === ФИНАЛЬНЫЙ МАНИФЕСТ ПОСЛЕ ДОБАВЛЕНИЯ РАЗРЕШЕНИЙ ==="
+                echo ""
+                echo "✅ ФИНАЛЬНЫЙ МАНИФЕСТ ПОСЛЕ ДОБАВЛЕНИЯ РАЗРЕШЕНИЙ:"
+                echo "--- НАЧАЛО ФИНАЛЬНОГО МАНИФЕСТА ---"
                 cat capacitor-app/android/app/src/main/AndroidManifest.xml
-                echo "🔍 === СПИСОК ВСЕХ РАЗРЕШЕНИЙ ==="
-                grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml || echo "❌ Разрешения не найдены в финальном манифесте!"
+                echo "--- КОНЕЦ ФИНАЛЬНОГО МАНИФЕСТА ---"
+                echo ""
+                echo "📋 СПИСОК ВСЕХ РАЗРЕШЕНИЙ В МАНИФЕСТЕ:"
+                grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml | while read line; do
+                  permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
+                  echo "  ✓ $permission"
+                done || echo "❌ Разрешения не найдены в финальном манифесте!"
                 
                 chmod +x ./create-directories.sh
                 ./create-directories.sh
                 cd ..
                 
+                echo ""
+                echo "🎯 ============ НАСТРОЙКА PUSH-УВЕДОМЛЕНИЙ ============"
+                echo "📅 Время: $(date)"
                 echo "🔧 Запускаем setup-android-notification-channel.js..."
-                node setup-android-notification-channel.js
                 
-                echo "📄 Проверяем манифест после notification script:"
+                node setup-android-notification-channel.js
+                echo "✅ Скрипт настройки уведомлений завершен"
+                
+                echo ""
+                echo "📄 ПРОВЕРКА МАНИФЕСТА ПОСЛЕ НАСТРОЙКИ УВЕДОМЛЕНИЙ:"
+                echo "--- МАНИФЕСТ ПОСЛЕ NOTIFICATION SCRIPT ---"
                 cat capacitor-app/android/app/src/main/AndroidManifest.xml
+                echo "--- КОНЕЦ МАНИФЕСТА ---"
+                echo ""
                 echo "📋 Разрешения после notification script:"
-                grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml || echo "Нет разрешений после notification script"
+                grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml | while read line; do
+                  permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
+                  echo "  ✓ $permission"
+                done || echo "❌ Нет разрешений после notification script"
                 
                 echo "📱 Проверяем MainActivity.java после добавления POST_NOTIFICATIONS:"
                 if [ -f "capacitor-app/android/app/src/main/java/ru/checoden/onlineloans/MainActivity.java" ]; then
@@ -157,19 +228,40 @@
                 node update-android-plugin.js
                 cd ..
                 
+                echo ""
+                echo "🎯 ============ ОБНОВЛЕНИЕ ANDROID SDK ============"
+                echo "📅 Время: $(date)"
                 echo "🔧 Обновляем Android SDK до версии 34 (ПОСЛЕ всех Capacitor настроек)..."
-                node update-android-sdk.cjs
                 
-                echo "🔍 ПРОВЕРКА РАЗРЕШЕНИЙ ПЕРЕД СБОРКОЙ:"
-                echo "Разрешения в финальном манифесте перед сборкой:"
+                node update-android-sdk.cjs
+                echo "✅ Android SDK обновлен"
+                
+                echo ""
+                echo "📋 ПРОВЕРКА НАСТРОЕК GRADLE ПОСЛЕ ОБНОВЛЕНИЯ SDK:"
+                if [ -f "capacitor-app/android/app/build.gradle" ]; then
+                  echo "--- НАСТРОЙКИ SDK В BUILD.GRADLE ---"
+                  grep -E "(compileSdk|targetSdk|minSdk)" capacitor-app/android/app/build.gradle
+                  echo "--- КОНЕЦ НАСТРОЕК SDK ---"
+                else
+                  echo "❌ build.gradle не найден"
+                fi
+                
+                echo ""
+                echo "🔍 ФИНАЛЬНАЯ ПРОВЕРКА РАЗРЕШЕНИЙ ПЕРЕД СБОРКОЙ:"
+                echo "Все разрешения в финальном манифесте:"
                 grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml | while read line; do
-                  echo "  ✓ $line"
+                  permission=$(echo "$line" | grep -o 'android:name="[^"]*"' | cut -d'"' -f2)
+                  echo "  ✓ $permission"
                 done
                 
+                echo ""
+                echo "🎯 КРИТИЧЕСКАЯ ПРОВЕРКА POST_NOTIFICATIONS:"
                 if grep -q "POST_NOTIFICATIONS" capacitor-app/android/app/src/main/AndroidManifest.xml; then
-                  echo "  ✅ POST_NOTIFICATIONS присутствует в манифесте"
+                  echo "  ✅ POST_NOTIFICATIONS присутствует в манифесте - готов к сборке"
                 else
                   echo "  ❌ POST_NOTIFICATIONS ОТСУТСТВУЕТ в манифесте!"
+                  echo "  🚨 СБОРКА БУДЕТ ОСТАНОВЛЕНА - Android 13+ требует это разрешение"
+                  exit 1
                 fi
                 
                 echo "📋 Проверяем финальные настройки SDK в build.gradle:"
@@ -215,8 +307,23 @@
                   echo "❌ Keystore не найден в app/"
                   exit 1
                 fi
+                echo ""
+                echo "🎯 ============ СБОРКА APK ============"
+                echo "📅 Время начала сборки: $(date)"
                 echo "✅ Keystore файл готов для сборки"
-                ./gradlew --no-daemon :app:assembleRelease --stacktrace
+                echo "🔨 Запускаем сборку APK с подробными логами..."
+                
+                ./gradlew --no-daemon :app:assembleRelease --stacktrace --info
+                
+                echo ""
+                echo "✅ СБОРКА APK ЗАВЕРШЕНА"
+                echo "📅 Время завершения сборки: $(date)"
+                echo ""
+                echo "📂 ПРОВЕРКА СОЗДАННЫХ ФАЙЛОВ:"
+                find app/build/outputs/apk -name "*.apk" -type f | while read apk; do
+                  echo "  📱 Найден APK: $apk"
+                  echo "     Размер: $(du -h "$apk" | cut -f1)"
+                done
                 
                 echo ""
                 echo "🔍 ПРОВЕРКА РАЗРЕШЕНИЙ В СОБРАННОМ APK:"
@@ -256,7 +363,10 @@
                 
                 echo ""
                 echo "🎯 ============ ИТОГОВЫЙ ОТЧЕТ СБОРКИ ============"
-                echo "📅 Время сборки: $(date)"
+                echo "📅 Время завершения всех этапов: $(date)"
+                echo "⏱️ Продолжительность сборки: $(($(date +%s) - BUILD_START_TIME)) секунд" 
+                echo ""
+                echo "📊 СТАТИСТИКА СБОРКИ:"
                 echo ""
                 
                 echo "📱 ВЕРСИИ ANDROID SDK:"
