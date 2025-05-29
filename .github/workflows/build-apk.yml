@@ -21,10 +21,13 @@
                 distribution: 'temurin'
                 java-version: '21'
 
-            - name: Clear Gradle cache
+            - name: Setup Gradle optimization
               run: |
-                rm -rf /home/runner/.gradle || true
-                rm -rf ~/.gradle/wrapper/dists || true
+                mkdir -p ~/.gradle
+                echo "org.gradle.daemon=true" >> ~/.gradle/gradle.properties
+                echo "org.gradle.parallel=true" >> ~/.gradle/gradle.properties
+                echo "org.gradle.caching=true" >> ~/.gradle/gradle.properties
+                echo "org.gradle.configureondemand=true" >> ~/.gradle/gradle.properties
 
             - name: Cache dependencies
               uses: actions/cache@v3
@@ -379,9 +382,9 @@
                 echo "🎯 ============ СБОРКА APK ============"
                 echo "📅 Время начала сборки: $(date)"
                 echo "✅ Keystore файл готов для сборки"
-                echo "🔨 Запускаем сборку APK с подробными логами..."
+                echo "🔨 Запускаем сборку APK с оптимизацией..."
                 
-                ./gradlew --no-daemon :app:assembleRelease --stacktrace --info
+                ./gradlew :app:assembleRelease --parallel --daemon --stacktrace --info
                 
                 echo ""
                 echo "✅ СБОРКА APK ЗАВЕРШЕНА"
