@@ -31,16 +31,86 @@ function forceAddPermissions() {
   console.log('  Manifest:', finalManifestPath);
   console.log('  Template:', finalTemplatePath);
   
-  if (!fs.existsSync(finalTemplatePath)) {
-    console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: AndroidManifest-template.xml не найден');
-    console.error('Проверьте пути:');
-    console.error('  Основной:', templatePath);  
-    console.error('  Альтернативный:', finalTemplatePath);
-    process.exit(1);
-  }
+  // Если шаблон не найден, создаем его с нужными разрешениями
+  let templateManifest;
   
-  // Читаем корректный шаблон
-  const templateManifest = fs.readFileSync(finalTemplatePath, 'utf8');
+  if (!fs.existsSync(finalTemplatePath)) {
+    console.log('📝 Шаблон не найден, создаем с POST_NOTIFICATIONS разрешениями');
+    
+    templateManifest = `<?xml version='1.0' encoding='utf-8'?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="ru.checoden.onlineloans">
+
+    <!-- ============ КРИТИЧЕСКИЕ РАЗРЕШЕНИЯ ДЛЯ PUSH-УВЕДОМЛЕНИЙ ============ -->
+    <!-- Android 13+ требует объявление POST_NOTIFICATIONS -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- Базовые разрешения для OneSignal -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    
+    <!-- Google Play Services для push -->
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+    
+    <!-- Сетевые разрешения -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <!-- Capacitor базовые разрешения -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- ===================================================================== -->
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true">
+
+        <activity
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:name="ru.checoden.onlineloans.MainActivity"
+            android:theme="@style/AppTheme.NoActionBarLaunch">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="\${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+    </application>
+
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>`;
+    
+    // Сохраняем шаблон для будущего использования
+    const templateDir = path.dirname(finalTemplatePath);
+    if (!fs.existsSync(templateDir)) {
+      fs.mkdirSync(templateDir, { recursive: true });
+    }
+    fs.writeFileSync(finalTemplatePath, templateManifest);
+    console.log('✅ Шаблон манифеста создан');
+  } else {
+    // Читаем существующий шаблон
+    templateManifest = fs.readFileSync(finalTemplatePath, 'utf8');
+    console.log('📄 Используем существующий шаблон');
+  }
   console.log(`📄 Размер шаблона: ${templateManifest.length} символов`);
   
   // Полностью заменяем манифест на наш шаблон
