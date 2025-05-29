@@ -115,6 +115,18 @@
                 echo "📋 Разрешения после notification script:"
                 grep "uses-permission" capacitor-app/android/app/src/main/AndroidManifest.xml || echo "Нет разрешений после notification script"
                 
+                echo "📱 Проверяем MainActivity.java после добавления POST_NOTIFICATIONS:"
+                if [ -f "capacitor-app/android/app/src/main/java/ru/checoden/onlineloans/MainActivity.java" ]; then
+                  echo "✅ MainActivity.java найден"
+                  echo "🔍 Содержимое MainActivity.java:"
+                  cat capacitor-app/android/app/src/main/java/ru/checoden/onlineloans/MainActivity.java
+                  echo "📋 Проверяем наличие POST_NOTIFICATIONS кода:"
+                  grep -n "POST_NOTIFICATIONS" capacitor-app/android/app/src/main/java/ru/checoden/onlineloans/MainActivity.java || echo "❌ POST_NOTIFICATIONS код не найден"
+                  grep -n "ActivityCompat.requestPermissions" capacitor-app/android/app/src/main/java/ru/checoden/onlineloans/MainActivity.java || echo "❌ requestPermissions код не найден"
+                else
+                  echo "❌ MainActivity.java не найден!"
+                fi
+                
                 cd capacitor-app
                 node update-gradle-signing.js
                 node update-android-plugin.js

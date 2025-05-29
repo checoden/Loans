@@ -160,10 +160,19 @@ function setupNotificationChannel() {
     }
     
     // Запрашиваем разрешение POST_NOTIFICATIONS для Android 13+
-    if (android.os.Build.VERSION.SDK_INT >= 33 &&
-        ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1001);
-        System.out.println("Запрашиваем разрешение POST_NOTIFICATIONS для Android 13+");
+    if (android.os.Build.VERSION.SDK_INT >= 33) {
+        System.out.println("🔍 Android версия: " + android.os.Build.VERSION.SDK_INT + " (требуется 33+)");
+        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS);
+        System.out.println("🔍 Статус разрешения POST_NOTIFICATIONS: " + permissionCheck + " (0=предоставлено, -1=отклонено)");
+        
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            System.out.println("🚀 ЗАПРАШИВАЕМ разрешение POST_NOTIFICATIONS для Android 13+");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1001);
+        } else {
+            System.out.println("✅ Разрешение POST_NOTIFICATIONS уже предоставлено");
+        }
+    } else {
+        System.out.println("ℹ️ Android версия " + android.os.Build.VERSION.SDK_INT + " - POST_NOTIFICATIONS не требуется");
     }
     
     // Запрашиваем разрешения на показ уведомлений для Android 13+ (API 33+)
@@ -174,13 +183,27 @@ function setupNotificationChannel() {
         } else {
             System.out.println("Разрешение POST_NOTIFICATIONS уже получено");
         }
+    }
+    
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        System.out.println("📋 Результат запроса разрешений - код: " + requestCode);
+        
+        if (requestCode == 1001) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                System.out.println("✅ Пользователь РАЗРЕШИЛ POST_NOTIFICATIONS");
+            } else {
+                System.out.println("❌ Пользователь ОТКЛОНИЛ POST_NOTIFICATIONS");
+            }
+        }
     }`
   );
   
   try {
     // Записываем изменения обратно в файл
     fs.writeFileSync(mainActivityPath, javaCode);
-    console.log('✅ Код для канала уведомлений успешно добавлен в MainActivity.java');
+    console.log('✅ Код для канала уведомлений и запрос POST_NOTIFICATIONS успешно добавлен в MainActivity.java');
     return true;
   } catch (error) {
     console.error('❌ Ошибка при записи в файл MainActivity.java:', error);
