@@ -11,54 +11,31 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function forceAddPermissions() {
-  console.log('🚨 ПРИНУДИТЕЛЬНОЕ ДОБАВЛЕНИЕ POST_NOTIFICATIONS');
+  console.log('🚨 ПРИНУДИТЕЛЬНАЯ ЗАМЕНА МАНИФЕСТА');
   
   const manifestPath = path.join(__dirname, 'capacitor-app', 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
+  const templatePath = path.join(__dirname, 'capacitor-app', 'android', 'app', 'src', 'main', 'AndroidManifest-template.xml');
   
-  if (!fs.existsSync(manifestPath)) {
-    console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: AndroidManifest.xml не найден');
+  if (!fs.existsSync(templatePath)) {
+    console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: AndroidManifest-template.xml не найден');
     process.exit(1);
   }
   
-  let manifest = fs.readFileSync(manifestPath, 'utf8');
-  console.log(`📄 Размер манифеста: ${manifest.length} символов`);
+  // Читаем корректный шаблон
+  const templateManifest = fs.readFileSync(templatePath, 'utf8');
+  console.log(`📄 Размер шаблона: ${templateManifest.length} символов`);
   
-  // Удаляем все существующие POST_NOTIFICATIONS если есть
-  manifest = manifest.replace(/\s*<uses-permission[^>]*POST_NOTIFICATIONS[^>]*\/>\s*/g, '');
-  
-  // Принудительно добавляем POST_NOTIFICATIONS в самый конец
-  const permissions = [
-    'android.permission.POST_NOTIFICATIONS',
-    'android.permission.WAKE_LOCK', 
-    'android.permission.VIBRATE',
-    'android.permission.RECEIVE_BOOT_COMPLETED',
-    'com.google.android.c2dm.permission.RECEIVE',
-    'android.permission.ACCESS_NETWORK_STATE'
-  ];
-  
-  permissions.forEach(permission => {
-    // Удаляем если уже есть, чтобы избежать дублирования
-    const regex = new RegExp(`\\s*<uses-permission[^>]*${permission.replace(/\./g, '\\.')}[^>]*\\/>\\s*`, 'g');
-    manifest = manifest.replace(regex, '');
-    
-    // Добавляем перед </manifest>
-    manifest = manifest.replace(
-      '</manifest>',
-      `    <uses-permission android:name="${permission}" />\n</manifest>`
-    );
-    console.log(`✅ Принудительно добавлен: ${permission}`);
-  });
-  
-  // Записываем обратно
-  fs.writeFileSync(manifestPath, manifest);
+  // Полностью заменяем манифест на наш шаблон
+  fs.writeFileSync(manifestPath, templateManifest);
+  console.log('✅ AndroidManifest.xml полностью заменен на шаблон с POST_NOTIFICATIONS');
   
   // Финальная проверка
   const finalManifest = fs.readFileSync(manifestPath, 'utf8');
   if (finalManifest.includes('POST_NOTIFICATIONS')) {
-    console.log('✅ POST_NOTIFICATIONS ГАРАНТИРОВАННО ДОБАВЛЕН');
+    console.log('✅ POST_NOTIFICATIONS ГАРАНТИРОВАННО ПРИСУТСТВУЕТ');
     console.log(`📏 Финальный размер: ${finalManifest.length} символов`);
   } else {
-    console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: POST_NOTIFICATIONS НЕ ДОБАВЛЕН');
+    console.error('❌ КРИТИЧЕСКАЯ ОШИБКА: POST_NOTIFICATIONS НЕ НАЙДЕН');
     process.exit(1);
   }
 }
