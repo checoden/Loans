@@ -435,6 +435,32 @@
                 fi
                 
                 echo ""
+                echo "🔍 ПОСЛЕДНЯЯ ПРОВЕРКА ВСЕХ МАНИФЕСТОВ ПЕРЕД GRADLE BUILD:"
+                echo "📄 Ищем все AndroidManifest.xml файлы в проекте:"
+                find . -name "AndroidManifest.xml" -type f | while read manifest; do
+                  echo "  📄 Найден: $manifest"
+                  if grep -q "POST_NOTIFICATIONS" "$manifest"; then
+                    echo "    ✅ POST_NOTIFICATIONS присутствует"
+                  else
+                    echo "    ❌ POST_NOTIFICATIONS отсутствует"
+                    echo "    🚨 ДОБАВЛЯЕМ POST_NOTIFICATIONS в $manifest"
+                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33"/>\n</manifest>|' "$manifest"
+                    echo "    ✅ POST_NOTIFICATIONS добавлен"
+                  fi
+                done
+                
+                echo ""
+                echo "📋 ФИНАЛЬНАЯ ПРОВЕРКА ОСНОВНОГО МАНИФЕСТА:"
+                MAIN_MANIFEST="app/src/main/AndroidManifest.xml"
+                if [ -f "$MAIN_MANIFEST" ]; then
+                  echo "--- СОДЕРЖИМОЕ $MAIN_MANIFEST ---"
+                  cat "$MAIN_MANIFEST"
+                  echo "--- КОНЕЦ МАНИФЕСТА ---"
+                else
+                  echo "❌ Основной манифест не найден!"
+                fi
+                
+                echo ""
                 echo "🎯 ============ СБОРКА APK ============"
                 echo "📅 Время начала сборки: $(date)"
                 echo "✅ Keystore файл готов для сборки"

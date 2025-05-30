@@ -1,0 +1,84 @@
+> Task :app:lintVitalReportRelease
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/android/app/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/node_modules/@capacitor/push-notifications/android/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/node_modules/@capacitor/android/capacitor/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/android/capacitor-cordova-android-plugins/src/main/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/android/app/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/android/app/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/node_modules/@capacitor/push-notifications/android/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/node_modules/@capacitor/android/capacitor/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/android/capacitor-cordova-android-plugins/src/main/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/android/app/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/android/app/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/node_modules/@capacitor/push-notifications/android/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/node_modules/@capacitor/android/capacitor/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/android/capacitor-cordova-android-plugins/src/main/libs', not found
+file or directory '/home/runner/work/Loans/Loans/capacitor-app/android/app/libs', not found
+Caching disabled for task ':app:lintVitalReportRelease' because:
+  Caching has been disabled for the task
+Task ':app:lintVitalReportRelease' is not up-to-date because:
+  No history is available.
+Android Lint: Reusing lint classloader 31.9.0_false
+Resolve mutations for :app:lintVitalRelease (Thread[#83,included builds,5,main]) started.
+:app:lintVitalRelease (Thread[#83,included builds,5,main]) started.
+
+> Task :app:lintVitalRelease
+Caching disabled for task ':app:lintVitalRelease' because:
+  Caching has been disabled for the task
+Task ':app:lintVitalRelease' is not up-to-date because:
+  Task.upToDateWhen is false.
+Resolve mutations for :app:packageRelease (Thread[#83,included builds,5,main]) started.
+:app:packageRelease (Thread[#83,included builds,5,main]) started.
+
+> Task :app:packageRelease
+Caching disabled for task ':app:packageRelease' because:
+  Caching has been disabled for the task
+Task ':app:packageRelease' is not up-to-date because:
+  No history is available.
+The input changes require a full rebuild for incremental task ':app:packageRelease'.
+Resolve mutations for :app:createReleaseApkListingFileRedirect (Thread[#83,included builds,5,main]) started.
+Resolve mutations for :app:assembleRelease (Thread[#84,Execution worker,5,main]) started.
+:app:assembleRelease (Thread[#84,Execution worker,5,main]) started.
+:app:createReleaseApkListingFileRedirect (Thread[#83,included builds,5,main]) started.
+
+> Task :app:assembleRelease
+Skipping task ':app:assembleRelease' as it has no actions.
+
+> Task :app:createReleaseApkListingFileRedirect
+Caching disabled for task ':app:createReleaseApkListingFileRedirect' because:
+  Caching has been disabled for the task
+Task ':app:createReleaseApkListingFileRedirect' is not up-to-date because:
+  No history is available.
+AAPT2 aapt2-8.9.0-12782657-linux Daemon #0: shutdown
+AAPT2 aapt2-8.9.0-12782657-linux Daemon #1: shutdown
+Android Lint: Disposing Uast application environment in lint classloader [31.9.0_false]
+[Incubating] Problems report is available at: file:///home/runner/work/Loans/Loans/capacitor-app/android/build/reports/problems/problems-report.html
+
+0 problems were found storing the configuration cache.
+
+See the complete report at file:///home/runner/work/Loans/Loans/capacitor-app/android/build/reports/configuration-cache/a6qsu4fl8ruhgm5snw9yarvuh/51k4gxsw2drqpxyqosmbaiqzs/configuration-cache-report.html
+
+BUILD SUCCESSFUL in 2m 15s
+144 actionable tasks: 131 executed, 13 from cache
+Configuration cache entry stored.
+
+✅ СБОРКА APK ЗАВЕРШЕНА
+📅 Время завершения сборки: Fri May 30 07:00:24 UTC 2025
+
+📂 ПРОВЕРКА СОЗДАННЫХ ФАЙЛОВ:
+  📱 Найден APK: app/build/outputs/apk/release/app-release.apk
+     Размер: 4.5M
+
+🔍 КРИТИЧЕСКАЯ ПРОВЕРКА РАЗРЕШЕНИЙ В СОБРАННОМ APK:
+Найден APK для проверки: app/build/outputs/apk/release/app-release.apk
+Извлекаем AndroidManifest.xml из APK...
+Размер извлеченного манифеста: 26404 extracted_manifest.xml
+Проверяем наличие POST_NOTIFICATIONS в APK...
+❌ КРИТИЧЕСКАЯ ОШИБКА: POST_NOTIFICATIONS отсутствует в APK
+Это означает что push-уведомления НЕ БУДУТ работать на Android 13+
+
+Содержимое всех разрешений в APK:
+
+Полный список строк в манифесте:
+СБОРКА ОСТАНОВЛЕНА - требуется исправление
+Error: Process completed with exit code 1.
