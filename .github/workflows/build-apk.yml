@@ -80,20 +80,30 @@
                 
                 echo ""
                 echo "🔧 СОЗДАНИЕ/СИНХРОНИЗАЦИЯ ANDROID ПЛАТФОРМЫ:"
-                echo "Сначала пробуем синхронизацию существующей платформы..."
-                npx cap sync android || {
-                  echo "⚠️ Синхронизация не удалась, создаем новую Android платформу..."
-                  npx cap add android || {
-                    echo "⚠️ Ошибка при создании Android платформы, полная переустановка..."
-                    echo "🗂️ Удаляем старые файлы:"
-                    rm -rf android node_modules
-                    echo "📦 Переустанавливаем зависимости:"
-                    npm install
-                    npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 onesignal-cordova-plugin@5.2.13
-                    echo "🔧 Создаем Android платформу заново:"
-                    npx cap add android
-                  }
-                }
+                echo "Проверяем существующую Android структуру..."
+                
+                if [ -f "android/app/build.gradle" ]; then
+                  echo "✅ Android платформа уже существует, выполняем синхронизацию..."
+                  npx cap sync android
+                else
+                  echo "❌ Android платформа неполная или отсутствует"
+                  echo "🗂️ Удаляем неполную структуру:"
+                  rm -rf android
+                  echo "🔧 Создаем полную Android платформу:"
+                  npx cap add android
+                  echo "🔄 Синхронизируем новую платформу:"
+                  npx cap sync android
+                  
+                  echo "✅ Проверяем создание критически важных файлов:"
+                  if [ -f "android/app/build.gradle" ]; then
+                    echo "✅ app/build.gradle создан"
+                  else
+                    echo "❌ app/build.gradle НЕ СОЗДАН - критическая ошибка!"
+                    echo "📂 Структура android/:"
+                    find android -type f -name "*.gradle" | head -10
+                    exit 1
+                  fi
+                fi
                 
                 echo ""
                 echo "✅ ПРОВЕРКА СОЗДАННОЙ СТРУКТУРЫ:"
@@ -400,7 +410,15 @@
                 echo "=== Проверяем местонахождение keystore ==="
                 ls -la app/android-keystore.keystore
                 echo "=== Проверяем содержимое build.gradle ==="
-                grep -A 5 -B 5 "storeFile" app/build.gradle
+                if [ -f "app/build.gradle" ]; then
+                  grep -A 5 -B 5 "storeFile" app/build.gradle || echo "storeFile не найден в build.gradle"
+                else
+                  echo "❌ app/build.gradle не найден!"
+                  echo "📂 Содержимое app/:"
+                  ls -la app/ || echo "Директория app/ не существует"
+                  echo "📂 Поиск всех build.gradle файлов:"
+                  find . -name "build.gradle" -type f | head -10
+                fi
                 if [ ! -f "app/android-keystore.keystore" ]; then
                   echo "❌ Keystore не найден в app/"
                   exit 1
