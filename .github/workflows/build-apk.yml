@@ -67,6 +67,103 @@
                 mkdir -p android/gradle/wrapper
                 npm install @capacitor/core@7.2.0 @capacitor/android@7.2.0 --legacy-peer-deps
 
+            - name: Pre-build validation
+              run: |
+                echo "🔍 ============ ПРЕДВАРИТЕЛЬНАЯ ДИАГНОСТИКА ПРОЕКТА ============"
+                echo "📅 Время: $(date)"
+                
+                echo "🔧 Проверка структуры проекта:"
+                echo "📂 Корень проекта:"
+                ls -la
+                
+                echo "📂 Структура capacitor-app:"
+                if [ -d "capacitor-app" ]; then
+                  ls -la capacitor-app/
+                else
+                  echo "❌ Директория capacitor-app отсутствует!"
+                  exit 1
+                fi
+                
+                echo "📋 Проверка критических файлов:"
+                CRITICAL_FILES=(
+                  "capacitor-app/package.json"
+                  "capacitor-app/capacitor.config.ts"
+                  "shared/schema.ts"
+                  "force-add-permissions.js"
+                )
+                
+                for file in "${CRITICAL_FILES[@]}"; do
+                  if [ -f "$file" ]; then
+                    echo "  ✅ $file"
+                  else
+                    echo "  ❌ $file ОТСУТСТВУЕТ!"
+                    exit 1
+                  fi
+                done
+                
+                echo "🔍 Проверка зависимостей:"
+                cd capacitor-app
+                if command -v npm &> /dev/null; then
+                  echo "✅ npm доступен: $(npm --version)"
+                else
+                  echo "❌ npm недоступен!"
+                  exit 1
+                fi
+                
+                if command -v npx &> /dev/null; then
+                  echo "✅ npx доступен: $(npx --version)"
+                else
+                  echo "❌ npx недоступен!"
+                  exit 1
+                fi
+                
+                echo "📦 Проверка package.json:"
+                if grep -q "@capacitor/android" package.json; then
+                  echo "✅ @capacitor/android найден в зависимостях"
+                else
+                  echo "❌ @capacitor/android отсутствует в package.json!"
+                  exit 1
+                fi
+                
+                echo "☕ Проверка Java:"
+                if command -v java &> /dev/null; then
+                  JAVA_VERSION=$(java -version 2>&1 | head -n 1)
+                  echo "✅ Java доступен: $JAVA_VERSION"
+                else
+                  echo "❌ Java недоступен!"
+                  exit 1
+                fi
+                
+                echo "🤖 Проверка Android SDK:"
+                if [ -n "$ANDROID_HOME" ]; then
+                  echo "✅ ANDROID_HOME установлен: $ANDROID_HOME"
+                else
+                  echo "❌ ANDROID_HOME не установлен!"
+                  exit 1
+                fi
+                
+                if command -v gradle &> /dev/null; then
+                  echo "✅ Gradle доступен: $(gradle --version | head -n 1)"
+                else
+                  echo "❌ Gradle недоступен!"
+                  exit 1
+                fi
+                
+                echo "🔍 Проверка существующей Android структуры:"
+                if [ -d "android" ]; then
+                  echo "✅ Директория android существует"
+                  if [ -f "android/app/build.gradle" ]; then
+                    echo "✅ android/app/build.gradle существует"
+                  else
+                    echo "⚠️ android/app/build.gradle отсутствует - будет создан"
+                  fi
+                else
+                  echo "⚠️ Директория android отсутствует - будет создана"
+                fi
+                
+                echo "🎯 Предварительная диагностика завершена успешно!"
+                cd ..
+
             - name: Add Android platform
               run: |
                 BUILD_START_TIME=$(date +%s)
