@@ -1,0 +1,54 @@
+Run BUILD_START_TIME=$(date +%s)
+🎯 ============ СОЗДАНИЕ ANDROID ПЛАТФОРМЫ ============
+📅 Время начала: Fri May 30 07:06:48 UTC 2025
+📂 Рабочая директория: /home/runner/work/Loans/Loans/capacitor-app
+📋 Содержимое capacitor-app:
+total 112
+drwxr-xr-x  5 runner docker  4096 May 30 07:06 .
+drwxr-xr-x 15 runner docker  4096 May 30 07:06 ..
+-rw-r--r--  1 runner docker  2804 May 30 07:06 add-notification-permission.sh
+drwxr-xr-x  3 runner docker  4096 May 30 07:06 android
+-rw-r--r--  1 runner docker   465 May 30 07:06 capacitor.config.json
+-rw-r--r--  1 runner docker  2021 May 30 07:06 capacitor.config.ts
+-rw-r--r--  1 runner docker  2729 May 30 07:06 create-directories.sh
+-rw-r--r--  1 runner docker  3607 May 30 07:06 fix-keystore-path.js
+-rw-r--r--  1 runner docker   687 May 30 07:06 google-services.json
+-rw-r--r--  1 runner docker   636 May 30 07:06 google-services.json.template
+drwxr-xr-x 90 runner docker  4096 May 30 07:06 node_modules
+-rw-r--r--  1 runner docker 50194 May 30 07:06 package-lock.json
+-rw-r--r--  1 runner docker   606 May 30 07:06 package.json
+-rw-r--r--  1 runner docker  3984 May 30 07:06 update-android-plugin.js
+-rw-r--r--  1 runner docker  3305 May 30 07:06 update-gradle-signing.js
+drwxr-xr-x  4 runner docker  4096 May 30 07:06 www
+
+🔧 СОЗДАНИЕ/СИНХРОНИЗАЦИЯ ANDROID ПЛАТФОРМЫ:
+Сначала пробуем синхронизацию существующей платформы...
+✔ Copying web assets from www to android/app/src/main/assets/public in 6.77ms
+✔ Creating capacitor.config.json in android/app/src/main/assets in 1.20ms
+[info] Found 1 Cordova plugin for android:
+       onesignal-cordova-plugin@5.2.14
+✔ copy android in 41.66ms
+✔ Updating Android plugins in 5.17ms
+[info] Found 1 Cordova plugin for android:
+       onesignal-cordova-plugin@5.2.14
+✔ update android in 48.98ms
+[info] Sync finished in 0.105s
+
+✅ ПРОВЕРКА СОЗДАННОЙ СТРУКТУРЫ:
+📂 Структура android/:
+android/capacitor.settings.gradle
+android/app/src/main/res/xml/config.xml
+android/app/capacitor.build.gradle
+android/capacitor-cordova-android-plugins/cordova.variables.gradle
+android/capacitor-cordova-android-plugins/src/main/AndroidManifest.xml
+android/capacitor-cordova-android-plugins/build.gradle
+
+📄 БАЗОВЫЙ МАНИФЕСТ ПОСЛЕ СОЗДАНИЯ:
+❌ Манифест не создан!
+📂 Содержимое android/app/src/main/:
+total 16
+drwxr-xr-x 4 runner docker 4096 May 30 07:06 .
+drwxr-xr-x 3 runner docker 4096 May 30 07:06 ..
+drwxr-xr-x 3 runner docker 4096 May 30 07:06 assets
+drwxr-xr-x 3 runner docker 4096 May 30 07:06 res
+Error: Process completed with exit code 1.
