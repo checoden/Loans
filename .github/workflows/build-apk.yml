@@ -388,18 +388,36 @@
                 MANIFEST_PATH="app/src/main/AndroidManifest.xml"
                 if [ -f "$MANIFEST_PATH" ]; then
                   echo "✅ Манифест найден: $MANIFEST_PATH"
+                  
+                  echo ""
+                  echo "📄 СОДЕРЖИМОЕ МАНИФЕСТА ПЕРЕД ПРОВЕРКОЙ:"
+                  cat "$MANIFEST_PATH"
+                  echo ""
+                  
                   if grep -q "POST_NOTIFICATIONS" "$MANIFEST_PATH"; then
-                    echo "✅ POST_NOTIFICATIONS присутствует в манифесте"
+                    echo "✅ POST_NOTIFICATIONS уже присутствует в манифесте"
                   else
-                    echo "❌ POST_NOTIFICATIONS ОТСУТСТВУЕТ - ДОБАВЛЯЕМ ВРУЧНУЮ"
-                    # Принудительно добавляем POST_NOTIFICATIONS
-                    sed -i 's|<application|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <application|' "$MANIFEST_PATH"
-                    echo "✅ POST_NOTIFICATIONS добавлен вручную"
+                    echo "❌ POST_NOTIFICATIONS ОТСУТСТВУЕТ - ДОБАВЛЯЕМ ПРИНУДИТЕЛЬНО"
+                    # Используем более надежный способ добавления
+                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33"/>\n</manifest>|' "$MANIFEST_PATH"
+                    echo "✅ POST_NOTIFICATIONS добавлен через sed"
+                  fi
+                  
+                  # Добавляем другие критические разрешения
+                  if ! grep -q "WAKE_LOCK" "$MANIFEST_PATH"; then
+                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.WAKE_LOCK" />\n</manifest>|' "$MANIFEST_PATH"
+                    echo "✅ WAKE_LOCK добавлен"
+                  fi
+                  
+                  if ! grep -q "VIBRATE" "$MANIFEST_PATH"; then
+                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>|' "$MANIFEST_PATH"
+                    echo "✅ VIBRATE добавлен"
                   fi
                   
                   echo ""
-                  echo "📋 ВСЕ РАЗРЕШЕНИЯ В МАНИФЕСТЕ ПЕРЕД СБОРКОЙ:"
-                  grep "uses-permission" "$MANIFEST_PATH" || echo "❌ Нет разрешений!"
+                  echo "📄 ФИНАЛЬНЫЙ МАНИФЕСТ ПОСЛЕ ВСЕХ ИЗМЕНЕНИЙ:"
+                  cat "$MANIFEST_PATH"
+                  echo ""
                   
                 else
                   echo "❌ КРИТИЧЕСКАЯ ОШИБКА: Манифест не найден перед сборкой!"
