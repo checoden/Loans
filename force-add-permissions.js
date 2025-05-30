@@ -39,11 +39,12 @@ function forceAddPermissions() {
     
     templateManifest = `<?xml version='1.0' encoding='utf-8'?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="ru.checoden.onlineloans">
 
     <!-- ============ КРИТИЧЕСКИЕ РАЗРЕШЕНИЯ ДЛЯ PUSH-УВЕДОМЛЕНИЙ ============ -->
     <!-- Android 13+ требует объявление POST_NOTIFICATIONS -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />
     
     <!-- Базовые разрешения для OneSignal -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
