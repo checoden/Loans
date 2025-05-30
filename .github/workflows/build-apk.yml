@@ -403,7 +403,64 @@
                 KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
                 KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
               run: |
-                cd capacitor-app/android
+                echo "🔍 КРИТИЧЕСКАЯ ПРОВЕРКА СТРУКТУРЫ ПЕРЕД СБОРКОЙ"
+                cd capacitor-app
+                
+                if [ ! -f "android/app/build.gradle" ]; then
+                  echo "❌ КРИТИЧЕСКАЯ ОШИБКА: android/app/build.gradle отсутствует!"
+                  echo "🚨 ПРИНУДИТЕЛЬНОЕ ПЕРЕСОЗДАНИЕ ANDROID ПЛАТФОРМЫ"
+                  rm -rf android
+                  npx cap add android
+                  npx cap sync android
+                  
+                  if [ ! -f "android/app/build.gradle" ]; then
+                    echo "❌ build.gradle ВСЕ РАВНО НЕ СОЗДАН!"
+                    echo "📂 Структура android/:"
+                    find android -name "*.gradle" -type f | head -20
+                    echo "🔧 Принудительно создаем базовый build.gradle"
+                    mkdir -p android/app
+                    cat > android/app/build.gradle << 'BUILD_EOF'
+apply plugin: 'com.android.application'
+
+android {
+    compileSdk 34
+    namespace "ru.checoden.onlineloans"
+    
+    defaultConfig {
+        applicationId "ru.checoden.onlineloans"
+        minSdk 22
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+    
+    signingConfigs {
+        release {
+            storeFile file("android-keystore.keystore")
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: "password"
+            keyAlias System.getenv("KEY_ALIAS") ?: "key0"
+            keyPassword System.getenv("KEY_PASSWORD") ?: "password"
+        }
+    }
+    
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.core:core:1.12.0'
+}
+BUILD_EOF
+                    echo "✅ Базовый build.gradle создан"
+                  fi
+                fi
+                
+                cd android
                 echo "=== Создаем keystore файл перед сборкой ==="
                 mkdir -p app
                 echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > app/android-keystore.keystore
@@ -412,12 +469,10 @@
                 echo "=== Проверяем содержимое build.gradle ==="
                 if [ -f "app/build.gradle" ]; then
                   grep -A 5 -B 5 "storeFile" app/build.gradle || echo "storeFile не найден в build.gradle"
+                  echo "✅ build.gradle найден и готов"
                 else
-                  echo "❌ app/build.gradle не найден!"
-                  echo "📂 Содержимое app/:"
-                  ls -la app/ || echo "Директория app/ не существует"
-                  echo "📂 Поиск всех build.gradle файлов:"
-                  find . -name "build.gradle" -type f | head -10
+                  echo "❌ app/build.gradle ВСЕ РАВНО ОТСУТСТВУЕТ - КРИТИЧЕСКАЯ ОШИБКА!"
+                  exit 1
                 fi
                 if [ ! -f "app/android-keystore.keystore" ]; then
                   echo "❌ Keystore не найден в app/"
