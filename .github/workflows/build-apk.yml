@@ -162,7 +162,7 @@
                 if ! grep -q "POST_NOTIFICATIONS" "$MANIFEST_PATH"; then
                   echo "⚡ Добавляем POST_NOTIFICATIONS разрешение..."
                   # Добавляем разрешение перед закрывающим тегом </manifest>
-                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n</manifest>|' "$MANIFEST_PATH"
+                  sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33"/>\n</manifest>|' "$MANIFEST_PATH"
                   echo "✅ POST_NOTIFICATIONS добавлено"
                 else
                   echo "✅ POST_NOTIFICATIONS разрешение уже присутствует"
@@ -265,7 +265,7 @@
                   # Добавляем POST_NOTIFICATIONS если его нет
                   if ! grep -q "POST_NOTIFICATIONS" "$FINAL_MANIFEST"; then
                     echo "🚨 POST_NOTIFICATIONS отсутствует - ДОБАВЛЯЕМ СРОЧНО"
-                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n</manifest>|' "$FINAL_MANIFEST"
+                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33"/>\n</manifest>|' "$FINAL_MANIFEST"
                   else
                     echo "✅ POST_NOTIFICATIONS уже есть"
                   fi
@@ -316,7 +316,7 @@
                   else
                     echo "❌ POST_NOTIFICATIONS отсутствует - КРИТИЧЕСКАЯ ОШИБКА"
                     echo "🚨 ДОБАВЛЯЕМ POST_NOTIFICATIONS ЭКСТРЕННО ПЕРЕД СБОРКОЙ"
-                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n</manifest>|' "$FINAL_MANIFEST"
+                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33"/>\n</manifest>|' "$FINAL_MANIFEST"
                     
                     # Проверяем еще раз
                     if grep -q "POST_NOTIFICATIONS" "$FINAL_MANIFEST"; then
