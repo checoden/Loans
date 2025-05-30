@@ -399,18 +399,18 @@
                   else
                     echo "❌ POST_NOTIFICATIONS ОТСУТСТВУЕТ - ДОБАВЛЯЕМ ПРИНУДИТЕЛЬНО"
                     # Используем более надежный способ добавления
-                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33"/>\n</manifest>|' "$MANIFEST_PATH"
+                    sed -i 's|</manifest>|<uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33"/>\n</manifest>|' "$MANIFEST_PATH"
                     echo "✅ POST_NOTIFICATIONS добавлен через sed"
                   fi
                   
                   # Добавляем другие критические разрешения
                   if ! grep -q "WAKE_LOCK" "$MANIFEST_PATH"; then
-                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.WAKE_LOCK" />\n</manifest>|' "$MANIFEST_PATH"
+                    sed -i 's|</manifest>|<uses-permission android:name="android.permission.WAKE_LOCK" />\n</manifest>|' "$MANIFEST_PATH"
                     echo "✅ WAKE_LOCK добавлен"
                   fi
                   
                   if ! grep -q "VIBRATE" "$MANIFEST_PATH"; then
-                    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>|' "$MANIFEST_PATH"
+                    sed -i 's|</manifest>|<uses-permission android:name="android.permission.VIBRATE" />\n</manifest>|' "$MANIFEST_PATH"
                     echo "✅ VIBRATE добавлен"
                   fi
                   
