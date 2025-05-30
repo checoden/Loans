@@ -401,17 +401,23 @@
                     # Используем более надежный способ добавления
                     sed -i 's|</manifest>|    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33"/>\n</manifest>|' "$MANIFEST_PATH"
                     echo "✅ POST_NOTIFICATIONS добавлен через sed"
+                    echo "----- ПРОВЕРКА POST_NOTIFICATIONS ПОСЛЕ ДОБАВЛЕНИЯ -----"
+                    grep "POST_NOTIFICATIONS" "$MANIFEST_PATH" || echo "❌ POST_NOTIFICATIONS НЕ НАЙДЕН ПОСЛЕ ДОБАВЛЕНИЯ!"
                   fi
                   
                   # Добавляем другие критические разрешения
                   if ! grep -q "WAKE_LOCK" "$MANIFEST_PATH"; then
                     sed -i 's|</manifest>|    <uses-permission android:name="android.permission.WAKE_LOCK" />\n</manifest>|' "$MANIFEST_PATH"
                     echo "✅ WAKE_LOCK добавлен"
+                    echo "----- ПРОВЕРКА WAKE_LOCK ПОСЛЕ ДОБАВЛЕНИЯ -----"
+                    grep "WAKE_LOCK" "$MANIFEST_PATH" || echo "❌ WAKE_LOCK НЕ НАЙДЕН!"
                   fi
                   
                   if ! grep -q "VIBRATE" "$MANIFEST_PATH"; then
                     sed -i 's|</manifest>|    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>|' "$MANIFEST_PATH"
                     echo "✅ VIBRATE добавлен"
+                    echo "----- ПРОВЕРКА VIBRATE ПОСЛЕ ДОБАВЛЕНИЯ -----"
+                    grep "VIBRATE" "$MANIFEST_PATH" || echo "❌ VIBRATE НЕ НАЙДЕН!"
                   fi
                   
                   echo ""
