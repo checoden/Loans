@@ -117,32 +117,21 @@
                   
                   echo "🔧 Создаем AndroidManifest.xml с нуля..."
                   mkdir -p android/app/src/main
-                  cat > android/app/src/main/AndroidManifest.xml << 'EOF'
+                  cat > android/app/src/main/AndroidManifest.xml << 'MANIFEST_EOF'
 <?xml version='1.0' encoding='utf-8'?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="ru.checoden.onlineloans">
 
-    <!-- ============ КРИТИЧЕСКИЕ РАЗРЕШЕНИЯ ДЛЯ PUSH-УВЕДОМЛЕНИЙ ============ -->
-    <!-- Android 13+ требует объявление POST_NOTIFICATIONS -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33"/>
-    
-    <!-- Базовые разрешения для OneSignal -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    
-    <!-- Google Play Services для push -->
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
-    
-    <!-- Сетевые разрешения -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    
-    <!-- Capacitor базовые разрешения -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <!-- ===================================================================== -->
 
     <application
         android:allowBackup="true"
@@ -178,7 +167,7 @@
     </application>
 
 </manifest>
-EOF
+MANIFEST_EOF
                   echo "✅ AndroidManifest.xml создан с POST_NOTIFICATIONS!"
                   echo "--- СОДЕРЖИМОЕ СОЗДАННОГО МАНИФЕСТА ---"
                   cat android/app/src/main/AndroidManifest.xml
